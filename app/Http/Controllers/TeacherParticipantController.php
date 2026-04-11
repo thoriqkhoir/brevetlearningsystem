@@ -121,13 +121,13 @@ class TeacherParticipantController extends Controller
 
     public function downloadTemplate()
     {
-        $filePath = public_path('templates/format_peserta_tls.xlsx');
+        $filePath = public_path('templates/format_peserta_bls.xlsx');
 
         if (!file_exists($filePath)) {
             return back()->with('error', 'File template tidak ditemukan.');
         }
 
-        return response()->download($filePath, 'format_peserta_tls.xlsx');
+        return response()->download($filePath, 'format_peserta_bls.xlsx');
     }
 
     public function deleteMultiple(Request $request)

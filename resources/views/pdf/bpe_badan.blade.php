@@ -69,7 +69,7 @@
 <body>
 
     <div class="header">
-        <img src="{{ public_path('images/logo.png') }}" alt="Tax Learning System" style="width: 160px;">
+        <img src="{{ public_path('images/logo.png') }}" alt="Brevet Learning System" style="width: 160px;">
     </div>
 
     <div class="sub-header">

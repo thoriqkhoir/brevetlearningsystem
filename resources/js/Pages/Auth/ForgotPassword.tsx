@@ -39,7 +39,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             <CardHeader className="px-0 pt-0 pb-6">
                                 <img
                                     src="/images/logo.png"
-                                    alt="Tax Learning System"
+                                    alt="Brevet Learning System"
                                     className="w-24 mb-6"
                                 />
                                 <CardTitle className="text-2xl">

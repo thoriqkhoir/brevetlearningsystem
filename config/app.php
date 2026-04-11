@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Tax Learning System'),
+    'name' => env('APP_NAME', 'Brevet Learning System'),
 
     /*
     |--------------------------------------------------------------------------

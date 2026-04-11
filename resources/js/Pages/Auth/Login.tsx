@@ -60,7 +60,7 @@ export default function Login({
                                 <div className="flex flex-col items-center mb-2">
                                     <img
                                         src="/images/logo.png"
-                                        alt="Tax Learning System"
+                                        alt="Brevet Learning System"
                                         className="w-36"
                                     />
                                     <p className="mt-2 text-balance text-muted-foreground text-sm">
@@ -198,7 +198,7 @@ export default function Login({
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                    <div className="text-center text-sm">
+                                    {/* <div className="text-center text-sm">
                                         Pengguna baru?{" "}
                                         <Link
                                             href={route("registration-portal")}
@@ -210,8 +210,8 @@ export default function Login({
                                         >
                                             Daftar disini
                                         </Link>
-                                    </div>
-                                    <Link
+                                    </div> */}
+                                    {/* <Link
                                         href={route("register")}
                                         className={`hover:underline w-fit text-center mx-auto text-sm text-blue-800 hover:text-blue-700 ${
                                             processing
@@ -220,7 +220,7 @@ export default function Login({
                                         }`}
                                     >
                                         Buat akun TLS baru
-                                    </Link>
+                                    </Link> */}
                                 </div>
                             </div>
                         </form>
@@ -233,7 +233,7 @@ export default function Login({
                             <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
                             <div className="absolute inset-0 flex items-end justify-start px-6 py-8">
                                 <h2 className="text-white text-3xl font-bold">
-                                    Tax <br /> Learning <br /> System
+                                    Brevet <br /> Learning <br /> System
                                 </h2>
                             </div>
                         </div>
@@ -245,7 +245,7 @@ export default function Login({
                         processing ? "pointer-events-none opacity-50" : ""
                     }`}
                 >
-                    Apa itu Tax Learning System?
+                    Apa itu Brevet Learning System?
                 </Link>
             </div>
         </GuestLayout>

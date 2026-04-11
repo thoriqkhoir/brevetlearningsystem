@@ -6,16 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title inertia>{{ config('app.name', 'Tax Learning System') }}</title>
+    <title inertia>{{ config('app.name', 'Brevet Learning System') }}</title>
 
     <meta name="description"
-        content="Tax Learning System adalah platform pembelajaran pajak untuk membantu dalam memahami dan mengelola pajak dengan mudah dan efisien.">
+        content="Brevet Learning System adalah platform pembelajaran pajak untuk membantu dalam memahami dan mengelola pajak dengan mudah dan efisien.">
     <meta name="keywords"
-        content="Tax Learning System, pembelajaran pajak, manajemen pajak, sistem pajak, belajar pajak online">
+        content="Brevet Learning System, pembelajaran pajak, manajemen pajak, sistem pajak, belajar pajak online">
     <meta name="author" content="Aksara Teknologi Mandiri">
     <meta name="robots" content="index, follow">
 
-    <meta property="og:title" content="Tax Learning System">
+    <meta property="og:title" content="Brevet Learning System">
     <meta property="og:description"
         content="Platform pembelajaran pajak untuk membantu dalam memahami dan mengelola pajak dengan mudah dan efisien.">
     <meta property="og:image" content="{{ asset('images/logo.png') }}">

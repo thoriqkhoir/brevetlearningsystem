@@ -298,7 +298,7 @@ export default function Dashboard({
                                             </p>
                                             <p className="text-sm text-gray-500 mt-1">
                                                 Silakan mulai kelas untuk
-                                                mendapatkan akses aplikasi TLS.
+                                                mendapatkan akses aplikasi BLS.
                                             </p>
                                             <Button className="mt-4" asChild>
                                                 <Link

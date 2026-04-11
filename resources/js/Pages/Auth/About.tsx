@@ -15,7 +15,7 @@ import {
 export default function About() {
     return (
         <GuestLayout>
-            <Head title="Tentang Tax Learning System" />
+            <Head title="Tentang Brevet Learning System" />
 
             <div className="min-h-screen ">
                 <div className="container mx-auto px-4 py-8">
@@ -25,12 +25,12 @@ export default function About() {
                             <div className="flex justify-center mb-6">
                                 <img
                                     src="/images/logo.png"
-                                    alt="Tax Learning System"
+                                    alt="Brevet Learning System"
                                     className="w-48 h-auto"
                                 />
                             </div>
                             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-                                Tax Learning System
+                                Brevet Learning System
                             </h1>
                             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
                                 Platform pembelajaran dan simulasi perpajakan
@@ -482,7 +482,7 @@ export default function About() {
                                 Siap Memulai Pembelajaran?
                             </h2>
                             <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                Bergabunglah dengan Tax Learning System dan
+                                Bergabunglah dengan Brevet Learning  System dan
                                 tingkatkan kemampuan perpajakan Anda
                             </p>
                             <div className="justify-center">

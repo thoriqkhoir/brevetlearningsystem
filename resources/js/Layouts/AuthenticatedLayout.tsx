@@ -158,7 +158,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                         href={route("dashboard")}
                         className="m-3 w-3/5 mx-auto"
                     >
-                        <img src="/images/logo.png" alt="Tax Learning System" />
+                        <img src="/images/logo.png" alt="Brevet Learning System" />
                     </Link>
                 </SidebarHeader>
                 <SidebarContent>
@@ -206,7 +206,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                     >
                                         <img
                                             src="/images/logo.png"
-                                            alt="Tax Learning System"
+                                            alt="Brevet Learning System"
                                         />
                                     </Link>
                                 </div>
@@ -358,7 +358,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                 >
                                                     <img
                                                         src="/images/logo.png"
-                                                        alt="Tax Learning System"
+                                                        alt="Brevet Learning System"
                                                     />
                                                 </Link>
                                             </SheetTitle>

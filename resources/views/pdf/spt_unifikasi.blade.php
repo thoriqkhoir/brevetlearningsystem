@@ -104,7 +104,7 @@
         <table class="header-table ">
             <tr>
                 <td style="vertical-align: middle; width: 20%;">
-                    <img src="{{ public_path('images/logo.png') }}" alt="Tax Learning System" style="width: 140px; ">
+                    <img src="{{ public_path('images/logo.png') }}" alt="Brevet Learning System" style="width: 140px; ">
                 </td>
                 <td class="title" style="width: 60%;">
                     <p>SURAT PEMBERITAHUAN MASA <br> PAJAK PENGHASILAN UNIFIKASI</p>
@@ -348,7 +348,7 @@
                 <td>:</td>
                 <td style="text-align: left;">{{ $spt->sptUnifikasi->ttd_name }}</td>
                 <td colspan="3" rowspan="3" style="vertical-align: middle; text-align:center;">
-                    <img src="{{ public_path('images/barcode.png') }}" alt="Tax Learning System" style="width: 50px; "></td>
+                    <img src="{{ public_path('images/barcode.png') }}" alt="Brevet Learning System" style="width: 50px; "></td>
             </tr>
             
             <tr >

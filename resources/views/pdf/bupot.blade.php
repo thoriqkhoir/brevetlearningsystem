@@ -101,7 +101,7 @@
         <table class="header-table">
             <tr>
                 <td style="vertical-align: middle; width: 20%;">
-                    <img src="{{ public_path('images/logo.png') }}" alt="Tax Learning System" style="width: 140px; ">
+                    <img src="{{ public_path('images/logo.png') }}" alt="Brevet Learning System" style="width: 140px; ">
                 </td>
                 <td class="title" style="width: 60%;">
                     <p>BUKTI PEMOTONGAN DAN/ATAU PEMUNGUTAN <br> UNIFIKASI BERFORMAT STANDART</p>

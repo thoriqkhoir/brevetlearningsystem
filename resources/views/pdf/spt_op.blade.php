@@ -709,7 +709,7 @@
         <td>NIK/NPWP &nbsp;&nbsp; {{ $sptOp->k_signer_id ?? ($user->npwp ?? '-') }}</td>
         <td style="font-weight:bold;">Tanda Tangan</td>
         <td rowspan="2" style="text-align:center; vertical-align:middle;">
-            <img src="{{ public_path('images/barcode.png') }}" alt="Tax Learning System" style="width: 50px; ">
+            <img src="{{ public_path('images/barcode.png') }}" alt="Brevet Learning System" style="width: 50px; ">
             <div style="font-size:7px; color:#888; margin-top:2px;">Ditandatangani<br>secara elektronik</div>
         </td>
     </tr>

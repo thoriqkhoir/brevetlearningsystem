@@ -1086,7 +1086,7 @@
                     </div>
                     <div class="sign-right">
                         <div class="sign-panel">
-                            <img src="{{ public_path('images/barcode.png') }}" alt="Tax Learning System" style="width: 50px;">
+                            <img src="{{ public_path('images/barcode.png') }}" alt="Brevet Learning System" style="width: 50px;">
                             <div class="caption">Ditandatangani<br>secara elektronik</div>
                         </div>
                     </div>

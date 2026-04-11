@@ -361,7 +361,7 @@ export default function NIKRegistration({
                 <div className="flex justify-center mb-6">
                     <img
                         src="/images/logo.png"
-                        alt="Tax Learning System"
+                        alt="Brevet Learning System"
                         className="w-36"
                     />
                 </div>

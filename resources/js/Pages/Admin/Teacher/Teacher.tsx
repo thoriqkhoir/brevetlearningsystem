@@ -169,12 +169,12 @@ export default function DaftarPengajar({ users, events }: any) {
                             className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border-blue-200"
                         >
                             <a
-                                href="/templates/format_pengajar_tls.xlsx"
+                                href="/templates/format_pengajar_bls.xlsx"
                                 download
                                 className="flex items-center gap-2"
                             >
                                 <Download className="h-4 w-4" />
-                                Download Format Import Pengajar TLS
+                                Download Format Import Pengajar BLS
                             </a>
                         </Button>
                         <DataTableTeacher

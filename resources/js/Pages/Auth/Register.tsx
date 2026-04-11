@@ -48,7 +48,7 @@ export default function Register() {
                                     <Link href="/">
                                         <img
                                             src="/images/logo.png"
-                                            alt="Tax Learning System"
+                                            alt="Brevet Learning System"
                                             className="w-36"
                                         />
                                     </Link>

@@ -194,13 +194,13 @@ class AdminController extends Controller
 
     public function downloadTemplate()
     {
-        $filePath = public_path('templates/format_peserta_tls.xlsx');
+        $filePath = public_path('templates/format_peserta_bls.xlsx');
 
         if (!file_exists($filePath)) {
             return redirect()->back()->with('error', 'File template tidak ditemukan.');
         }
 
-        return response()->download($filePath, 'format_peserta_tls.xlsx');
+        return response()->download($filePath, 'format_peserta_bls.xlsx');
     }
 
     public function import(Request $request)

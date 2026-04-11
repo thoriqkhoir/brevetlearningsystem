@@ -117,7 +117,7 @@
         <table style="width: 100%; padding-bottom: 15px;">
             <tr>
                 <td style="width: 70%; vertical-align: middle;">
-                    <img src="{{ public_path('images/logo.png') }}" alt="Tax Learning System" style="width: 160px;">
+                    <img src="{{ public_path('images/logo.png') }}" alt="Brevet Learning System" style="width: 160px;">
                 </td>
                 <td style="width: 30%; text-align: right; vertical-align: middle;" class="billing-code">
                     <p>Kode Billing</p>
