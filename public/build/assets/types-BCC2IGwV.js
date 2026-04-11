@@ -1,0 +1,1 @@
+const a=["Biaya iklan","Biaya pameran","Biaya promosi (sampel/gratis)","Biaya hadiah/doorprize","Biaya promosi lainnya"],n=["Dibebankan langsung","Pencadangan","Penghapusan piutang","Lainnya"],i=["Putusan pengadilan","Perjanjian penghapusan piutang","Surat pernyataan","Lainnya"];export{n as D,a as T,i as a};

@@ -1,0 +1,121 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('spt_unifikasi', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignUuid('spt_id')->constrained('spt')->onUpdate('cascade')->onDelete('cascade');
+            $table->integer('setor_1')->default(0);
+            $table->integer('setor_1a')->default(0);
+            $table->integer('setor_1b')->default(0);
+            $table->integer('setor_1c')->default(0);
+            $table->integer('setor_2')->default(0);
+            $table->integer('setor_2a')->default(0);
+            $table->integer('setor_2b')->default(0);
+            $table->integer('setor_3')->default(0);
+            $table->integer('setor_3a')->default(0);
+            $table->integer('setor_3b')->default(0);
+            $table->integer('setor_3c')->default(0);
+            $table->integer('setor_4')->default(0);
+            $table->integer('setor_4a')->default(0);
+            $table->integer('setor_5')->default(0);
+            $table->integer('setor_5a')->default(0);
+            $table->integer('total_setor')->default(0);
+            $table->integer('pemotongan_1')->default(0);
+            $table->integer('pemotongan_1a')->default(0);
+            $table->integer('pemotongan_1b')->default(0);
+            $table->integer('pemotongan_1c')->default(0);
+            $table->integer('pemotongan_2')->default(0);
+            $table->integer('pemotongan_2a')->default(0);
+            $table->integer('pemotongan_2b')->default(0);
+            $table->integer('pemotongan_3')->default(0);
+            $table->integer('pemotongan_3a')->default(0);
+            $table->integer('pemotongan_3b')->default(0);
+            $table->integer('pemotongan_3c')->default(0);
+            $table->integer('pemotongan_4')->default(0);
+            $table->integer('pemotongan_4a')->default(0);
+            $table->integer('pemotongan_5')->default(0);
+            $table->integer('pemotongan_5a')->default(0);
+            $table->integer('total_pemotongan')->default(0);
+            $table->integer('pphpemerintah_1')->default(0);
+            $table->integer('pphpemerintah_1a')->default(0);
+            $table->integer('pphpemerintah_1b')->default(0);
+            $table->integer('pphpemerintah_1c')->default(0);
+            $table->integer('pphpemerintah_2')->default(0);
+            $table->integer('pphpemerintah_2a')->default(0);
+            $table->integer('pphpemerintah_2b')->default(0);
+            $table->integer('pphpemerintah_3')->default(0);
+            $table->integer('pphpemerintah_3a')->default(0);
+            $table->integer('pphpemerintah_3b')->default(0);
+            $table->integer('pphpemerintah_3c')->default(0);
+            $table->integer('pphpemerintah_4')->default(0);
+            $table->integer('pphpemerintah_4a')->default(0);
+            $table->integer('pphpemerintah_5')->default(0);
+            $table->integer('pphpemerintah_5a')->default(0);
+            $table->integer('total_pphpemerintah')->default(0);
+            $table->integer('jumlahpph_1')->default(0);
+            $table->integer('jumlahpph_1a')->default(0);
+            $table->integer('jumlahpph_1b')->default(0);
+            $table->integer('jumlahpph_1c')->default(0);
+            $table->integer('jumlahpph_2')->default(0);
+            $table->integer('jumlahpph_2a')->default(0);
+            $table->integer('jumlahpph_2b')->default(0);
+            $table->integer('jumlahpph_3')->default(0);
+            $table->integer('jumlahpph_3a')->default(0);
+            $table->integer('jumlahpph_3b')->default(0);
+            $table->integer('jumlahpph_3c')->default(0);
+            $table->integer('jumlahpph_4')->default(0);
+            $table->integer('jumlahpph_4a')->default(0);
+            $table->integer('jumlahpph_5')->default(0);
+            $table->integer('jumlahpph_5a')->default(0);
+            $table->integer('total_jumlahpph')->default(0);
+            $table->integer('pphdibetulkan_1')->default(0);
+            $table->integer('pphdibetulkan_1a')->default(0);
+            $table->integer('pphdibetulkan_1b')->default(0);
+            $table->integer('pphdibetulkan_1c')->default(0);
+            $table->integer('pphdibetulkan_2')->default(0);
+            $table->integer('pphdibetulkan_2a')->default(0);
+            $table->integer('pphdibetulkan_2b')->default(0);
+            $table->integer('pphdibetulkan_3')->default(0);
+            $table->integer('pphdibetulkan_3a')->default(0);
+            $table->integer('pphdibetulkan_3b')->default(0);
+            $table->integer('pphdibetulkan_3c')->default(0);
+            $table->integer('pphdibetulkan_4')->default(0);
+            $table->integer('pphdibetulkan_4a')->default(0);
+            $table->integer('pphdibetulkan_5')->default(0);
+            $table->integer('pphdibetulkan_5a')->default(0);
+            $table->integer('total_pphdibetulkan')->default(0);
+            $table->integer('pphkurangbayar_1')->default(0);
+            $table->integer('pphkurangbayar_1a')->default(0);
+            $table->integer('pphkurangbayar_1b')->default(0);
+            $table->integer('pphkurangbayar_1c')->default(0);
+            $table->integer('pphkurangbayar_2')->default(0);
+            $table->integer('pphkurangbayar_2a')->default(0);
+            $table->integer('pphkurangbayar_2b')->default(0);
+            $table->integer('pphkurangbayar_3')->default(0);
+            $table->integer('pphkurangbayar_3a')->default(0);
+            $table->integer('pphkurangbayar_3b')->default(0);
+            $table->integer('pphkurangbayar_3c')->default(0);
+            $table->integer('pphkurangbayar_4')->default(0);
+            $table->integer('pphkurangbayar_4a')->default(0);
+            $table->integer('pphkurangbayar_5')->default(0);
+            $table->integer('pphkurangbayar_5a')->default(0);
+            $table->integer('total_pphkurangbayar')->default(0);
+            $table->enum('penandatangan', ['Wajib Pajak', 'Kuasa Wajib Pajak'])->default('Wajib Pajak');
+            $table->string('ttd_npwp')->nullable();
+            $table->string('ttd_name')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('spt_unifikasi');
+    }
+};

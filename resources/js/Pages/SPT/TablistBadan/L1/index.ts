@@ -1,0 +1,13 @@
+export { default as TabL1A } from "./TabL1A";
+export { default as TabL1B } from "./TabL1B";
+export { default as TabL1C } from "./TabL1C";
+export { default as TabL1D } from "./TabL1D";
+export { default as TabL1E } from "./TabL1E";
+export { default as TabL1F } from "./TabL1F";
+export { default as TabL1G } from "./TabL1G";
+export { default as TabL1H } from "./TabL1H";
+export { default as TabL1I } from "./TabL1I";
+export { default as TabL1J } from "./TabL1J";
+export { default as TabL1K } from "./TabL1K";
+export { default as TabL1L } from "./TabL1L";
+export * from "./types";

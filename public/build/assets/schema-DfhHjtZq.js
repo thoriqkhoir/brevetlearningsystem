@@ -1,0 +1,1 @@
+import{z as i}from"./index-mSkvzYyn.js";const s=i.object({name:i.string().min(1,"Nama wajib diisi").max(255),npwp:i.string().regex(/^\d{16}$/,"NPWP harus 16 digit").min(16).max(16),address:i.string().max(255).optional().default("")});export{s as b};
