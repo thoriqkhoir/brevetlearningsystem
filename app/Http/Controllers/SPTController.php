@@ -540,9 +540,10 @@ class SPTController extends Controller
     public function downloadBPE($id)
     {
         $user = Auth::user();
-        $spt = Spt::with(['form', 'sptInduk'])->findOrFail($id);
+        $spt = Spt::with(['form', 'sptInduk', 'spt2126'])->findOrFail($id);
         Carbon::setLocale('id');
-        $formattedDate = Carbon::parse($spt->sptInduk->ttd_date)->translatedFormat('d F Y');
+        $dateSource = $spt->sptInduk?->ttd_date ?? $spt->spt2126?->created_at ?? $spt->created_at;
+        $formattedDate = Carbon::parse($dateSource)->translatedFormat('d F Y');
         $pdf = PDF::loadView('pdf/bpe', compact('spt', 'user', 'formattedDate'));
         return $pdf->stream('BPE_' . $user->name . '.pdf');
     }

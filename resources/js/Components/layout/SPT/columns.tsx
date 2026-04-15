@@ -66,6 +66,14 @@ const handleApprove = (id: string, password: string) => {
 };
 
 const handleDownloadPDF = (id: string, formName: string, formCode?: string) => {
+    if (formCode === "PPH2126") {
+        window.open(route("spt.downloadPDF21", id), "_blank");
+        return;
+    }
+    if (formCode === "PPHUNI") {
+        window.open(route("spt.downloadPDFUnifikasi", id), "_blank");
+        return;
+    }
     if (formCode === "PPHOP") {
         window.open(route("spt.downloadSPTOp", id), "_blank");
         return;
@@ -85,6 +93,14 @@ const handleDownloadPDF = (id: string, formName: string, formCode?: string) => {
 };
 
 const handleDownloadBPE = (id: string, formName: string, formCode?: string) => {
+    if (formCode === "PPH2126") {
+        window.open(route("spt.downloadBPE21", id), "_blank");
+        return;
+    }
+    if (formCode === "PPHUNI") {
+        window.open(route("spt.downloadBPEUnifikasi", id), "_blank");
+        return;
+    }
     if (formCode === "PPHOP") {
         window.open(route("spt.downloadBPEOp", id), "_blank");
         return;
