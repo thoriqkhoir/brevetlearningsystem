@@ -1,4 +1,11 @@
-import { CalendarFold, Home, School, Users } from "lucide-react";
+import {
+    BookOpen,
+    CalendarFold,
+    Home,
+    NotebookPen,
+    School,
+    Users,
+} from "lucide-react";
 
 const adminItems = () => {
     return [
@@ -24,6 +31,16 @@ const adminItems = () => {
                     title: "Daftar Event",
                     url: route("admin.events"),
                     icon: CalendarFold,
+                },
+                {
+                    title: "Daftar Kelas",
+                    url: route("admin.courses"),
+                    icon: BookOpen,
+                },
+                {
+                    title: "Daftar Ujian",
+                    url: route("admin.tests"),
+                    icon: NotebookPen,
                 },
             ],
         },

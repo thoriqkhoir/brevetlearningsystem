@@ -82,6 +82,8 @@ use App\Http\Controllers\SptOpL4AController;
 use App\Http\Controllers\SptOpL5AController;
 use App\Http\Controllers\SptOpL5BCController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminCourseListController;
+use App\Http\Controllers\AdminTestListController;
 use App\Http\Controllers\Api\RegionController;
 use App\Http\Controllers\BankController;
 use App\Http\Controllers\BP21Controller;
@@ -843,6 +845,9 @@ Route::middleware(['auth', EnsureAdmin::class])->group(function () {
     Route::get('/admin/events/{id}/edit', [EventController::class, 'edit'])->name('admin.editEvent');
     Route::put('/admin/events/{id}', [EventController::class, 'update'])->name('admin.updateEvent');
     Route::delete('/admin/events/destroy/{id}', [EventController::class, 'destroy'])->name('admin.destroyEvent');
+
+    Route::get('/admin/courses', [AdminCourseListController::class, 'index'])->name('admin.courses');
+    Route::get('/admin/tests', [AdminTestListController::class, 'index'])->name('admin.tests');
 });
 
 Route::middleware(['auth', EnsureTeacher::class])->group(function () {
