@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('test_id')->constrained('tests')->onDelete('cascade');
+            $table->foreignUuid('question_bank_id')->constrained('question_banks')->onDelete('cascade');
             $table->text('question_text');
             $table->string('image_url')->nullable();
             $table->enum('question_type', ['multiple_choice', 'true_false', 'short_answer'])->default('multiple_choice');
