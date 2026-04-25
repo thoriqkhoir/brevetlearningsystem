@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\CourseTestImport;
 use App\Models\Course;
 use App\Models\CourseTest;
 use App\Models\CourseTestAttempt;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CourseTestController extends Controller
 {
@@ -48,6 +50,34 @@ class CourseTestController extends Controller
         $courseTest->delete();
 
         return back()->with('success', 'Ujian kelas berhasil dihapus.');
+    }
+
+    public function import(Request $request, Course $course)
+    {
+        $this->authorizeCourse($course);
+
+        $request->validate([
+            'file' => 'required|mimes:xlsx,csv,xls',
+        ], [
+            'file.required' => 'File Excel harus dipilih.',
+            'file.mimes' => 'File harus berformat Excel (.xlsx, .xls, .csv).',
+        ]);
+
+        try {
+            Excel::import(new CourseTestImport($course), $request->file('file'));
+
+            return back()->with('success', 'Ujian kelas berhasil diimport.');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $errorMessages = [];
+
+            foreach ($e->failures() as $failure) {
+                $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+            }
+
+            return back()->with('error', 'Import gagal! ' . implode(' | ', array_slice($errorMessages, 0, 5)));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Import gagal! ' . $e->getMessage());
+        }
     }
 
     public function detail(Course $course, CourseTest $courseTest)

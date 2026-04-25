@@ -219,7 +219,7 @@ export default function Login({
                                                 : ""
                                         }`}
                                     >
-                                        Buat akun TLS baru
+                                        Buat akun BLS baru
                                     </Link> */}
                                 </div>
                             </div>

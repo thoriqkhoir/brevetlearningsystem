@@ -895,10 +895,12 @@ Route::middleware(['auth', EnsureTeacher::class])->group(function () {
     Route::delete('/teacher/courses/results/{id}/score', [CourseResultController::class, 'deleteScore'])->name('teacher.deleteScore');
 
     Route::post('/teacher/courses/{course}/schedules', [CourseScheduleController::class, 'store'])->name('teacher.courseSchedules.store');
+    Route::post('/teacher/courses/{course}/schedules/import', [CourseScheduleController::class, 'import'])->name('teacher.courseSchedules.import');
     Route::put('/teacher/courses/{course}/schedules/{schedule}', [CourseScheduleController::class, 'update'])->name('teacher.courseSchedules.update');
     Route::delete('/teacher/courses/{course}/schedules/{schedule}', [CourseScheduleController::class, 'destroy'])->name('teacher.courseSchedules.destroy');
 
     Route::post('/teacher/courses/{course}/tests', [CourseTestController::class, 'store'])->name('teacher.courseTests.store');
+    Route::post('/teacher/courses/{course}/tests/import', [CourseTestController::class, 'import'])->name('teacher.courseTests.import');
     Route::get('/teacher/courses/{course}/tests/{courseTest}/detail', [CourseTestController::class, 'detail'])->name('teacher.courseTests.detail');
     Route::put('/teacher/courses/{course}/tests/{courseTest}', [CourseTestController::class, 'update'])->name('teacher.courseTests.update');
     Route::delete('/teacher/courses/{course}/tests/{courseTest}', [CourseTestController::class, 'destroy'])->name('teacher.courseTests.destroy');

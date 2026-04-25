@@ -228,23 +228,23 @@ export const createUserColumns = (
     //         );
     //     },
     // },
-    {
-        accessorKey: "event.name",
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Event" />
-        ),
-        cell: ({ row }) => (
-            <Badge variant="outline">{row.original.event.name}</Badge>
-        ),
-        enableColumnFilter: true,
-    },
-    {
-        accessorKey: "event_id",
-        header: "Event ID",
-        cell: ({ row }) => row.original.event?.id ?? "-",
-        enableColumnFilter: true,
-        enableHiding: true,
-    },
+    // {
+    //     accessorKey: "event.name",
+    //     header: ({ column }) => (
+    //         <DataTableColumnHeader column={column} title="Event" />
+    //     ),
+    //     cell: ({ row }) => (
+    //         <Badge variant="outline">{row.original.event.name}</Badge>
+    //     ),
+    //     enableColumnFilter: true,
+    // },
+    // {
+    //     accessorKey: "event_id",
+    //     header: "Event ID",
+    //     cell: ({ row }) => row.original.event?.id ?? "-",
+    //     enableColumnFilter: true,
+    //     enableHiding: true,
+    // },
     {
         accessorKey: "last_login_at",
         header: ({ column }) => (

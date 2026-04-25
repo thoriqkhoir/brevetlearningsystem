@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\CourseScheduleImport;
 use App\Models\Course;
 use App\Models\CourseSchedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CourseScheduleController extends Controller
 {
@@ -52,6 +54,34 @@ class CourseScheduleController extends Controller
         $schedule->delete();
 
         return back()->with('success', 'Jadwal kelas berhasil dihapus.');
+    }
+
+    public function import(Request $request, Course $course)
+    {
+        $this->authorizeCourse($course);
+
+        $request->validate([
+            'file' => 'required|mimes:xlsx,csv,xls',
+        ], [
+            'file.required' => 'File Excel harus dipilih.',
+            'file.mimes' => 'File harus berformat Excel (.xlsx, .xls, .csv).',
+        ]);
+
+        try {
+            Excel::import(new CourseScheduleImport($course), $request->file('file'));
+
+            return back()->with('success', 'Jadwal kelas berhasil diimport.');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $errorMessages = [];
+
+            foreach ($e->failures() as $failure) {
+                $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+            }
+
+            return back()->with('error', 'Import gagal! ' . implode(' | ', array_slice($errorMessages, 0, 5)));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Import gagal! ' . $e->getMessage());
+        }
     }
 
     private function authorizeCourse(Course $course): void

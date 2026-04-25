@@ -2,9 +2,11 @@
 
 namespace App\Imports;
 
-use App\Models\Event;
+use App\Models\Course;
+use App\Models\CourseUser;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -15,13 +17,26 @@ class UserImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithValidat
 {
     use Importable;
 
+    private function resolveCourseCode(array $row): ?string
+    {
+        $courseCode = $row['course_code'] ?? null;
+
+        if ($courseCode === null) {
+            return null;
+        }
+
+        $courseCode = trim((string) $courseCode);
+
+        return $courseCode !== '' ? $courseCode : null;
+    }
+
     public function model(array $row)
     {
         if (User::where('email', $row['email'])->exists()) {
             return null;
         }
 
-        return new User([
+        $user = User::create([
             'name'          => $row['name'],
             'email'         => $row['email'],
             'phone_number'  => strval($row['phone_number']),
@@ -34,6 +49,19 @@ class UserImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithValidat
             //     : null,
             'event_id'      => 1,
         ]);
+
+        $courseCode = $this->resolveCourseCode($row);
+        if ($courseCode) {
+            $course = Course::whereRaw('LOWER(code) = ?', [Str::lower($courseCode)])->first();
+            if ($course) {
+                CourseUser::firstOrCreate([
+                    'course_id' => $course->id,
+                    'user_id' => $user->id,
+                ]);
+            }
+        }
+
+        return null;
     }
 
     public function rules(): array

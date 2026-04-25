@@ -12,6 +12,7 @@ import {
 } from "@/Components/ui/breadcrumb";
 import {
     CalendarIcon,
+    Download,
     Eye,
     FileText,
     Pencil,
@@ -20,7 +21,6 @@ import {
     Trash,
     UserPlus,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import ConfirmDialog from "@/Components/layout/ConfirmDialog";
 import toast from "react-hot-toast";
 import {
@@ -57,6 +57,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/Components/ui/alert-dialog";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 export default function DetailCourse({
     course,
@@ -78,6 +79,8 @@ export default function DetailCourse({
     const [deleteModulOpen, setDeleteModulOpen] = useState(false);
     const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
     const [scheduleDateOpen, setScheduleDateOpen] = useState(false);
+    const [isImportingSchedule, setIsImportingSchedule] = useState(false);
+    const [isImportingCourseTest, setIsImportingCourseTest] = useState(false);
     const [editingScheduleId, setEditingScheduleId] = useState<string | null>(
         null,
     );
@@ -106,6 +109,8 @@ export default function DetailCourse({
         end_time: "",
         show_score: true,
     });
+    const scheduleImportInputRef = useRef<HTMLInputElement | null>(null);
+    const courseTestImportInputRef = useRef<HTMLInputElement | null>(null);
 
     const selectedQuestionBank = questionBanks.find(
         (bank: any) => bank.id === courseTestForm.question_bank_id,
@@ -319,6 +324,34 @@ export default function DetailCourse({
         );
     };
 
+    const handleScheduleImportChange = (
+        event: ChangeEvent<HTMLInputElement>,
+    ) => {
+        const file = event.target.files?.[0];
+
+        if (!file) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        setIsImportingSchedule(true);
+
+        router.post(
+            route("teacher.courseSchedules.import", course.id),
+            formData,
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsImportingSchedule(false);
+                    event.target.value = "";
+                },
+            },
+        );
+    };
+
     const resetCourseTestForm = () => {
         setCourseTestForm({
             title: "",
@@ -486,6 +519,30 @@ export default function DetailCourse({
                 preserveScroll: true,
             },
         );
+    };
+
+    const handleCourseTestImportChange = (
+        event: ChangeEvent<HTMLInputElement>,
+    ) => {
+        const file = event.target.files?.[0];
+
+        if (!file) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        setIsImportingCourseTest(true);
+
+        router.post(route("teacher.courseTests.import", course.id), formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            onFinish: () => {
+                setIsImportingCourseTest(false);
+                event.target.value = "";
+            },
+        });
     };
 
     const handleViewModul = () => {
@@ -768,19 +825,58 @@ export default function DetailCourse({
                     </div>
 
                     <div className="rounded-xl bg-white border shadow p-6 space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <h2 className="text-lg font-bold text-primary">
                                 Jadwal Kelas ({courseSchedules.length})
                             </h2>
-                            <Button
-                                variant="outline"
-                                className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
-                                onClick={openCreateScheduleDialog}
-                            >
-                                <Plus size={16} />
-                                Tambah Jadwal
-                            </Button>
+                            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+                                <Button
+                                    variant="outline"
+                                    asChild
+                                    className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border-blue-200 sm:w-auto"
+                                >
+                                    <a
+                                        href="/templates/format_course_schedule.xlsx"
+                                        className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                                        download
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Download Template
+                                    </a>
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100 sm:w-auto"
+                                    onClick={() =>
+                                        scheduleImportInputRef.current?.click()
+                                    }
+                                    disabled={isImportingSchedule}
+                                >
+                                    <FileText size={16} />
+                                    {isImportingSchedule
+                                        ? "Mengimpor..."
+                                        : "Import Excel"}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100 sm:w-auto"
+                                    onClick={openCreateScheduleDialog}
+                                >
+                                    <Plus size={16} />
+                                    Tambah Jadwal
+                                </Button>
+                            </div>
                         </div>
+
+                        <Input
+                            ref={scheduleImportInputRef}
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            className="hidden"
+                            onChange={handleScheduleImportChange}
+                        />
 
                         {courseSchedules.length > 0 ? (
                             <div className="space-y-2">
@@ -878,19 +974,58 @@ export default function DetailCourse({
                     </div>
 
                     <div className="rounded-xl bg-white border shadow p-6 space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <h2 className="text-lg font-bold text-primary">
                                 Ujian Kelas ({courseTests.length})
                             </h2>
-                            <Button
-                                variant="outline"
-                                className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
-                                onClick={openCreateCourseTestDialog}
-                            >
-                                <Plus size={16} />
-                                Tambah Ujian
-                            </Button>
+                            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+                                <Button
+                                    variant="outline"
+                                    asChild
+                                    className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border-blue-200 sm:w-auto"
+                                >
+                                    <a
+                                        href="/templates/format_course_test.xlsx"
+                                        className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                                        download
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Download Template
+                                    </a>
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100 sm:w-auto"
+                                    onClick={() =>
+                                        courseTestImportInputRef.current?.click()
+                                    }
+                                    disabled={isImportingCourseTest}
+                                >
+                                    <FileText size={16} />
+                                    {isImportingCourseTest
+                                        ? "Mengimpor..."
+                                        : "Import Excel"}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100 sm:w-auto"
+                                    onClick={openCreateCourseTestDialog}
+                                >
+                                    <Plus size={16} />
+                                    Tambah Ujian
+                                </Button>
+                            </div>
                         </div>
+
+                        <Input
+                            ref={courseTestImportInputRef}
+                            type="file"
+                            accept=".xlsx,.xls,.csv"
+                            className="hidden"
+                            onChange={handleCourseTestImportChange}
+                        />
 
                         {courseTests.length > 0 ? (
                             <div className="space-y-2">

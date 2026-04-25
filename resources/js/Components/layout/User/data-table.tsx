@@ -95,13 +95,13 @@ export function DataTableUser<TData extends { id: string }, TValue>({
                     className="max-w-sm bg-primary-foreground text-sm placeholder:text-sm"
                 />
                 <div className="flex items-center gap-2">
-                    {table.getColumn("event_id") && (
+                    {/* {table.getColumn("event_id") && (
                         <DataTableFacetedFilter
                             column={table.getColumn("event_id")}
                             title="Event"
                             options={eventOptions}
                         />
-                    )}
+                    )} */}
                     {isFiltered && (
                         <Button
                             onClick={() => table.resetColumnFilters()}

@@ -160,6 +160,10 @@ export default function Participant({ participants, events }: any) {
                                         onChange={handleFileChange}
                                         accept=".xlsx,.xls,.csv"
                                     />
+                                    <p className="text-xs text-muted-foreground">
+                                        Kolom opsional: isi "course_code" untuk otomatis memasukkan
+                                        peserta ke kelas berdasarkan kode kelas.
+                                    </p>
                                     {errors.file && (
                                         <p className="text-red-600">
                                             {errors.file}

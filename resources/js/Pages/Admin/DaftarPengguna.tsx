@@ -151,6 +151,10 @@ export default function DaftarPengguna({ users, events }: any) {
                                         className="hover:cursor-pointer"
                                         onChange={handleFileChange}
                                     />
+                                    <p className="text-xs text-muted-foreground">
+                                        Kolom opsional: isi "course_code" untuk otomatis memasukkan
+                                        pengguna ke kelas berdasarkan kode kelas.
+                                    </p>
                                     {errors.file && (
                                         <p className="text-red-600">
                                             {errors.file}
