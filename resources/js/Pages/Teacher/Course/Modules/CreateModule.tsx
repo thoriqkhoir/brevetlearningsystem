@@ -126,8 +126,8 @@ export default function CreateModule({ course }: any) {
     return (
         <TeacherLayout>
             <Head title={`Tambah Modul - ${course.name}`} />
-            <div className="py-8 mx-auto lg:px-4">
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="teacher-page-shell">
+                <div className="teacher-page-stack">
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
@@ -165,7 +165,7 @@ export default function CreateModule({ course }: any) {
                     </Breadcrumb>
 
                     <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-semibold text-primary">
+                        <h1 className="teacher-page-title">
                             Tambah Modul - {course.name}
                         </h1>
                     </div>

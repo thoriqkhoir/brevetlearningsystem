@@ -381,8 +381,8 @@ export default function Question({
     return (
         <TeacherLayout>
             <Head title={`Soal Bank - ${bankName}`} />
-            <div className="py-8 mx-auto lg:px-4">
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="teacher-page-shell">
+                <div className="teacher-page-stack">
                     <Breadcrumb>
                         <BreadcrumbList>
                             {isBankMode ? (
@@ -432,7 +432,7 @@ export default function Question({
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <h1 className="text-xl sm:text-2xl font-semibold text-primary">
+                            <h1 className="text-xl sm:teacher-page-title">
                                 Soal Bank - {bankName}
                             </h1>
                         </div>

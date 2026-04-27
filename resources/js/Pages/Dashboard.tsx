@@ -61,6 +61,18 @@ export default function Dashboard({
         return `${value < 0 ? "- Rp " : "Rp "}${formattedValue}`;
     };
 
+    const saldoTextClass =
+        saldo < 0
+            ? "text-rose-600"
+            : saldo > 0
+              ? "text-emerald-600"
+              : "text-slate-700";
+
+    const saldoCardToneClass =
+        saldo < 0
+            ? "border-rose-200 bg-rose-50/80"
+            : "border-teal-100 bg-gradient-to-r from-teal-50/80 to-cyan-50/80";
+
     useEffect(() => {
         if (flash?.success) {
             toast.success(flash.success);
@@ -73,69 +85,100 @@ export default function Dashboard({
     return (
         <AuthenticatedLayout>
             <Head title="Dashboard" />
-            <div className="py-8 mx-auto px-4">
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                    <div className="flex flex-col md:flex-row justify-between gap-4">
-                        <h1 className="text-2xl font-semibold text-primary">
-                            Selamat Datang, {user.name}
-                        </h1>
-                        {user.role === "admin" && (
-                            <Button variant="outline" asChild>
-                                <Link href={route("admin.dashboard")}>
-                                    <MoveLeft /> Kembali ke Dashboard Admin
-                                </Link>
-                            </Button>
-                        )}
+            <div className={`relative overflow-hidden ${className}`}>
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(13,148,136,0.2),_transparent_40%),radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.2),_transparent_36%)]" />
+                <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
+                    <div className="mb-6 rounded-2xl border border-teal-100 bg-gradient-to-r from-teal-50 via-white to-amber-50 p-6 shadow-sm">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+                                    Portal Pengguna
+                                </p>
+                                <h1 className="mt-2 text-2xl font-semibold text-slate-800 md:text-3xl">
+                                    Selamat Datang, {user.name}
+                                </h1>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Kelola profil, saldo, dan akses kelas Anda
+                                    dalam satu dashboard.
+                                </p>
+                            </div>
+                            {user.role === "admin" && (
+                                <Button variant="outline" asChild>
+                                    <Link href={route("admin.dashboard")}>
+                                        <MoveLeft /> Kembali ke Dashboard Admin
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
                     </div>
-                    <div className="grid auto-rows-min gap-4 md:grid-cols-2">
-                        <div className="py-4 px-5 md:px-8 rounded-xl bg-sidebar border">
-                            <h6 className="font-semibold">Dashboard</h6>
-                            <p className="font-medium text-sm text-primary/70">
+
+                    <div className="grid auto-rows-min gap-6 lg:grid-cols-[minmax(300px,_360px)_1fr]">
+                        <div className="rounded-2xl border border-teal-100 bg-white/90 p-6 shadow-md backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg md:p-8">
+                            <h6 className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+                                Profil
+                            </h6>
+                            <p className="mt-1 text-sm font-medium text-slate-600">
                                 Informasi Pengguna
                             </p>
-                            <div className="flex flex-col items-center">
-                                <div className="w-24 h-24 rounded-full bg-blue-950 flex items-center justify-center text-white text-4xl font-semibold mt-8">
+                            <div className="mt-6 flex flex-col items-center">
+                                <div className="mt-2 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-teal-600 to-cyan-700 text-4xl font-semibold text-white shadow-lg ring-4 ring-white">
                                     {getInitials(user.name)}
                                 </div>
-                                <h2 className="text-xl font-semibold mt-2">
+                                <h2 className="mt-3 text-xl font-semibold text-slate-800">
                                     {user.name}
                                 </h2>
-                                <div className="mb-4">
-                                    <p className="font-semibold">
+                                <div className="mb-5">
+                                    <p className="font-medium text-slate-600">
                                         {user.email}
                                     </p>
                                 </div>
 
-                                <p className="font-medium text-sm text-primary/70">
-                                    NPWP
-                                </p>
-                                <p className="font-semibold mb-2">
-                                    {user.npwp ? user.npwp : "-"}
-                                </p>
-                                <p className="font-medium text-sm text-primary/70">
-                                    No.HP
-                                </p>
-                                <p className="font-semibold mb-2">
-                                    {user.phone_number}
-                                </p>
-                                <p className="font-medium text-sm text-primary/70">
-                                    Alamat
-                                </p>
-                                <p className="font-semibold mb-4">
-                                    {user.address ? user.address : "-"}
-                                </p>
-                                <Button
-                                    onClick={() => setProfileModalOpen(true)}
-                                >
-                                    Lengkapi Data Diri
-                                </Button>
-                                <Button
-                                    className="mt-2"
-                                    variant={"outline"}
-                                    onClick={() => setPasswordModalOpen(true)}
-                                >
-                                    Ubah Password
-                                </Button>
+                                <div className="w-full space-y-3">
+                                    <div className="rounded-xl border border-teal-100 bg-teal-50/70 px-4 py-3">
+                                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-700">
+                                            NPWP
+                                        </p>
+                                        <p className="mt-1 font-semibold text-slate-700">
+                                            {user.npwp ? user.npwp : "-"}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl border border-cyan-100 bg-cyan-50/70 px-4 py-3">
+                                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-700">
+                                            No.HP
+                                        </p>
+                                        <p className="mt-1 font-semibold text-slate-700">
+                                            {user.phone_number}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl border border-amber-100 bg-amber-50/70 px-4 py-3">
+                                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+                                            Alamat
+                                        </p>
+                                        <p className="mt-1 font-semibold text-slate-700">
+                                            {user.address ? user.address : "-"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 grid w-full gap-2 sm:grid-cols-2">
+                                    <Button
+                                        className="w-full"
+                                        onClick={() =>
+                                            setProfileModalOpen(true)
+                                        }
+                                    >
+                                        Lengkapi Data Diri
+                                    </Button>
+                                    <Button
+                                        className="w-full"
+                                        variant="outline"
+                                        onClick={() =>
+                                            setPasswordModalOpen(true)
+                                        }
+                                    >
+                                        Ubah Password
+                                    </Button>
+                                </div>
 
                                 <Modal
                                     isOpen={isProfileModalOpen}
@@ -160,38 +203,39 @@ export default function Dashboard({
                                 </Modal>
                             </div>
                         </div>
-                        <div className="p-5 md:p-8 rounded-xl bg-sidebar border">
-                            <div className="flex flex-col items-center gap-4 justify-center">
-                                <div className="w-full p-4 mb-2 rounded-lg bg-white border shadow-sm">
-                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-center ">
+
+                        <div className="rounded-2xl border border-amber-100 bg-white/90 p-5 shadow-md backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg md:p-8">
+                            <div className="flex flex-col items-center gap-4">
+                                <div
+                                    className={`w-full rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:shadow-md ${saldoCardToneClass}`}
+                                >
+                                    <div className="grid grid-cols-1 items-center gap-4 xl:grid-cols-2">
                                         <div>
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Wallet size={18} />
-                                                <h2 className="text-sm font-medium">
+                                            <div className="mb-2 flex items-center gap-2">
+                                                <Wallet
+                                                    size={18}
+                                                    className="text-teal-700"
+                                                />
+                                                <h2 className="text-sm font-semibold text-slate-700">
                                                     Saldo Tersedia
                                                 </h2>
                                             </div>
                                             <p
-                                                className={`text-2xl font-bold ${
-                                                    saldo < 0
-                                                        ? "text-red-500"
-                                                        : saldo > 0
-                                                          ? "text-green-500"
-                                                          : "text-black"
-                                                }`}
+                                                className={`text-2xl font-bold ${saldoTextClass}`}
                                             >
                                                 {formatCurrency(saldo)}
                                             </p>
                                             {saldo < 0 && (
-                                                <p className="text-xs text-red-500 mt-1">
-                                                    Saldo Anda negatif. Silahkan
-                                                    deposit segera.
+                                                <p className="mt-1 text-xs text-rose-600">
+                                                    Saldo Anda negatif. Silakan
+                                                    lakukan deposit segera.
                                                 </p>
                                             )}
                                         </div>
 
-                                        <div className="flex items-center justify-end h-full">
+                                        <div className="flex h-full items-center justify-end">
                                             <Button
+                                                variant="accent"
                                                 asChild
                                                 className="w-full xl:w-auto"
                                             >
@@ -199,7 +243,6 @@ export default function Dashboard({
                                                     href={route(
                                                         "payment.creation",
                                                     )}
-                                                    className="btn btn-primary"
                                                 >
                                                     <Wallet
                                                         size={16}
@@ -212,18 +255,21 @@ export default function Dashboard({
                                     </div>
                                 </div>
 
-                                <div className="w-full p-4 mb-4 rounded-lg bg-white border shadow-sm">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Building2 size={18} />
-                                        <h2 className="text-sm font-medium">
+                                <div className="w-full rounded-2xl border border-amber-100 bg-amber-50/60 p-5 shadow-sm transition-all duration-300 hover:shadow-md">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <Building2
+                                            size={18}
+                                            className="text-amber-700"
+                                        />
+                                        <h2 className="text-sm font-semibold text-slate-700">
                                             Badan Usaha
                                         </h2>
                                     </div>
-                                    <p className="text-xs text-gray-500">
-                                        Kelola badan usaha untuk impersonate
+                                    <p className="text-xs text-slate-600">
+                                        Kelola badan usaha untuk impersonate.
                                     </p>
-                                    <div className="mt-3 flex gap-2 flex-wrap">
-                                        <Button asChild>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <Button variant="neutral" asChild>
                                             <Link
                                                 href={route(
                                                     "business-entities.index",
@@ -232,7 +278,7 @@ export default function Dashboard({
                                                 Lihat Daftar
                                             </Link>
                                         </Button>
-                                        <Button variant="outline" asChild>
+                                        <Button variant="accentOutline" asChild>
                                             <Link
                                                 href={route(
                                                     "business-entities.create",
@@ -245,44 +291,50 @@ export default function Dashboard({
                                 </div>
 
                                 {active_course ? (
-                                    <div className="w-full p-4 mb-4 rounded-lg bg-white border shadow-sm">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <School size={18} />
-                                            <h2 className="text-sm font-medium">
+                                    <div className="w-full rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50/80 via-white to-teal-50/70 p-5 shadow-sm transition-all duration-300 hover:shadow-md">
+                                        <div className="mb-2 flex items-center gap-2">
+                                            <School
+                                                size={18}
+                                                className="text-cyan-700"
+                                            />
+                                            <h2 className="text-sm font-semibold text-slate-700">
                                                 Kelas Aktif
                                             </h2>
                                         </div>
-                                        <h3 className="text-lg font-semibold">
+                                        <h3 className="text-lg font-semibold text-slate-800">
                                             Kelas {active_course.name}
                                         </h3>
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <p className="mt-1 text-xs text-slate-600">
                                             Akses Materi:
                                         </p>
-                                        <div className="flex flex-wrap gap-2 mt-1">
+                                        <div className="mt-2 flex flex-wrap gap-2">
                                             {access_rights.length > 0 ? (
                                                 access_rights.map(
                                                     (access: string) => (
                                                         <span
                                                             key={access}
-                                                            className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full"
+                                                            className="rounded-full bg-teal-100 px-2.5 py-1 text-xs font-medium text-teal-800"
                                                         >
                                                             {access}
                                                         </span>
                                                     ),
                                                 )
                                             ) : (
-                                                <span className="italic text-gray-400">
+                                                <span className="italic text-slate-400">
                                                     Tidak ada akses materi
                                                 </span>
                                             )}
                                         </div>
-                                        <Button className="mt-4 w-full" asChild>
+                                        <Button
+                                            variant="info"
+                                            className="mt-4 w-full"
+                                            asChild
+                                        >
                                             <Link
                                                 href={route(
                                                     "courses.detail",
                                                     active_course.id,
                                                 )}
-                                                className="btn btn-primary"
                                             >
                                                 <School />
                                                 Masuk Kelas
@@ -290,21 +342,22 @@ export default function Dashboard({
                                         </Button>
                                     </div>
                                 ) : (
-                                    <div className="w-full p-4 mb-4 rounded-lg bg-red-50 border border-red-300 shadow-sm">
+                                    <div className="w-full rounded-2xl border border-amber-300 bg-amber-50/80 p-5 shadow-sm">
                                         <div className="text-center">
-                                            <p className="text-lg font-medium">
-                                                Anda belum memiliki kelas yang
-                                                aktif saat ini.
+                                            <p className="text-lg font-semibold text-amber-900">
+                                                Anda belum memiliki kelas aktif
+                                                saat ini.
                                             </p>
-                                            <p className="text-sm text-gray-500 mt-1">
+                                            <p className="mt-1 text-sm text-amber-800/80">
                                                 Silakan mulai kelas untuk
                                                 mendapatkan akses aplikasi BLS.
                                             </p>
-                                            <Button className="mt-4" asChild>
-                                                <Link
-                                                    href={route("courses")}
-                                                    className="btn btn-primary"
-                                                >
+                                            <Button
+                                                variant="accent"
+                                                className="mt-4"
+                                                asChild
+                                            >
+                                                <Link href={route("courses")}>
                                                     <School />
                                                     Masuk Kelas
                                                 </Link>
@@ -312,16 +365,9 @@ export default function Dashboard({
                                         </div>
                                     </div>
                                 )}
-
-                                <img
-                                    className="w-80"
-                                    src="/images/ilustrasi page.png"
-                                    alt=""
-                                />
                             </div>
                         </div>
                     </div>
-                    {/* <UpdatePasswordForm></UpdatePasswordForm> */}
                 </div>
             </div>
         </AuthenticatedLayout>

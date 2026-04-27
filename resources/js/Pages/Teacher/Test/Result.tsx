@@ -8,7 +8,7 @@ export default function TeacherResult({ test, attempt, review, participant }: an
       <div className="py-6 px-4">
         <div className="flex items-center justify-between max-w-5xl mx-auto mb-4">
           <div>
-            <h1 className="text-2xl font-semibold text-primary">
+            <h1 className="teacher-page-title">
               Hasil Ujian - {test?.title ?? test?.name}
             </h1>
             {participant?.user?.name && (

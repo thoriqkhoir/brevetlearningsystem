@@ -66,8 +66,8 @@ export default function ModulesIndex({ course, modules, canManage }: any) {
         <TeacherLayout>
             <Head title={`Modul Kelas ${course.name}`} />
 
-            <div className="py-8 mx-auto lg:px-4">
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="teacher-page-shell">
+                <div className="teacher-page-stack">
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>

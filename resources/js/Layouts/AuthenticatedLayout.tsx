@@ -152,19 +152,22 @@ export default function Authenticated({ children }: PropsWithChildren) {
                 } as React.CSSProperties
             }
         >
-            <Sidebar>
-                <SidebarHeader>
+            <Sidebar className="border-r border-teal-100 bg-white/95 backdrop-blur-sm">
+                <SidebarHeader className="border-b border-teal-100/70 bg-gradient-to-r from-teal-50/80 to-amber-50/70">
                     <Link
                         href={route("dashboard")}
                         className="m-3 w-3/5 mx-auto"
                     >
-                        <img src="/images/logo.png" alt="Brevet Learning System" />
+                        <img
+                            src="/images/logo.png"
+                            alt="Brevet Learning System"
+                        />
                     </Link>
                 </SidebarHeader>
                 <SidebarContent>
                     {menuItems.map((category) => (
                         <SidebarGroup key={category.category}>
-                            <SidebarGroupLabel>
+                            <SidebarGroupLabel className="text-[11px] uppercase tracking-[0.12em] text-slate-500">
                                 {category.category}
                             </SidebarGroupLabel>
                             <SidebarGroupContent>
@@ -175,7 +178,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                 asChild
                                                 className={
                                                     isActiveSidebar(item.url)
-                                                        ? "bg-primary text-accent hover:bg-primary hover:text-accent"
+                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                         : ""
                                                 }
                                             >
@@ -193,8 +196,9 @@ export default function Authenticated({ children }: PropsWithChildren) {
                 </SidebarContent>
                 <SidebarFooter />
             </Sidebar>
-            <div className="w-full min-h-screen bg-background">
-                <header className="border-b border-sidebar-border bg-sidebar">
+            <div className="relative min-h-screen w-full overflow-hidden bg-slate-50/70">
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(13,148,136,0.14),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.16),_transparent_36%)]" />
+                <header className="border-b border-teal-100 bg-gradient-to-r from-teal-50 via-white to-amber-50/90 backdrop-blur-sm">
                     <div className="mx-auto px-4">
                         <div className="flex h-16 justify-between">
                             <div className="flex">
@@ -212,7 +216,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                 </div>
 
                                 <div className="hidden md:flex md:items-center">
-                                    <h3 className="text-sm text-primary/80 font-medium">
+                                    <h3 className="text-sm font-medium text-slate-600">
                                         Login Terakhir :{" "}
                                         <span>
                                             {user.last_logout_at
@@ -228,12 +232,12 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                 </div>
                             </div>
                             {active_course && (
-                                <div className="flex items-center ml-8 text-sm bg-emerald-100 border border-emerald-300 rounded-xl my-2 px-4 text-center font-semibold text-emerald-800">
+                                <div className="my-2 ml-8 flex items-center rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 text-center text-sm font-semibold text-emerald-700">
                                     Kelas Aktif: {active_course.name}
                                     <Button
                                         size="sm"
-                                        className="ml-4 text-orange-700 bg-orange-50 border-orange-200 hover:bg-orange-100 hover:text-orange-700"
-                                        variant="outline"
+                                        className="ml-4"
+                                        variant="accentOutline"
                                         onClick={() =>
                                             router.post(route("courses.stop"))
                                         }
@@ -246,33 +250,33 @@ export default function Authenticated({ children }: PropsWithChildren) {
                             <div className="hidden lg:ms-6 lg:flex lg:items-center lg:gap-4">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <div className="flex items-center hover:cursor-pointer mr-6 gap-2">
+                                        <div className="mr-6 flex items-center gap-2 rounded-xl border border-teal-100 bg-white/80 px-2 py-1 hover:cursor-pointer">
                                             <div>
                                                 {activeBusinessEntity &&
                                                 activeBusinessEntity.id !==
                                                     user.id ? (
-                                                    <p className="text-center font-medium text-gray-600 text-xs">
+                                                    <p className="text-center text-xs font-medium text-slate-500">
                                                         You are currently
                                                         impersonating user
                                                     </p>
                                                 ) : null}
-                                                <p className="font-medium text-center">
+                                                <p className="text-center font-medium text-slate-700">
                                                     {activeBusinessEntity
                                                         ? ` ${activeBusinessEntity.npwp} ${activeBusinessEntity.name}`
                                                         : `${user.npwp} ${user.name}`}
                                                 </p>
                                             </div>
-                                            <div className="w-10 h-10 rounded-full bg-blue-950 flex items-center justify-center text-white text-lg font-semibold">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 text-lg font-semibold text-white">
                                                 {getInitials(
                                                     activeBusinessEntity
                                                         ? activeBusinessEntity.name
                                                         : user.name,
                                                 )}
                                             </div>
-                                            <ChevronDown className="w-4 h-4" />
+                                            <ChevronDown className="h-4 w-4 text-slate-500" />
                                         </div>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="z-50 w-96 bg-white shadow-lg rounded-lg mt-2 border border-gray-400">
+                                    <DropdownMenuContent className="z-50 mt-2 w-96 rounded-xl border border-teal-100 bg-white/95 shadow-lg backdrop-blur-sm">
                                         <DropdownMenuGroup className="p-2">
                                             <DropdownMenuItem
                                                 onClick={() =>
@@ -283,7 +287,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                     )
                                                 }
                                             >
-                                                <p className="w-full cursor-pointer p-2 text-center hover:bg-gray-100 hover:rounded-lg">
+                                                <p className="w-full cursor-pointer rounded-lg p-2 text-center hover:bg-teal-50">
                                                     {user.npwp} {user.name}
                                                 </p>
                                             </DropdownMenuItem>
@@ -300,13 +304,13 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                         )
                                                     }
                                                 >
-                                                    <p className="w-full cursor-pointer p-2 text-center hover:bg-gray-100 hover:rounded-lg">
+                                                    <p className="w-full cursor-pointer rounded-lg p-2 text-center hover:bg-teal-50">
                                                         {e.npwp} {e.name}
                                                     </p>
                                                 </DropdownMenuItem>
                                             ))}
 
-                                            <DropdownMenuSeparator className="bg-gray-400 h-[1px] my-2" />
+                                            <DropdownMenuSeparator className="my-2 h-[1px] bg-teal-100" />
 
                                             <DropdownMenuItem asChild>
                                                 <Link
@@ -315,18 +319,18 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                     )}
                                                     className="w-full cursor-pointer"
                                                 >
-                                                    <p className="w-full p-2 text-center hover:bg-gray-100 hover:rounded-lg">
+                                                    <p className="w-full rounded-lg p-2 text-center hover:bg-teal-50">
                                                         + Tambah Badan Usaha
                                                     </p>
                                                 </Link>
                                             </DropdownMenuItem>
                                         </DropdownMenuGroup>
 
-                                        <DropdownMenuSeparator className="bg-gray-400 h-[1px]" />
+                                        <DropdownMenuSeparator className="h-[1px] bg-teal-100" />
 
                                         <DropdownMenuGroup>
                                             <DropdownMenuItem
-                                                className="cursor-pointer p-2 font-bold hover:bg-gray-100 hover:rounded-b-lg"
+                                                className="cursor-pointer rounded-b-lg p-2 font-bold text-slate-700 hover:bg-teal-50"
                                                 onClick={() =>
                                                     setOpenLogoutDialog(true)
                                                 }
@@ -349,7 +353,10 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                     <SheetTrigger>
                                         <Menu />
                                     </SheetTrigger>
-                                    <SheetContent side={"top"}>
+                                    <SheetContent
+                                        side={"top"}
+                                        className="border-teal-100 bg-gradient-to-br from-white via-teal-50/70 to-amber-50/70"
+                                    >
                                         <SheetHeader>
                                             <SheetTitle>
                                                 <Link
@@ -362,8 +369,8 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                     />
                                                 </Link>
                                             </SheetTitle>
-                                            <SheetDescription className="text-center">
-                                                <h2 className="text-base text-primary/80 font-medium">
+                                            <SheetDescription className="text-center text-slate-600">
+                                                <h2 className="text-base font-medium text-slate-700">
                                                     {user.name}
                                                 </h2>
                                                 <h3 className="font-medium mb-2">
@@ -499,7 +506,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                             route().current(
                                                                                 "mp.*",
                                                                             )
-                                                                                ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                 : "border-none shadow-none"
                                                                         }`}
                                                                     >
@@ -521,7 +528,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                         route().current(
                                                                                             "bppu.*",
                                                                                         )
-                                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                             : ""
                                                                                     }`}
                                                                                 >
@@ -541,7 +548,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                         route().current(
                                                                                             "bpnr.*",
                                                                                         )
-                                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                             : ""
                                                                                     }`}
                                                                                 >
@@ -561,7 +568,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                         route().current(
                                                                                             "sp.*",
                                                                                         )
-                                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                             : ""
                                                                                     }`}
                                                                                 >
@@ -582,7 +589,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                         route().current(
                                                                                             "cy.*",
                                                                                         )
-                                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                             : ""
                                                                                     }`}
                                                                                 >
@@ -604,7 +611,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                         route().current(
                                                                                             "bp21.*",
                                                                                         )
-                                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                             : ""
                                                                                     }`}
                                                                                 >
@@ -631,7 +638,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                         route().current(
                                                                                             "bp26.*",
                                                                                         )
-                                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                             : ""
                                                                                     }`}
                                                                                 >
@@ -659,7 +666,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                         route().current(
                                                                                             "bpa1.*",
                                                                                         )
-                                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                             : ""
                                                                                     }`}
                                                                                 >
@@ -687,7 +694,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                         route().current(
                                                                                             "bpa2.*",
                                                                                         )
-                                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                             : ""
                                                                                     }`}
                                                                                 >
@@ -715,7 +722,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                         route().current(
                                                                                             "mp.*",
                                                                                         )
-                                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                             : ""
                                                                                     }`}
                                                                                 >
@@ -771,7 +778,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                         route().current(
                                                                             "payment.*",
                                                                         )
-                                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                             : "border-none shadow-none"
                                                                     }`}
                                                                 >
@@ -793,7 +800,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                     route().current(
                                                                                         "payment.creation",
                                                                                     )
-                                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                         : ""
                                                                                 }`}
                                                                             >
@@ -817,7 +824,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                                     route().current(
                                                                                         "payment.billing",
                                                                                     )
-                                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                                         : ""
                                                                                 }`}
                                                                             >
@@ -864,7 +871,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                     </div>
                 </header>
 
-                <nav className="bg-sidebar shadow hidden lg:block">
+                <nav className="hidden border-b border-teal-100 bg-gradient-to-r from-white via-teal-50/40 to-amber-50/50 shadow-sm lg:block">
                     <div className="mx-auto px-4 py-4">
                         <NavigationMenu>
                             <NavigationMenuList>
@@ -941,7 +948,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                             "bpa2.*",
                                                         ) ||
                                                         route().current("mp.*")
-                                                            ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                            ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                             : "border-none shadow-none"
                                                     }`}
                                                 >
@@ -962,7 +969,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                     route().current(
                                                                         "bppu.*",
                                                                     )
-                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                         : ""
                                                                 }`}
                                                             >
@@ -982,7 +989,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                     route().current(
                                                                         "bpnr.*",
                                                                     )
-                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                         : ""
                                                                 }`}
                                                             >
@@ -1002,7 +1009,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                     route().current(
                                                                         "sp.*",
                                                                     )
-                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                         : ""
                                                                 }`}
                                                             >
@@ -1023,7 +1030,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                     route().current(
                                                                         "cy.*",
                                                                     )
-                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                         : ""
                                                                 }`}
                                                             >
@@ -1045,7 +1052,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                     route().current(
                                                                         "bp21.*",
                                                                     )
-                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                         : ""
                                                                 }`}
                                                             >
@@ -1068,7 +1075,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                     route().current(
                                                                         "bp26.*",
                                                                     )
-                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                         : ""
                                                                 }`}
                                                             >
@@ -1091,7 +1098,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                     route().current(
                                                                         "bpa1.*",
                                                                     )
-                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                         : ""
                                                                 }`}
                                                             >
@@ -1114,7 +1121,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                     route().current(
                                                                         "bpa2.*",
                                                                     )
-                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                         : ""
                                                                 }`}
                                                             >
@@ -1137,7 +1144,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                     route().current(
                                                                         "mp.*",
                                                                     )
-                                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                         : ""
                                                                 }`}
                                                             >
@@ -1177,7 +1184,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                         "payment",
                                                     ) ||
                                                     route().current("payment.*")
-                                                        ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                        ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                         : "border-none shadow-none"
                                                 }`}
                                             >
@@ -1198,7 +1205,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                 route().current(
                                                                     "payment.creation",
                                                                 )
-                                                                    ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                    ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                     : ""
                                                             }`}
                                                         >
@@ -1220,7 +1227,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                                 route().current(
                                                                     "payment.billing",
                                                                 )
-                                                                    ? "bg-primary text-background hover:bg-primary hover:text-background"
+                                                                    ? "bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                                                                     : ""
                                                             }`}
                                                         >
@@ -1251,7 +1258,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                     </div>
                 </nav>
 
-                <main>
+                <main className="relative z-10">
                     <Toaster position="top-center" />
                     {children}
                 </main>

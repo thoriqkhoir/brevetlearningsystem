@@ -222,8 +222,8 @@ export default function FormCreateTest({
         <TeacherLayout>
             <Head title="Tambah Ujian" />
 
-            <div className="py-8 mx-auto lg:px-4">
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="teacher-page-shell">
+                <div className="teacher-page-stack">
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
@@ -238,11 +238,11 @@ export default function FormCreateTest({
                         </BreadcrumbList>
                     </Breadcrumb>
 
-                    <h1 className="text-2xl font-semibold text-primary">
+                    <h1 className="teacher-page-title">
                         Tambah Ujian
                     </h1>
 
-                    <div className="p-5 lg:p-8 rounded-xl bg-sidebar border">
+                    <div className="teacher-panel">
                         {tests.length < user.max_test ? (
                             <Form {...form}>
                                 <form onSubmit={form.handleSubmit(onSubmit)}>

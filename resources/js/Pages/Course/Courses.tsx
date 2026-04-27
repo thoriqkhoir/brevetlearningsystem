@@ -56,15 +56,24 @@ function getStatus(start: string, end: string) {
     const endDate = new Date(end);
 
     if (now < startDate)
-        return { label: "Belum Mulai", color: "text-gray-500 bg-gray-100" };
+        return {
+            label: "Belum Mulai",
+            color: "border border-amber-200 bg-amber-100 text-amber-800",
+        };
     if (now > endDate)
-        return { label: "Selesai", color: "text-red-700 bg-red-100" };
+        return {
+            label: "Selesai",
+            color: "border border-rose-200 bg-rose-100 text-rose-700",
+        };
     if (now >= startDate && now <= endDate)
         return {
             label: "Sedang Berlangsung",
-            color: "text-green-700 bg-green-100",
+            color: "border border-emerald-200 bg-emerald-100 text-emerald-700",
         };
-    return { label: "-", color: "text-gray-400 bg-gray-50" };
+    return {
+        label: "-",
+        color: "border border-slate-200 bg-slate-100 text-slate-500",
+    };
 }
 
 export default function Courses({ courses = [] }: any) {
@@ -101,53 +110,104 @@ export default function Courses({ courses = [] }: any) {
     return (
         <AuthenticatedLayout>
             <Head title="Daftar Kelas Saya" />
-            <div className="py-8 mx-auto px-4">
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                    <div className="flex flex-col md:flex-row justify-between gap-4">
-                        <h1 className="text-2xl font-semibold text-primary">
-                            Kelas Saya
-                        </h1>
-                        <Dialog open={open} onOpenChange={setOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="default">
-                                    <Plus size={18} />
-                                    Gabung Kelas
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Gabung Kelas</DialogTitle>
-                                    <DialogDescription>
-                                        Masukkan kode kelas yang diberikan oleh
-                                        pengajar untuk bergabung ke kelas.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex flex-col gap-4">
-                                    <Input
-                                        placeholder="Kode Kelas"
-                                        value={classCode}
-                                        onChange={(e) =>
-                                            setClassCode(e.target.value)
-                                        }
-                                        autoFocus
-                                    />
-                                    <Button
-                                        onClick={handleJoinClass}
-                                        disabled={loading || !classCode}
-                                    >
-                                        {loading ? "Memproses..." : "Gabung"}
-                                    </Button>
+            <div className="relative min-h-[100svh] overflow-hidden bg-gradient-to-b from-teal-50/70 via-white to-amber-50/60">
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,_rgba(13,148,136,0.18),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(245,158,11,0.16),_transparent_40%)]" />
+                <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
+                    <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_auto]">
+                        <div className="rounded-3xl border border-teal-200/70 bg-white/85 p-6 shadow-sm backdrop-blur-sm">
+                            <div className="flex items-start gap-4">
+                                <div className="mt-0.5 h-16 w-1 rounded-full bg-gradient-to-b from-teal-500 to-amber-500" />
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+                                        Brevet Class
+                                    </p>
+                                    <h1 className="mt-1 text-2xl font-semibold text-slate-800 md:text-3xl">
+                                        Kelas Saya
+                                    </h1>
+                                    <p className="mt-1 text-sm text-slate-600">
+                                        Pantau status kelas, jadwal terdekat,
+                                        dan progres belajar Anda dengan cepat.
+                                    </p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700">
+                                            Total Kelas: {courses.length}
+                                        </span>
+                                        {active_course ? (
+                                            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                                Kelas Aktif:{" "}
+                                                {active_course.name}
+                                            </span>
+                                        ) : (
+                                            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                                                Belum ada kelas aktif
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            </DialogContent>
-                        </Dialog>
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-amber-200/70 bg-white/85 p-4 shadow-sm backdrop-blur-sm lg:min-w-60">
+                            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+                                Aksi Cepat
+                            </p>
+                            <p className="mt-1 text-sm text-slate-600">
+                                Masukkan kode dari pengajar untuk bergabung ke
+                                kelas baru.
+                            </p>
+                            <Dialog open={open} onOpenChange={setOpen}>
+                                <DialogTrigger asChild>
+                                    <Button
+                                        variant="accent"
+                                        className="mt-3 w-full"
+                                    >
+                                        <Plus size={18} />
+                                        Gabung Kelas
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="border-teal-100 bg-white/95">
+                                    <DialogHeader>
+                                        <DialogTitle className="text-slate-800">
+                                            Gabung Kelas
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                            Masukkan kode kelas yang diberikan
+                                            oleh pengajar untuk bergabung ke
+                                            kelas.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="flex flex-col gap-4">
+                                        <Input
+                                            placeholder="Kode Kelas"
+                                            value={classCode}
+                                            onChange={(e) =>
+                                                setClassCode(e.target.value)
+                                            }
+                                            autoFocus
+                                        />
+                                        <Button
+                                            onClick={handleJoinClass}
+                                            disabled={loading || !classCode}
+                                        >
+                                            {loading
+                                                ? "Memproses..."
+                                                : "Gabung"}
+                                        </Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </div>
 
-                    <div className="mt-2 grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         {courses.length === 0 && (
-                            <div className="text-gray-400 text-center col-span-3 py-8">
-                                Anda belum bergabung di kelas manapun.
+                            <div className="rounded-2xl border border-teal-100 bg-white/90 px-6 py-10 text-center shadow-sm backdrop-blur-sm">
+                                <p className="text-sm font-medium text-slate-500">
+                                    Anda belum bergabung di kelas manapun.
+                                </p>
                             </div>
                         )}
+
                         {courses.map((course: any) => {
                             const status = getStatus(
                                 course.start_date,
@@ -166,64 +226,60 @@ export default function Courses({ courses = [] }: any) {
                             return (
                                 <div
                                     key={course.id}
-                                    className="rounded-xl bg-white border shadow p-5 flex flex-col gap-2 hover:shadow-lg transition"
+                                    className="rounded-3xl border border-teal-100/80 bg-white/95 p-6 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                                 >
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-lg font-bold text-primary">
-                                            {course.name}
-                                        </h3>
+                                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-slate-800">
+                                                {course.name}
+                                            </h3>
+                                            <p className="mt-1 text-sm text-slate-600">
+                                                {course.description || "-"}
+                                            </p>
+                                        </div>
                                         <span
-                                            className={`px-2 py-1 rounded text-xs font-semibold ${status.color}`}
+                                            className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${status.color}`}
                                         >
                                             {status.label}
                                         </span>
                                     </div>
-                                    <p className="text-gray-600 text-sm">
-                                        {course.description || "-"}
-                                    </p>
-                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                        <span>
-                                            Durasi Pengerjaan:{" "}
-                                            {course.start_date
-                                                ? new Date(
-                                                      course.start_date,
-                                                  ).toLocaleDateString(
-                                                      "id-ID",
-                                                      {
-                                                          day: "numeric",
-                                                          month: "long",
-                                                          year: "numeric",
-                                                      },
-                                                  )
-                                                : "-"}
-                                            {" - "}
-                                            {course.end_date
-                                                ? new Date(
-                                                      course.end_date,
-                                                  ).toLocaleDateString(
-                                                      "id-ID",
-                                                      {
-                                                          day: "numeric",
-                                                          month: "long",
-                                                          year: "numeric",
-                                                      },
-                                                  )
-                                                : "-"}
-                                        </span>
+
+                                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-sm text-slate-600">
+                                        Durasi Pengerjaan:{" "}
+                                        {course.start_date
+                                            ? new Date(
+                                                  course.start_date,
+                                              ).toLocaleDateString("id-ID", {
+                                                  day: "numeric",
+                                                  month: "long",
+                                                  year: "numeric",
+                                              })
+                                            : "-"}
+                                        {" - "}
+                                        {course.end_date
+                                            ? new Date(
+                                                  course.end_date,
+                                              ).toLocaleDateString("id-ID", {
+                                                  day: "numeric",
+                                                  month: "long",
+                                                  year: "numeric",
+                                              })
+                                            : "-"}
                                     </div>
+
                                     {(nextUpcomingSchedule ||
                                         nextUpcomingTest) && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
                                             {nextUpcomingSchedule && (
-                                                <div className="rounded-lg border border-dashed bg-slate-50 p-3 text-sm">
-                                                    <div className="font-semibold text-slate-700">
+                                                <div className="rounded-xl border border-teal-100 bg-teal-50/70 p-3 text-sm">
+                                                    <div className="font-semibold text-teal-800">
                                                         Jadwal Kelas terdekat
                                                     </div>
-                                                    <div className="text-slate-700 mt-0.5">
+                                                    <div className="mt-0.5 text-slate-700">
                                                         {nextUpcomingSchedule.title ||
                                                             "-"}
                                                     </div>
-                                                    <div className="text-slate-500 text-xs mt-1">
+                                                    <div className="mt-1 text-xs text-slate-500">
                                                         {formatLocalDateTime(
                                                             nextUpcomingSchedule.starts_at,
                                                         )}
@@ -232,18 +288,18 @@ export default function Courses({ courses = [] }: any) {
                                             )}
 
                                             {nextUpcomingTest && (
-                                                <div className="rounded-lg border border-dashed bg-blue-50 p-3 text-sm">
-                                                    <div className="font-semibold text-blue-800">
+                                                <div className="rounded-xl border border-cyan-100 bg-cyan-50/70 p-3 text-sm">
+                                                    <div className="font-semibold text-cyan-800">
                                                         {nextUpcomingTest.state ===
                                                         "ongoing"
                                                             ? "Ujian Kelas sedang berlangsung"
                                                             : "Ujian Kelas terdekat"}
                                                     </div>
-                                                    <div className="text-blue-800 mt-0.5">
+                                                    <div className="mt-0.5 text-slate-700">
                                                         {nextUpcomingTest.title ||
                                                             "-"}
                                                     </div>
-                                                    <div className="text-blue-700 text-xs mt-1">
+                                                    <div className="mt-1 text-xs text-slate-500">
                                                         {formatLocalDateTime(
                                                             nextUpcomingTest.starts_at,
                                                         )}
@@ -252,26 +308,24 @@ export default function Courses({ courses = [] }: any) {
                                             )}
                                         </div>
                                     )}
-                                    <div className="flex items-center gap-2 text-sm mt-2">
-                                        <span className="font-medium text-gray-700">
+
+                                    <div className="mt-3 flex items-center gap-2">
+                                        <span className="text-sm font-medium text-slate-700">
                                             Nilai:
                                         </span>
-                                        <div className="font-mono text-lg font-bold text-primary">
+                                        <div className="font-mono text-lg font-bold text-teal-700">
                                             {averageScore !== null ? (
                                                 averageScore
                                             ) : (
-                                                <span className="italic text-base text-gray-400">
+                                                <span className="text-base italic text-slate-400">
                                                     Belum dinilai
                                                 </span>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex gap-2 mt-2">
-                                        <Button
-                                            variant="outline"
-                                            className="w-fit text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100 hover:text-blue-700"
-                                            asChild
-                                        >
+
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <Button variant="info" asChild>
                                             <Link
                                                 href={route(
                                                     "courses.detail",
@@ -281,6 +335,7 @@ export default function Courses({ courses = [] }: any) {
                                                 Lihat Detail
                                             </Link>
                                         </Button>
+
                                         {!isActive ? (
                                             <Button
                                                 onClick={() =>
@@ -291,8 +346,6 @@ export default function Courses({ courses = [] }: any) {
                                                         ),
                                                     )
                                                 }
-                                                variant="outline"
-                                                className="text-green-700 bg-green-50 border-green-400 hover:bg-green-100 hover:text-green-700"
                                                 disabled={
                                                     status.label !==
                                                         "Sedang Berlangsung" ||
@@ -303,8 +356,7 @@ export default function Courses({ courses = [] }: any) {
                                             </Button>
                                         ) : (
                                             <Button
-                                                variant="outline"
-                                                className="text-orange-700 bg-orange-50 border-orange-200 hover:bg-orange-100 hover:text-orange-700"
+                                                variant="accentOutline"
                                                 onClick={() =>
                                                     router.post(
                                                         route("courses.stop"),
@@ -315,17 +367,18 @@ export default function Courses({ courses = [] }: any) {
                                             </Button>
                                         )}
                                     </div>
+
                                     {status.label === "Sedang Berlangsung" ? (
                                         hasOtherActive && (
-                                            <p className="text-sm text-red-600 mt-1">
+                                            <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                                                 Anda memiliki kelas aktif lain.
                                                 Selesaikan kelas tersebut
                                                 terlebih dahulu sebelum
                                                 mengerjakan kelas ini.
-                                            </p>
+                                            </div>
                                         )
                                     ) : (
-                                        <div className="text-sm text-red-600 mt-1">
+                                        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                                             {status.label === "Belum Mulai" && (
                                                 <p>
                                                     Kelas belum mulai. Tunggu
@@ -334,7 +387,7 @@ export default function Courses({ courses = [] }: any) {
                                                 </p>
                                             )}
                                             {status.label === "Selesai" && (
-                                                <p>
+                                                <p className="text-rose-700">
                                                     Kelas sudah selesai. Anda
                                                     tidak dapat mengerjakan
                                                     kelas ini lagi.

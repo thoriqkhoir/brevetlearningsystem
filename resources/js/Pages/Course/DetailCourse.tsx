@@ -77,15 +77,24 @@ function getStatus(start: string, end: string) {
     const endDate = new Date(end);
 
     if (now < startDate)
-        return { label: "Belum Mulai", color: "text-gray-500 bg-gray-100" };
+        return {
+            label: "Belum Mulai",
+            color: "border border-amber-200 bg-amber-100 text-amber-800",
+        };
     if (now > endDate)
-        return { label: "Selesai", color: "text-red-700 bg-red-100" };
+        return {
+            label: "Selesai",
+            color: "border border-rose-200 bg-rose-100 text-rose-700",
+        };
     if (now >= startDate && now <= endDate)
         return {
             label: "Sedang Berlangsung",
-            color: "text-green-700 bg-green-100",
+            color: "border border-emerald-200 bg-emerald-100 text-emerald-700",
         };
-    return { label: "-", color: "text-gray-400 bg-gray-50" };
+    return {
+        label: "-",
+        color: "border border-slate-200 bg-slate-100 text-slate-500",
+    };
 }
 
 export default function DetailCourse({
@@ -145,386 +154,409 @@ export default function DetailCourse({
         <AuthenticatedLayout>
             <Head title={`Detail Kelas - ${course.name}`} />
 
-            <div className="py-8 mx-auto lg:px-4">
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            <BreadcrumbItem>
-                                <Link href={route("courses")}>
-                                    Daftar Kelas
-                                </Link>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>
-                                    Kelas {course.name}
-                                </BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
-
-                    <div className="flex flex-col md:flex-row md:items-center justify-between mt-2 gap-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-primary mb-1">
-                                Kelas {course.name}
-                            </h1>
-                            <div className="text-sm text-gray-500">
-                                Pengajar :{" "}
-                                <span className="font-semibold text-primary">
-                                    {teacher?.name || "-"}
-                                </span>
-                            </div>
-                            <div className="text-sm text-gray-500">
-                                Institusi :{" "}
-                                <span className="font-semibold text-primary">
-                                    {teacher?.institution || "-"}
-                                </span>
-                            </div>
-                            <div
-                                className={`mt-2 w-fit px-2 py-1 rounded text-xs font-semibold ${status.color}`}
-                            >
-                                Kelas {status.label}
-                            </div>
-                        </div>
-                        <div className="flex flex-col md:items-end gap-2">
-                            {!isActive ? (
-                                <Button
-                                    onClick={() =>
-                                        router.post(
-                                            route("courses.start", course.id),
-                                        )
-                                    }
-                                    variant="outline"
-                                    className="text-green-700 bg-green-50 border-green-400 hover:bg-green-100 hover:text-green-700"
-                                    disabled={
-                                        status.label !== "Sedang Berlangsung" ||
-                                        hasOtherActive
-                                    }
-                                >
-                                    Mulai Mengerjakan
-                                </Button>
-                            ) : (
-                                <Button
-                                    variant="outline"
-                                    className="text-orange-700 bg-orange-50 border-orange-200 hover:bg-orange-100 hover:text-orange-700"
-                                    onClick={() =>
-                                        router.post(route("courses.stop"))
-                                    }
-                                >
-                                    Hentikan Pengerjaan
-                                </Button>
-                            )}
-                            {status.label === "Sedang Berlangsung" ? (
-                                hasOtherActive && (
-                                    <div className="text-sm md:text-right text-red-600 mt-1">
-                                        Anda memiliki kelas aktif lain.
-                                        <br />
-                                        Selesaikan kelas tersebut terlebih
-                                        dahulu sebelum mengerjakan kelas ini.
-                                    </div>
-                                )
-                            ) : (
-                                <div className="text-sm md:text-right text-red-600 mt-1">
-                                    {status.label === "Belum Mulai" && (
-                                        <>
-                                            Kelas belum mulai.
-                                            <br />
-                                            Tunggu waktu mulai kelas untuk dapat
-                                            mengerjakan.
-                                        </>
-                                    )}
-                                    {status.label === "Selesai" && (
-                                        <>
-                                            Kelas sudah selesai.
-                                            <br />
-                                            Anda tidak dapat mengerjakan kelas
-                                            ini lagi.
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="rounded-xl bg-white border shadow p-6 flex flex-col gap-2">
-                        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-6 gap-2">
-                            <div className="col-span-1 md:col-span-2">
-                                <Button
-                                    variant="outline"
-                                    className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
-                                    asChild
-                                >
-                                    <Link
-                                        href={route(
-                                            "course.showModules",
-                                            course.id,
-                                        )}
-                                    >
-                                        <FileText size={16} />
-                                        Lihat Modul ({course.modules_count || 0}
-                                        )
+            <div className="relative min-h-[100svh] overflow-hidden bg-gradient-to-b from-cyan-50/60 via-white to-amber-50/60">
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,_rgba(6,182,212,0.16),_transparent_34%),radial-gradient(circle_at_bottom_left,_rgba(245,158,11,0.15),_transparent_38%)]" />
+                <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
+                    <div className="flex flex-1 flex-col gap-6">
+                        <Breadcrumb>
+                            <BreadcrumbList>
+                                <BreadcrumbItem>
+                                    <Link href={route("courses")}>
+                                        Daftar Kelas
                                     </Link>
-                                </Button>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage>
+                                        Kelas {course.name}
+                                    </BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </BreadcrumbList>
+                        </Breadcrumb>
+
+                        <div className="grid gap-4 xl:grid-cols-[1fr_auto]">
+                            <div className="rounded-3xl border border-cyan-200/70 bg-white/85 p-6 shadow-sm backdrop-blur-sm">
+                                <div className="flex items-start gap-4">
+                                    <div className="mt-0.5 h-16 w-1 rounded-full bg-gradient-to-b from-cyan-500 to-teal-500" />
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                                            Ruang Kelas
+                                        </p>
+                                        <h1 className="mt-2 text-2xl font-semibold text-slate-800 md:text-3xl">
+                                            Kelas {course.name}
+                                        </h1>
+                                        <div className="mt-1 text-sm text-slate-600">
+                                            Pengajar :{" "}
+                                            <span className="font-semibold text-slate-700">
+                                                {teacher?.name || "-"}
+                                            </span>
+                                        </div>
+                                        <div className="text-sm text-slate-600">
+                                            Institusi :{" "}
+                                            <span className="font-semibold text-slate-700">
+                                                {teacher?.institution || "-"}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className={`mt-3 w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${status.color}`}
+                                        >
+                                            Kelas {status.label}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="flex-1">
-                                <div className="text-sm text-gray-500">
-                                    Deskripsi
-                                </div>
-                                <div className="font-medium text-gray-700 mb-2">
-                                    {course.description || "-"}
-                                </div>
-                                <div>
-                                    <div className="text-sm text-gray-500">
-                                        Durasi Pengerjaan
-                                    </div>
-                                    <div className="font-medium text-gray-700">
-                                        {course.start_date
-                                            ? new Date(
-                                                  course.start_date,
-                                              ).toLocaleDateString("id-ID", {
-                                                  day: "numeric",
-                                                  month: "long",
-                                                  year: "numeric",
-                                              })
-                                            : "-"}
-                                        {" - "}
-                                        {course.end_date
-                                            ? new Date(
-                                                  course.end_date,
-                                              ).toLocaleDateString("id-ID", {
-                                                  day: "numeric",
-                                                  month: "long",
-                                                  year: "numeric",
-                                              })
-                                            : "-"}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex-1 flex flex-col gap-2">
-                                <div>
-                                    <span className="text-sm text-gray-500">
-                                        Nilai Anda
-                                    </span>
-                                    <div className="font-mono text-lg font-bold text-primary">
-                                        {averageScore !== null ? (
-                                            averageScore
-                                        ) : (
-                                            <span className="italic text-gray-400">
-                                                Belum dinilai
+                            <div className="rounded-2xl border border-amber-200/70 bg-white/85 p-4 shadow-sm backdrop-blur-sm xl:min-w-72">
+                                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+                                    Aksi Kelas
+                                </p>
+                                {!isActive ? (
+                                    <Button
+                                        className="mt-2 w-full"
+                                        onClick={() =>
+                                            router.post(
+                                                route(
+                                                    "courses.start",
+                                                    course.id,
+                                                ),
+                                            )
+                                        }
+                                        disabled={
+                                            status.label !==
+                                                "Sedang Berlangsung" ||
+                                            hasOtherActive
+                                        }
+                                    >
+                                        Mulai Mengerjakan
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="accentOutline"
+                                        className="mt-2 w-full"
+                                        onClick={() =>
+                                            router.post(route("courses.stop"))
+                                        }
+                                    >
+                                        Hentikan Pengerjaan
+                                    </Button>
+                                )}
+
+                                {status.label === "Sedang Berlangsung" ? (
+                                    hasOtherActive && (
+                                        <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                                            Anda memiliki kelas aktif lain.
+                                            Selesaikan kelas tersebut terlebih
+                                            dahulu sebelum mengerjakan kelas
+                                            ini.
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                                        {status.label === "Belum Mulai" && (
+                                            <span>
+                                                Kelas belum mulai. Tunggu waktu
+                                                mulai kelas untuk dapat
+                                                mengerjakan.
+                                            </span>
+                                        )}
+                                        {status.label === "Selesai" && (
+                                            <span className="text-rose-700">
+                                                Kelas sudah selesai. Anda tidak
+                                                dapat mengerjakan kelas ini
+                                                lagi.
                                             </span>
                                         )}
                                     </div>
-                                </div>
-                                <div>
-                                    <span className="text-sm text-gray-500">
-                                        Feedback
-                                    </span>
-                                    <div className="text-gray-700">
-                                        {pivot?.feedback ? (
-                                            pivot.feedback
-                                        ) : (
-                                            <span className="italic text-gray-400">
-                                                Belum ada feedback
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
+                                )}
                             </div>
                         </div>
-                    </div>
 
-                    <div className="rounded-xl bg-white border shadow p-6 space-y-4">
-                        <h2 className="text-lg font-semibold text-primary">
-                            Jadwal Kelas & Ujian Kelas
-                        </h2>
-
-                        <div>
-                            <h3 className="font-semibold text-gray-800 mb-2">
-                                Jadwal Kelas ({courseSchedules.length})
-                            </h3>
-                            {courseSchedules.length > 0 ? (
-                                <div className="space-y-2">
-                                    {courseSchedules.map((schedule: any) => (
-                                        <div
-                                            key={schedule.id}
-                                            className="rounded-lg border p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+                        <div className="rounded-2xl border border-teal-100 bg-white/90 p-6 shadow-md backdrop-blur-sm">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-6">
+                                <div className="col-span-1 md:col-span-2">
+                                    <Button variant="info" asChild>
+                                        <Link
+                                            href={route(
+                                                "course.showModules",
+                                                course.id,
+                                            )}
                                         >
-                                            <div>
-                                                <div className="font-medium text-gray-800">
-                                                    {schedule.title}
-                                                </div>
-                                                <div className="text-sm text-gray-500">
-                                                    {formatLocalDateTime(
-                                                        schedule.scheduled_at,
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {schedule.zoom_link ? (
-                                                <a
-                                                    href={schedule.zoom_link}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-sm font-medium text-blue-700 hover:underline"
-                                                >
-                                                    Buka Link Meeting
-                                                </a>
+                                            <FileText size={16} />
+                                            Lihat Modul (
+                                            {course.modules_count || 0})
+                                        </Link>
+                                    </Button>
+                                </div>
+
+                                <div className="flex-1">
+                                    <div className="text-sm text-slate-500">
+                                        Deskripsi
+                                    </div>
+                                    <div className="mb-2 font-medium text-slate-700">
+                                        {course.description || "-"}
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-slate-500">
+                                            Durasi Pengerjaan
+                                        </div>
+                                        <div className="font-medium text-slate-700">
+                                            {course.start_date
+                                                ? new Date(
+                                                      course.start_date,
+                                                  ).toLocaleDateString(
+                                                      "id-ID",
+                                                      {
+                                                          day: "numeric",
+                                                          month: "long",
+                                                          year: "numeric",
+                                                      },
+                                                  )
+                                                : "-"}
+                                            {" - "}
+                                            {course.end_date
+                                                ? new Date(
+                                                      course.end_date,
+                                                  ).toLocaleDateString(
+                                                      "id-ID",
+                                                      {
+                                                          day: "numeric",
+                                                          month: "long",
+                                                          year: "numeric",
+                                                      },
+                                                  )
+                                                : "-"}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex-1 flex flex-col gap-2">
+                                    <div>
+                                        <span className="text-sm text-slate-500">
+                                            Nilai Anda
+                                        </span>
+                                        <div className="font-mono text-lg font-bold text-teal-700">
+                                            {averageScore !== null ? (
+                                                averageScore
                                             ) : (
-                                                <span className="text-sm text-gray-500 italic">
-                                                    Link meeting belum tersedia
+                                                <span className="italic text-slate-400">
+                                                    Belum dinilai
                                                 </span>
                                             )}
                                         </div>
-                                    ))}
+                                    </div>
+                                    <div>
+                                        <span className="text-sm text-slate-500">
+                                            Feedback
+                                        </span>
+                                        <div className="text-slate-700">
+                                            {pivot?.feedback ? (
+                                                pivot.feedback
+                                            ) : (
+                                                <span className="italic text-slate-400">
+                                                    Belum ada feedback
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            ) : (
-                                <p className="text-sm text-gray-500 italic">
-                                    Belum ada jadwal kelas.
-                                </p>
-                            )}
+                            </div>
                         </div>
 
-                        <div>
-                            <h3 className="font-semibold text-gray-800 mb-2">
-                                Ujian Kelas ({courseTests.length})
-                            </h3>
-                            {courseTests.length > 0 ? (
-                                <div className="space-y-2">
-                                    {courseTests.map((courseTest: any) => (
-                                        <div
-                                            key={courseTest.id}
-                                            className="rounded-xl border bg-slate-50/60 p-4"
-                                        >
-                                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                                                <div>
-                                                    <div className="font-semibold text-gray-800 text-base">
-                                                        {courseTest.title}
+                        <div className="space-y-4 rounded-2xl border border-amber-100 bg-white/90 p-6 shadow-md backdrop-blur-sm">
+                            <h2 className="text-lg font-semibold text-slate-800">
+                                Jadwal Kelas & Ujian Kelas
+                            </h2>
+
+                            <div>
+                                <h3 className="mb-2 font-semibold text-slate-800">
+                                    Jadwal Kelas ({courseSchedules.length})
+                                </h3>
+                                {courseSchedules.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {courseSchedules.map(
+                                            (schedule: any) => (
+                                                <div
+                                                    key={schedule.id}
+                                                    className="flex flex-col gap-2 rounded-xl border border-teal-100 bg-teal-50/60 p-3 md:flex-row md:items-center md:justify-between"
+                                                >
+                                                    <div>
+                                                        <div className="font-medium text-slate-800">
+                                                            {schedule.title}
+                                                        </div>
+                                                        <div className="text-sm text-slate-500">
+                                                            {formatLocalDateTime(
+                                                                schedule.scheduled_at,
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {schedule.zoom_link ? (
+                                                        <a
+                                                            href={
+                                                                schedule.zoom_link
+                                                            }
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="text-sm font-medium text-cyan-700 hover:underline"
+                                                        >
+                                                            Buka Link Meeting
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-sm italic text-slate-500">
+                                                            Link meeting belum
+                                                            tersedia
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm italic text-slate-500">
+                                        Belum ada jadwal kelas.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <h3 className="mb-2 font-semibold text-slate-800">
+                                    Ujian Kelas ({courseTests.length})
+                                </h3>
+                                {courseTests.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {courseTests.map((courseTest: any) => (
+                                            <div
+                                                key={courseTest.id}
+                                                className="rounded-xl border border-cyan-100 bg-cyan-50/60 p-4"
+                                            >
+                                                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                                                    <div>
+                                                        <div className="text-base font-semibold text-slate-800">
+                                                            {courseTest.title}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="md:self-start">
+                                                        <Button
+                                                            asChild
+                                                            size="sm"
+                                                            variant="info"
+                                                        >
+                                                            <Link
+                                                                href={route(
+                                                                    "courses.courseTests.detail",
+                                                                    [
+                                                                        course.id,
+                                                                        courseTest.id,
+                                                                    ],
+                                                                )}
+                                                            >
+                                                                Lihat Ujian
+                                                            </Link>
+                                                        </Button>
                                                     </div>
                                                 </div>
 
-                                                <div className="md:self-start">
-                                                    <Button
-                                                        asChild
-                                                        size="sm"
-                                                        className="bg-blue-600 hover:bg-blue-700"
-                                                    >
-                                                        <Link
-                                                            href={route(
-                                                                "courses.courseTests.detail",
-                                                                [
-                                                                    course.id,
-                                                                    courseTest.id,
-                                                                ],
+                                                <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                    <div className="rounded-md border border-slate-200 bg-white p-2">
+                                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                                                            Durasi
+                                                        </p>
+                                                        <p className="text-sm font-semibold text-slate-800">
+                                                            {courseTest.duration ||
+                                                                0}{" "}
+                                                            menit
+                                                        </p>
+                                                    </div>
+                                                    <div className="rounded-md border border-slate-200 bg-white p-2">
+                                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                                                            Jumlah Soal
+                                                        </p>
+                                                        <p className="text-sm font-semibold text-slate-800">
+                                                            {getQuestionCountLabel(
+                                                                courseTest,
                                                             )}
-                                                        >
-                                                            Lihat Ujian
-                                                        </Link>
-                                                    </Button>
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
-                                                <div className="rounded-md border bg-white p-2">
-                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                                                        Durasi
-                                                    </p>
-                                                    <p className="text-sm font-semibold text-gray-800">
-                                                        {courseTest.duration ||
-                                                            0}{" "}
-                                                        menit
-                                                    </p>
-                                                </div>
-                                                <div className="rounded-md border bg-white p-2">
-                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                                                        Jumlah Soal
-                                                    </p>
-                                                    <p className="text-sm font-semibold text-gray-800">
-                                                        {getQuestionCountLabel(
-                                                            courseTest,
-                                                        )}
-                                                    </p>
-                                                </div>
-                                                <div
-                                                    className={`rounded-md border p-2 col-span-2 md:col-span-1 ${
-                                                        courseTest.best_attempt
-                                                            ? courseTest
-                                                                  .best_attempt
-                                                                  .passed
-                                                                ? "border-emerald-200 bg-emerald-50"
-                                                                : "border-rose-200 bg-rose-50"
-                                                            : "bg-white"
-                                                    }`}
-                                                >
-                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                                                        Nilai Terbaik
-                                                    </p>
-                                                    <p
-                                                        className={`text-sm font-semibold ${
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        className={`rounded-md border p-2 col-span-2 md:col-span-1 ${
                                                             courseTest.best_attempt
                                                                 ? courseTest
                                                                       .best_attempt
                                                                       .passed
-                                                                    ? "text-emerald-700"
-                                                                    : "text-rose-700"
-                                                                : "text-gray-800"
+                                                                    ? "border-emerald-200 bg-emerald-50"
+                                                                    : "border-rose-200 bg-rose-50"
+                                                                : "border-slate-200 bg-white"
                                                         }`}
                                                     >
-                                                        {courseTest.best_attempt
-                                                            ? courseTest
-                                                                  .best_attempt
-                                                                  .score
-                                                            : "-"}
-                                                    </p>
-                                                    {courseTest.best_attempt && (
+                                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                                                            Nilai Terbaik
+                                                        </p>
                                                         <p
-                                                            className={`text-xs font-medium ${
-                                                                courseTest
-                                                                    .best_attempt
-                                                                    .passed
-                                                                    ? "text-emerald-700"
-                                                                    : "text-rose-700"
+                                                            className={`text-sm font-semibold ${
+                                                                courseTest.best_attempt
+                                                                    ? courseTest
+                                                                          .best_attempt
+                                                                          .passed
+                                                                        ? "text-emerald-700"
+                                                                        : "text-rose-700"
+                                                                    : "text-slate-800"
                                                             }`}
                                                         >
-                                                            {courseTest
-                                                                .best_attempt
-                                                                .passed
-                                                                ? "Lulus"
-                                                                : "Tidak lulus"}
+                                                            {courseTest.best_attempt
+                                                                ? courseTest
+                                                                      .best_attempt
+                                                                      .score
+                                                                : "-"}
                                                         </p>
-                                                    )}
+                                                        {courseTest.best_attempt && (
+                                                            <p
+                                                                className={`text-xs font-medium ${
+                                                                    courseTest
+                                                                        .best_attempt
+                                                                        .passed
+                                                                        ? "text-emerald-700"
+                                                                        : "text-rose-700"
+                                                                }`}
+                                                            >
+                                                                {courseTest
+                                                                    .best_attempt
+                                                                    .passed
+                                                                    ? "Lulus"
+                                                                    : "Tidak lulus"}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600">
-                                                <div className="rounded-md border border-dashed bg-white p-2">
-                                                    Jadwal Mulai:{" "}
-                                                    {courseTest.start_date
-                                                        ? formatLocalDateTime(
-                                                              courseTest.start_date,
-                                                          )
-                                                        : "-"}
-                                                </div>
-                                                <div className="rounded-md border border-dashed bg-white p-2">
-                                                    Jadwal Selesai:{" "}
-                                                    {courseTest.end_date
-                                                        ? formatLocalDateTime(
-                                                              courseTest.end_date,
-                                                          )
-                                                        : "-"}
+                                                <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-slate-600 md:grid-cols-2">
+                                                    <div className="rounded-md border border-dashed border-slate-300 bg-white p-2">
+                                                        Jadwal Mulai:{" "}
+                                                        {courseTest.start_date
+                                                            ? formatLocalDateTime(
+                                                                  courseTest.start_date,
+                                                              )
+                                                            : "-"}
+                                                    </div>
+                                                    <div className="rounded-md border border-dashed border-slate-300 bg-white p-2">
+                                                        Jadwal Selesai:{" "}
+                                                        {courseTest.end_date
+                                                            ? formatLocalDateTime(
+                                                                  courseTest.end_date,
+                                                              )
+                                                            : "-"}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-gray-500 italic">
-                                    Belum ada ujian kelas.
-                                </p>
-                            )}
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm italic text-slate-500">
+                                        Belum ada ujian kelas.
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* <div className="mt-4">
+                        {/* <div className="mt-4">
                         <h2 className="text-lg font-semibold text-primary mb-2">
                             Hasil yang Sudah Dikerjakan
                         </h2>
@@ -672,43 +704,44 @@ export default function DetailCourse({
                         </Tabs>
                     </div> */}
 
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className="text-red-700 border-red-200 bg-red-50 hover:bg-red-100"
-                            >
-                                <DoorOpen /> Keluar Kelas
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                    Apakah Anda yakin ingin keluar dari kelas
-                                    ini?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Tindakan ini tidak dapat dibatalkan. Anda
-                                    harus memasukkan kode kelas lagi jika ingin
-                                    bergabung kembali.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Batal</AlertDialogCancel>
-                                <AlertDialogAction
-                                    className="bg-red-600 text-white hover:bg-red-700"
-                                    onClick={() => {
-                                        router.delete(
-                                            route("courses.leave", course.id),
-                                            { preserveScroll: true },
-                                        );
-                                    }}
-                                >
-                                    Keluar Kelas
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="destructive">
+                                    <DoorOpen /> Keluar Kelas
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                        Apakah Anda yakin ingin keluar dari
+                                        kelas ini?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Tindakan ini tidak dapat dibatalkan.
+                                        Anda harus memasukkan kode kelas lagi
+                                        jika ingin bergabung kembali.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        className="bg-rose-600 text-white hover:bg-rose-700"
+                                        onClick={() => {
+                                            router.delete(
+                                                route(
+                                                    "courses.leave",
+                                                    course.id,
+                                                ),
+                                                { preserveScroll: true },
+                                            );
+                                        }}
+                                    >
+                                        Keluar Kelas
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

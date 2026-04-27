@@ -258,8 +258,8 @@ export default function DetailTest({
     return (
         <TeacherLayout>
             <Head title={`Detail Ujian - ${test.title}`} />
-            <div className="py-8 mx-auto lg:px-4">
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="teacher-page-shell">
+                <div className="teacher-page-stack">
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
@@ -275,7 +275,7 @@ export default function DetailTest({
                     </Breadcrumb>
 
                     <div className="flex items-center justify-between">
-                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">
+                        <h1 className="text-xl sm:teacher-page-title">
                             Detail Ujian - {test.title}
                         </h1>
                         <div className="flex flex-col sm:flex-col md:flex-row items-center gap-2 md:gap-2 ">

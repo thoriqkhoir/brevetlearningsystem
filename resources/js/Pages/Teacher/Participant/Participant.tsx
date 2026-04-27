@@ -6,7 +6,14 @@ import { Input } from "@/Components/ui/input";
 import Modal from "@/Components/ui/modal";
 import TeacherLayout from "@/Layouts/TeacherLayout";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
-import { Download, FileDown, RefreshCcw, Trash, UserPlus } from "lucide-react";
+import {
+    Download,
+    FileDown,
+    RefreshCcw,
+    Trash,
+    Users,
+    UserPlus,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -63,9 +70,7 @@ export default function Participant({ participants, events }: any) {
             },
             onError: (errs) => {
                 setIsLoading(false);
-                if (errs.file) {
-                    toast.error(errs.file);
-                }
+                if (errs.file) toast.error(errs.file);
             },
             preserveScroll: true,
             preserveState: false,
@@ -111,91 +116,103 @@ export default function Participant({ participants, events }: any) {
         <TeacherLayout>
             <Head title="Daftar Peserta" />
 
-            <div className="py-8 mx-auto max-w-xl lg:max-w-4xl xl:max-w-6xl 2xl:max-w-7xl">
-                <div className="flex flex-1 flex-col gap-4 px-4 pt-0">
-                    <h1 className="text-2xl font-semibold text-primary">
-                        Daftar Peserta
-                    </h1>
+            <div className="relative overflow-hidden">
+                <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(13,148,136,0.12),_transparent_40%),radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.12),_transparent_40%)]" />
 
-                    <div className="p-5 md:p-8 rounded-xl bg-sidebar border">
-                        <div className="flex flex-col lg:flex-row gap-2 mb-2" />
-                        <div className="flex flex-col lg:flex-row gap-2 mb-2">
+                <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
+
+                    {/* Page Header */}
+                    <div className="mb-6 rounded-2xl border border-teal-100 bg-gradient-to-r from-teal-50 via-white to-amber-50 p-6 shadow-sm">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+                                    Teacher Portal
+                                </p>
+                                <h1 className="mt-2 text-2xl font-semibold text-slate-800 md:text-3xl">
+                                    Daftar Peserta
+                                </h1>
+                                <p className="mt-1 text-sm text-slate-600">
+                                    Kelola seluruh data peserta — tambah, impor, dan hapus dengan mudah.
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                                <Users size={16} className="text-teal-600" />
+                                <span className="font-medium text-slate-700">
+                                    {initialParticipants.length} peserta terdaftar
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action Panel */}
+                    <div className="mb-6 rounded-2xl border border-teal-100 bg-white/90 p-5 shadow-md backdrop-blur-sm md:p-6">
+                        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+                            Aksi
+                        </p>
+
+                        <div className="flex flex-wrap gap-2">
                             <Button asChild>
                                 <Link href={route("teacher.createParticipant")}>
-                                    <UserPlus />
+                                    <UserPlus size={16} />
                                     Tambah Peserta
                                 </Link>
                             </Button>
 
                             <Button
                                 variant="destructive"
-                                onClick={() => {
-                                    setOpenDeleteModal(true);
-                                }}
+                                onClick={() => setOpenDeleteModal(true)}
                                 disabled={selectedParticipants.length === 0}
                             >
-                                <Trash />
-                                Hapus Peserta
+                                <Trash size={16} />
+                                Hapus Terpilih
+                                {selectedParticipants.length > 0 && (
+                                    <span className="ml-1 rounded-full bg-white/20 px-1.5 text-xs">
+                                        {selectedParticipants.length}
+                                    </span>
+                                )}
                             </Button>
+
                             <Button
-                                className="bg-green-600 hover:bg-green-600/90"
+                                variant="accent"
                                 onClick={() => setImportModalOpen(true)}
                             >
-                                <FileDown />
+                                <FileDown size={16} />
                                 Import Peserta
                             </Button>
-                            <Modal
-                                isOpen={isImportModalOpen}
-                                onClose={() => setImportModalOpen(false)}
-                                title="Import Peserta"
-                            >
-                                <form
-                                    onSubmit={handleSubmit}
-                                    className="flex flex-col gap-3"
-                                    encType="multipart/form-data"
-                                >
-                                    <Input
-                                        type="file"
-                                        className="hover:cursor-pointer"
-                                        onChange={handleFileChange}
-                                        accept=".xlsx,.xls,.csv"
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Kolom opsional: isi "course_code" untuk otomatis memasukkan
-                                        peserta ke kelas berdasarkan kode kelas.
-                                    </p>
-                                    {errors.file && (
-                                        <p className="text-red-600">
-                                            {errors.file}
-                                        </p>
-                                    )}
-                                    <Button type="submit" disabled={isLoading}>
-                                        {isLoading ? "Loading..." : "Import"}
-                                    </Button>
-                                </form>
-                            </Modal>
+
                             <Button
-                                className="bg-yellow-400 text-primary hover:bg-yellow-400/90 hover:text-primary"
+                                variant="outline"
+                                className="border-amber-200 text-amber-700 hover:bg-amber-50"
                                 onClick={handleRefresh}
                             >
-                                <RefreshCcw />
+                                <RefreshCcw size={16} />
+                                Refresh
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                asChild
+                                className="border-cyan-200 text-cyan-700 hover:bg-cyan-50"
+                            >
+                                <a href={route("teacher.downloadParticipantTemplate")}>
+                                    <Download size={16} />
+                                    Download Template
+                                </a>
                             </Button>
                         </div>
-                        <Button
-                            variant="outline"
-                            asChild
-                            className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border-blue-200"
-                        >
-                            <a
-                                href={route(
-                                    "teacher.downloadParticipantTemplate",
-                                )}
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700"
-                            >
-                                <Download className="h-4 w-4" />
-                                Download Format Import Peserta BLS
-                            </a>
-                        </Button>
+
+                        {selectedParticipants.length > 0 && (
+                            <div className="mt-3 rounded-xl border border-rose-100 bg-rose-50/60 px-4 py-2 text-sm text-rose-700">
+                                <span className="font-semibold">{selectedParticipants.length} peserta</span> dipilih — klik <span className="font-semibold">Hapus Terpilih</span> untuk menghapus.
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Data Table */}
+                    <div className="rounded-2xl border border-teal-100 bg-white/90 p-5 shadow-md backdrop-blur-sm md:p-6">
+                        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+                            Data Peserta
+                        </p>
                         <DataTableUser
                             columns={columns}
                             data={initialParticipants}
@@ -206,6 +223,42 @@ export default function Participant({ participants, events }: any) {
                     </div>
                 </div>
             </div>
+
+            {/* Import Modal */}
+            <Modal
+                isOpen={isImportModalOpen}
+                onClose={() => setImportModalOpen(false)}
+                title="Import Peserta"
+            >
+                <form
+                    onSubmit={handleSubmit}
+                    className="flex flex-col gap-4"
+                    encType="multipart/form-data"
+                >
+                    <div className="rounded-xl border border-teal-100 bg-teal-50/60 px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+                            Format File
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                            Kolom opsional: isi <span className="font-mono font-semibold">course_code</span> untuk otomatis memasukkan peserta ke kelas berdasarkan kode kelas.
+                        </p>
+                    </div>
+                    <Input
+                        type="file"
+                        className="cursor-pointer"
+                        onChange={handleFileChange}
+                        accept=".xlsx,.xls,.csv"
+                    />
+                    {errors.file && (
+                        <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
+                            {errors.file}
+                        </p>
+                    )}
+                    <Button type="submit" disabled={isLoading} className="w-full">
+                        {isLoading ? "Mengimport..." : "Import Sekarang"}
+                    </Button>
+                </form>
+            </Modal>
 
             <ConfirmDialog
                 title="Hapus Peserta"

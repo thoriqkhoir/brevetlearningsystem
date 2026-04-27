@@ -1,89 +1,115 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 220.9 39.3% 11%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 224 71.4% 4.1%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
-  .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 210 20% 98%;
-    --primary-foreground: 220.9 39.3% 11%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 216 12.2% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
-}
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 215 28% 17%;
+        --card: 0 0% 100%;
+        --card-foreground: 215 28% 17%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 215 28% 17%;
+        --primary: 175 84% 32%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 173 47% 94%;
+        --secondary-foreground: 176 84% 24%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 16% 47%;
+        --accent: 48 96% 89%;
+        --accent-foreground: 32 95% 26%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 20% 98%;
+        --border: 174 31% 88%;
+        --input: 174 31% 88%;
+        --ring: 175 84% 32%;
+        --chart-1: 175 84% 32%;
+        --chart-2: 38 92% 50%;
+        --chart-3: 192 82% 31%;
+        --chart-4: 160 84% 39%;
+        --chart-5: 215 14% 46%;
+        --radius: 0.5rem;
+        --sidebar-background: 0 0% 100%;
+        --sidebar-foreground: 215 25% 27%;
+        --sidebar-primary: 175 84% 32%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 173 47% 95%;
+        --sidebar-accent-foreground: 176 84% 24%;
+        --sidebar-border: 174 31% 88%;
+        --sidebar-ring: 175 84% 32%;
+    }
+
+    .dark {
+        --background: 210 27% 11%;
+        --foreground: 210 20% 98%;
+        --card: 210 27% 13%;
+        --card-foreground: 210 20% 98%;
+        --popover: 210 27% 13%;
+        --popover-foreground: 210 20% 98%;
+        --primary: 172 66% 45%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 210 19% 20%;
+        --secondary-foreground: 210 20% 98%;
+        --muted: 210 19% 18%;
+        --muted-foreground: 214 17% 68%;
+        --accent: 34 56% 25%;
+        --accent-foreground: 48 100% 88%;
+        --destructive: 0 70% 45%;
+        --destructive-foreground: 210 20% 98%;
+        --border: 210 18% 24%;
+        --input: 210 18% 24%;
+        --ring: 172 66% 45%;
+        --chart-1: 173 58% 47%;
+        --chart-2: 43 96% 56%;
+        --chart-3: 188 86% 53%;
+        --chart-4: 158 64% 52%;
+        --chart-5: 215 20% 65%;
+        --sidebar-background: 210 27% 12%;
+        --sidebar-foreground: 210 20% 96%;
+        --sidebar-primary: 172 66% 45%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 210 19% 18%;
+        --sidebar-accent-foreground: 210 20% 96%;
+        --sidebar-border: 210 18% 24%;
+        --sidebar-ring: 172 66% 45%;
+    }
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+/* ─── Teacher Layout Utilities ──────────────────────────────────────────────
+   Defines the structural shell used by all Teacher pages.
+   These replace the previously undefined teacher-page-* class names.
+   ─────────────────────────────────────────────────────────────────────────── */
+@layer components {
+    /* Outermost page wrapper — radial gradient background + overflow guard */
+    .teacher-page-shell {
+        @apply relative overflow-hidden;
+        background-image:
+            radial-gradient(circle at top left, rgba(13, 148, 136, 0.12), transparent 40%),
+            radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.12), transparent 40%);
+    }
+
+    /* Centered content stack with max-width and vertical padding */
+    .teacher-page-stack {
+        @apply mx-auto max-w-7xl space-y-6 px-4 py-8 md:py-10;
+    }
+
+    /* White/glass card panel — consistent with BLS card pattern */
+    .teacher-panel {
+        @apply rounded-2xl border border-teal-100 bg-white/90 p-5 shadow-md backdrop-blur-sm md:p-6;
+    }
+
+    /* Page-level H1 — matches the type hierarchy in UI_DESIGN_RULES.md */
+    .teacher-page-title {
+        @apply text-2xl font-semibold text-slate-800 md:text-3xl;
+    }
 }
