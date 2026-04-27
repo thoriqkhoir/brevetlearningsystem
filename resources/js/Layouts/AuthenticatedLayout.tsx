@@ -198,7 +198,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
             </Sidebar>
             <div className="relative min-h-screen w-full overflow-hidden bg-slate-50/70">
                 <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(13,148,136,0.14),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.16),_transparent_36%)]" />
-                <header className="border-b border-teal-100 bg-gradient-to-r from-teal-50 via-white to-amber-50/90 backdrop-blur-sm">
+                <header className="relative z-50 border-b border-teal-100 bg-gradient-to-r from-teal-50 via-white to-amber-50/90 backdrop-blur-sm">
                     <div className="mx-auto px-4">
                         <div className="flex h-16 justify-between">
                             <div className="flex">
