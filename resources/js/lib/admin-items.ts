@@ -37,11 +37,11 @@ const adminItems = () => {
                     url: route("admin.courses"),
                     icon: BookOpen,
                 },
-                {
-                    title: "Daftar Ujian",
-                    url: route("admin.tests"),
-                    icon: NotebookPen,
-                },
+                // {
+                //     title: "Daftar Ujian",
+                //     url: route("admin.tests"),
+                //     icon: NotebookPen,
+                // },
             ],
         },
     ];

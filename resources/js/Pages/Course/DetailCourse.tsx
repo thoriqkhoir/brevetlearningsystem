@@ -524,7 +524,7 @@ export default function DetailCourse({
                         </div>
                     </div>
 
-                    <div className="mt-4">
+                    {/* <div className="mt-4">
                         <h2 className="text-lg font-semibold text-primary mb-2">
                             Hasil yang Sudah Dikerjakan
                         </h2>
@@ -566,7 +566,7 @@ export default function DetailCourse({
                                     }
                                     )
                                 </TabsTrigger>
-                                {/* <TabsTrigger value="other-keluaran">
+                                <TabsTrigger value="other-keluaran">
                                     Dokumen Keluaran (
                                     {
                                         others.filter(
@@ -601,7 +601,7 @@ export default function DetailCourse({
                                         ).length
                                     }
                                     )
-                                </TabsTrigger> */}
+                                </TabsTrigger>
                                 <TabsTrigger value="bupot">
                                     Bupot ({bupots.length})
                                 </TabsTrigger>
@@ -633,7 +633,7 @@ export default function DetailCourse({
                                     courseResults={courseResults}
                                 />
                             </TabsContent>
-                            {/* <TabsContent value="other-keluaran">
+                            <TabsContent value="other-keluaran">
                                 <DokumenKeluaran
                                     others={others}
                                     courseResults={courseResults}
@@ -656,7 +656,7 @@ export default function DetailCourse({
                                     returOthers={returOthers}
                                     courseResults={courseResults}
                                 />
-                            </TabsContent> */}
+                            </TabsContent>
                             <TabsContent value="bupot">
                                 <Bupot
                                     bupots={bupots}
@@ -670,7 +670,7 @@ export default function DetailCourse({
                                 />
                             </TabsContent>
                         </Tabs>
-                    </div>
+                    </div> */}
 
                     <AlertDialog>
                         <AlertDialogTrigger asChild>

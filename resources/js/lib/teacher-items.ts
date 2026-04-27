@@ -20,11 +20,11 @@ const adminItems = () => {
                     url: route("teacher.courses"),
                     icon: School,
                 },
-                {
-                    title: "Daftar Ujian",
-                    url: route("teacher.tests"),
-                    icon: BookKeyIcon,
-                },
+                // {
+                //     title: "Daftar Ujian",
+                //     url: route("teacher.tests"),
+                //     icon: BookKeyIcon,
+                // },
                 {
                     title: "Bank Soal",
                     url: route("teacher.questionBanks"),

@@ -55,11 +55,11 @@ const items = () => {
                         url: route("courses"),
                         icon: School,
                     },
-                    {
-                        title: "Ujian Saya",
-                        url: route("tests.index"),
-                        icon: BookKey,
-                    },
+                    // {
+                    //     title: "Ujian Saya",
+                    //     url: route("tests.index"),
+                    //     icon: BookKey,
+                    // },
                 ],
             },
         ];
