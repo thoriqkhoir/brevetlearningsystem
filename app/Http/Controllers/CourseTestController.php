@@ -95,6 +95,21 @@ class CourseTestController extends Controller
             ->whereNotNull('submitted_at')
             ->get(['user_id', 'score', 'submitted_at']);
 
+        $attemptHistory = CourseTestAttempt::where('course_test_id', $courseTest->id)
+            ->whereNotNull('submitted_at')
+            ->with('user:id,name,email')
+            ->orderBy('submitted_at', 'desc')
+            ->get()
+            ->map(function ($attempt) {
+                return [
+                    'id' => $attempt->id,
+                    'user' => $attempt->user,
+                    'score' => (int) $attempt->score,
+                    'passed' => (bool) $attempt->passed,
+                    'submitted_at' => optional($attempt->submitted_at)->toIso8601String(),
+                ];
+            });
+
         $bestScoreByUser = $submittedAttempts
             ->groupBy('user_id')
             ->map(function ($attempts) {
@@ -162,6 +177,7 @@ class CourseTestController extends Controller
                 ] : null,
             ],
             'participants' => $participantsData,
+            'attemptHistory' => $attemptHistory,
         ]);
     }
 
@@ -220,6 +236,7 @@ class CourseTestController extends Controller
                     }
                 },
             ],
+            'max_attempts' => 'nullable|integer|min:0',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'show_score' => 'nullable|boolean',

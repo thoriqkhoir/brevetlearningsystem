@@ -54,6 +54,7 @@ class CourseTestImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithV
         }
 
         $questionsToShow = $this->normalizeInteger($row['questions_to_show'] ?? null);
+        $maxAttempts = $this->normalizeInteger($row['max_attempts'] ?? null);
 
         if ($questionsToShow !== null && $questionsToShow > (int) $questionBank->questions_count) {
             throw new \InvalidArgumentException('Jumlah soal ditampilkan tidak boleh melebihi total soal pada bank (' . $questionBank->questions_count . ').');
@@ -78,6 +79,7 @@ class CourseTestImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithV
             'duration' => $this->normalizeInteger($row['duration'] ?? null) ?? 0,
             'passing_score' => $this->normalizeInteger($row['passing_score'] ?? null) ?? 0,
             'questions_to_show' => $questionsToShow,
+            'max_attempts' => $maxAttempts ?? 0,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'show_score' => $this->normalizeBoolean($row['show_score'] ?? null),
@@ -123,6 +125,7 @@ class CourseTestImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithV
             'duration' => 'nullable|integer|min:0',
             'passing_score' => 'nullable|integer|min:0|max:100',
             'questions_to_show' => 'nullable|integer|min:1',
+            'max_attempts' => 'nullable|integer|min:0',
             'start_date' => [
                 'nullable',
                 function ($attribute, $value, $fail) {

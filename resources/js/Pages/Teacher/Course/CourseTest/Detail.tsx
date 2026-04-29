@@ -8,41 +8,37 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/Components/ui/breadcrumb";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 
-function parseLocalDateTime(value?: string | null) {
+function parseLocalDate(value?: string | null) {
     if (!value) return null;
-
-    const normalized = String(value).trim();
-    const matched = normalized.match(
-        /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/,
-    );
-
-    if (!matched) {
-        const parsed = new Date(normalized);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-    }
-
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (!match) return null;
     return new Date(
-        Number(matched[1]),
-        Number(matched[2]) - 1,
-        Number(matched[3]),
-        Number(matched[4]),
-        Number(matched[5]),
-        Number(matched[6] ?? 0),
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5]),
+        Number(match[6] ?? 0)
     );
 }
 
 function formatLocalDateTime(value?: string | null) {
-    const date = parseLocalDateTime(value);
-    if (!date) return "-";
-
-    return date.toLocaleString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    const date = parseLocalDate(value);
+    if (!date) return value || "-";
+    
+    const day = date.getDate();
+    const months = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    
+    return `${day} ${month} ${year}, ${hours}.${minutes} WIB`;
 }
 
 export default function CourseTestTeacherDetail({
@@ -50,6 +46,7 @@ export default function CourseTestTeacherDetail({
     courseTest,
     statistics,
     participants = [],
+    attemptHistory = [],
 }: any) {
     const attemptedParticipants = Number(
         statistics?.attempted_participants ?? 0,
@@ -149,7 +146,7 @@ export default function CourseTestTeacherDetail({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 col-span-2 text-sm">
                             <div className="rounded-md border p-3">
                                 <p className="text-gray-500">Durasi</p>
                                 <p className="font-semibold text-gray-800">
@@ -162,12 +159,22 @@ export default function CourseTestTeacherDetail({
                                     {courseTest?.passing_score || 0}
                                 </p>
                             </div>
+                            <div className="rounded-md border p-3">
+                                <p className="text-gray-500">
+                                    Maksimal Pengerjaan
+                                </p>
+                                <p className="font-semibold text-gray-800">
+                                    {Number(courseTest?.max_attempts ?? 0) <= 0
+                                        ? "Tidak terbatas"
+                                        : courseTest?.max_attempts}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">
                             <div className="rounded-md border border-dashed p-3">
                                 <p className="text-gray-500">Mulai Ujian</p>
                                 <p className="font-semibold text-gray-800">
-                                    {formatLocalDateTime(
-                                        courseTest?.start_date,
-                                    )}
+                                    {formatLocalDateTime(courseTest?.start_date)}
                                 </p>
                             </div>
                             <div className="rounded-md border border-dashed p-3">
@@ -180,72 +187,170 @@ export default function CourseTestTeacherDetail({
                     </div>
 
                     <div className="rounded-xl border bg-white p-6 shadow">
-                        <h2 className="text-lg font-semibold text-primary mb-3">
-                            Peserta dan Nilai Terbaik
-                        </h2>
+                        <Tabs defaultValue="participants">
+                            <TabsList>
+                                <TabsTrigger value="participants">
+                                    Peserta
+                                </TabsTrigger>
+                                <TabsTrigger value="history">
+                                    Riwayat Pengerjaan
+                                </TabsTrigger>
+                            </TabsList>
 
-                        {participants.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="text-left text-gray-500 border-b">
-                                            <th className="py-2">Nama</th>
-                                            <th className="py-2">Email</th>
-                                            <th className="py-2">
-                                                Nilai Terbaik
-                                            </th>
-                                            <th className="py-2">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {participants.map(
-                                            (participant: any) => (
-                                                <tr
-                                                    key={participant.id}
-                                                    className="border-b last:border-b-0"
-                                                >
-                                                    <td className="py-2 font-medium text-gray-800">
-                                                        {participant?.user
-                                                            ?.name || "-"}
-                                                    </td>
-                                                    <td className="py-2 text-gray-600">
-                                                        {participant?.user
-                                                            ?.email || "-"}
-                                                    </td>
-                                                    <td className="py-2 text-gray-800 font-semibold">
-                                                        {participant?.best_score ??
-                                                            "-"}
-                                                    </td>
-                                                    <td className="py-2">
-                                                        {participant?.best_score ===
-                                                            null ||
-                                                        typeof participant?.best_score ===
-                                                            "undefined" ? (
-                                                            <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-                                                                Belum
-                                                                Mengerjakan
-                                                            </span>
-                                                        ) : participant?.passed ? (
-                                                            <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                                                                Lulus
-                                                            </span>
-                                                        ) : (
-                                                            <span className="inline-flex rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
-                                                                Tidak Lulus
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ),
-                                        )}
-                                    </tbody>
-                                </table>
+                            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-6">
+                                <h2 className="text-lg font-semibold text-primary">
+                                    Peserta & Riwayat Pengerjaan
+                                </h2>
                             </div>
-                        ) : (
-                            <p className="text-sm text-gray-500 italic">
-                                Belum ada peserta kelas.
-                            </p>
-                        )}
+
+                            <TabsContent value="participants" className="mt-4">
+                                {participants.length > 0 ? (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="text-left text-gray-500 border-b">
+                                                    <th className="py-2">
+                                                        Nama
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Email
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Nilai Terbaik
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Status
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {participants.map(
+                                                    (participant: any) => (
+                                                        <tr
+                                                            key={participant.id}
+                                                            className="border-b last:border-b-0"
+                                                        >
+                                                            <td className="py-2 font-medium text-gray-800">
+                                                                {participant
+                                                                    ?.user
+                                                                    ?.name ||
+                                                                    "-"}
+                                                            </td>
+                                                            <td className="py-2 text-gray-600">
+                                                                {participant
+                                                                    ?.user
+                                                                    ?.email ||
+                                                                    "-"}
+                                                            </td>
+                                                            <td className="py-2 text-gray-800 font-semibold">
+                                                                {participant?.best_score ??
+                                                                    "-"}
+                                                            </td>
+                                                            <td className="py-2">
+                                                                {participant?.best_score ===
+                                                                    null ||
+                                                                typeof participant?.best_score ===
+                                                                    "undefined" ? (
+                                                                    <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                                                                        Belum
+                                                                        Mengerjakan
+                                                                    </span>
+                                                                ) : participant?.passed ? (
+                                                                    <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                                                        Lulus
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                                                                        Tidak
+                                                                        Lulus
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">
+                                        Belum ada peserta kelas.
+                                    </p>
+                                )}
+                            </TabsContent>
+
+                            <TabsContent value="history" className="mt-4">
+                                {attemptHistory.length > 0 ? (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="text-left text-gray-500 border-b">
+                                                    <th className="py-2">
+                                                        Peserta
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Email
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Skor
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Status
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Waktu Submit
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {attemptHistory.map(
+                                                    (attempt: any) => (
+                                                        <tr
+                                                            key={attempt.id}
+                                                            className="border-b last:border-b-0"
+                                                        >
+                                                            <td className="py-2 font-medium text-gray-800">
+                                                                {attempt?.user
+                                                                    ?.name ||
+                                                                    "-"}
+                                                            </td>
+                                                            <td className="py-2 text-gray-600">
+                                                                {attempt?.user
+                                                                    ?.email ||
+                                                                    "-"}
+                                                            </td>
+                                                            <td className="py-2 text-gray-800 font-semibold">
+                                                                {attempt?.score ??
+                                                                    0}
+                                                            </td>
+                                                            <td className="py-2">
+                                                                {attempt?.passed ? (
+                                                                    <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                                                        Lulus
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                                                                        Tidak
+                                                                        Lulus
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="py-2 text-gray-600">
+                                                                {formatLocalDateTime(attempt?.submitted_at)}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">
+                                        Belum ada riwayat pengerjaan.
+                                    </p>
+                                )}
+                            </TabsContent>
+                        </Tabs>
                     </div>
                 </div>
             </div>

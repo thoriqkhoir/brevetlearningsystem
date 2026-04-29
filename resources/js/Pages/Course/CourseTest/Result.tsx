@@ -3,6 +3,10 @@ import HeaderOnlyLayout from "@/Layouts/HeaderOnlyLayout";
 
 export default function Result({ course, test, attempt, review }: any) {
     const showScore = test?.show_score ?? true;
+    const statusLabel = attempt?.passed ? "Lulus" : "Tidak lulus";
+    const statusClass = attempt?.passed
+        ? "bg-emerald-100 text-emerald-700"
+        : "bg-rose-100 text-rose-700";
 
     return (
         <HeaderOnlyLayout
@@ -136,32 +140,27 @@ export default function Result({ course, test, attempt, review }: any) {
                         <div className="bg-white border rounded-xl p-8 shadow-sm text-center">
                             <div className="max-w-md mx-auto">
                                 <div className="mb-4">
-                                    <svg
-                                        className="mx-auto h-16 w-16 text-emerald-500"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
+                                    <span
+                                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}
                                     >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        />
-                                    </svg>
+                                        Status: {statusLabel}
+                                    </span>
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                                    Selamat Anda Telah Mengerjakan Ujian
+                                    Hasil Ujian
                                 </h2>
                                 <p className="text-gray-600 mb-6">
-                                    Ujian Anda telah berhasil dikumpulkan. Nilai
-                                    akan diumumkan oleh pengajar.
+                                    Nilai disembunyikan oleh pengajar. Anda
+                                    hanya dapat melihat status kelulusan.
                                 </p>
                                 <Link
-                                    href={route("courses.detail", course?.id)}
+                                    href={route("courses.courseTests.detail", [
+                                        course?.id,
+                                        test?.id,
+                                    ])}
                                     className="inline-block px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
                                 >
-                                    Kembali ke Detail Kelas
+                                    Kembali ke Detail Ujian
                                 </Link>
                             </div>
                         </div>

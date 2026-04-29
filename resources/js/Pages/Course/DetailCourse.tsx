@@ -36,45 +36,41 @@ import ReturDokumenMasukan from "./CourseResults/ReturDokumenMasukan";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
-function parseLocalDateTimeParts(value?: string | null) {
+function parseLocalDate(value?: string | null) {
     if (!value) return null;
-
-    const matched = String(value).match(
-        /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/,
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (!match) return null;
+    return new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5]),
+        Number(match[6] ?? 0)
     );
-
-    if (!matched) return null;
-
-    return {
-        year: Number(matched[1]),
-        month: Number(matched[2]),
-        day: Number(matched[3]),
-        hour: Number(matched[4]),
-        minute: Number(matched[5]),
-        second: Number(matched[6] ?? 0),
-    };
 }
 
 function formatLocalDateTime(value?: string | null) {
-    const parts = parseLocalDateTimeParts(value);
-    if (!parts) return "-";
-
-    const localDate = new Date(
-        parts.year,
-        parts.month - 1,
-        parts.day,
-        parts.hour,
-        parts.minute,
-        parts.second,
-    );
-
-    return format(localDate, "d MMMM yyyy, HH:mm", { locale: id });
+    const date = parseLocalDate(value);
+    if (!date) return value || "-";
+    
+    const day = date.getDate();
+    const months = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    
+    return `${day} ${month} ${year}, ${hours}.${minutes} WIB`;
 }
 
 function getStatus(start: string, end: string) {
     const now = new Date();
-    const startDate = new Date(start);
-    const endDate = new Date(end);
+    const startDate = parseLocalDate(start) || new Date(0);
+    const endDate = parseLocalDate(end) || new Date(0);
 
     if (now < startDate)
         return {
@@ -136,14 +132,6 @@ export default function DetailCourse({
     };
 
     const averageScore = calculateAverageScore();
-
-    const getQuestionCountLabel = (courseTest: any) => {
-        const configured = Number(courseTest?.questions_to_show ?? 0);
-        if (configured > 0) return configured;
-
-        const total = Number(courseTest?.question_count ?? 0);
-        return total > 0 ? total : "Semua";
-    };
 
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
@@ -383,9 +371,7 @@ export default function DetailCourse({
                                                             {schedule.title}
                                                         </div>
                                                         <div className="text-sm text-slate-500">
-                                                            {formatLocalDateTime(
-                                                                schedule.scheduled_at,
-                                                            )}
+                                                            {formatLocalDateTime(schedule.scheduled_at)}
                                                         </div>
                                                     </div>
                                                     {schedule.zoom_link ? (
@@ -421,15 +407,65 @@ export default function DetailCourse({
                                     Ujian Kelas ({courseTests.length})
                                 </h3>
                                 {courseTests.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {courseTests.map((courseTest: any) => (
+                                <div className="space-y-2">
+                                    {courseTests.map((courseTest: any) => {
+                                        const maxAttempts = Number(
+                                            courseTest?.max_attempts ?? 0,
+                                        );
+                                        const usedAttempts = Number(
+                                            courseTest?.attempts_used ?? 0,
+                                        );
+                                        const isUnlimited = maxAttempts <= 0;
+                                        const progress = isUnlimited
+                                            ? 100
+                                            : maxAttempts > 0
+                                              ? Math.min(
+                                                    100,
+                                                    Math.round(
+                                                        (usedAttempts /
+                                                            maxAttempts) *
+                                                            100,
+                                                    ),
+                                                )
+                                              : 0;
+                                        const attemptStatus = isUnlimited
+                                            ? {
+                                                  label: "Tanpa batas",
+                                                  text: "text-blue-700 bg-blue-100",
+                                                  bar: "bg-blue-500",
+                                              }
+                                            : usedAttempts <= 0
+                                              ? {
+                                                    label: "Belum mengerjakan",
+                                                    text: "text-emerald-700 bg-emerald-100",
+                                                    bar: "bg-emerald-500",
+                                                }
+                                              : usedAttempts >= maxAttempts
+                                                ? {
+                                                      label: "Habis",
+                                                      text: "text-rose-700 bg-rose-100",
+                                                      bar: "bg-rose-500",
+                                                  }
+                                                : {
+                                                      label: "Mengerjakan sebagian",
+                                                      text: "text-amber-700 bg-amber-100",
+                                                      bar: "bg-amber-500",
+                                                  };
+                                        const showScore =
+                                            courseTest?.show_score ?? true;
+                                        const bestAttemptLabel = courseTest
+                                            ?.best_attempt?.passed
+                                            ? "Lulus"
+                                            : "Tidak lulus";
+
+                                        return (
                                             <div
                                                 key={courseTest.id}
-                                                className="rounded-xl border border-cyan-100 bg-cyan-50/60 p-4"
+                                                className="rounded-xl border bg-slate-50/60 p-4"
                                             >
                                                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                                                     <div>
-                                                        <div className="text-base font-semibold text-slate-800">
+                                                        <div className="font-semibold text-gray-800 text-base">
                                                             {courseTest.title}
                                                         </div>
                                                     </div>
@@ -438,7 +474,7 @@ export default function DetailCourse({
                                                         <Button
                                                             asChild
                                                             size="sm"
-                                                            variant="info"
+                                                            className="bg-blue-600 hover:bg-blue-700"
                                                         >
                                                             <Link
                                                                 href={route(
@@ -456,25 +492,65 @@ export default function DetailCourse({
                                                 </div>
 
                                                 <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
-                                                    <div className="rounded-md border border-slate-200 bg-white p-2">
-                                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                                                    <div className="rounded-md border bg-white p-2">
+                                                        <p className="text-[11px] uppercase tracking-wide text-gray-500">
                                                             Durasi
                                                         </p>
-                                                        <p className="text-sm font-semibold text-slate-800">
+                                                        <p className="text-sm font-semibold text-gray-800">
                                                             {courseTest.duration ||
                                                                 0}{" "}
                                                             menit
                                                         </p>
                                                     </div>
-                                                    <div className="rounded-md border border-slate-200 bg-white p-2">
-                                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                                                            Jumlah Soal
+                                                    <div className="rounded-md border bg-white p-2">
+                                                        <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                                                            Kesempatan
+                                                            Mengerjakan
                                                         </p>
-                                                        <p className="text-sm font-semibold text-slate-800">
-                                                            {getQuestionCountLabel(
-                                                                courseTest,
-                                                            )}
-                                                        </p>
+                                                        <div className="mt-1 flex items-center justify-between gap-2">
+                                                            <p className="text-sm font-semibold text-gray-800">
+                                                                {isUnlimited
+                                                                    ? "Tidak terbatas"
+                                                                    : `${usedAttempts} / ${maxAttempts}`}
+                                                            </p>
+                                                            <span
+                                                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${attemptStatus.text}`}
+                                                            >
+                                                                {
+                                                                    attemptStatus.label
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                        {!isUnlimited && (
+                                                            <>
+                                                                <div className="mt-2 h-2 w-full rounded-full bg-slate-200">
+                                                                    <div
+                                                                        className={`h-full rounded-full ${attemptStatus.bar}`}
+                                                                        style={{
+                                                                            width: `${progress}%`,
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                <p className="mt-1 text-[11px] text-gray-500">
+                                                                    Dipakai{" "}
+                                                                    {
+                                                                        usedAttempts
+                                                                    }{" "}
+                                                                    dari{" "}
+                                                                    {
+                                                                        maxAttempts
+                                                                    }
+                                                                </p>
+                                                            </>
+                                                        )}
+                                                        {isUnlimited && (
+                                                            <p className="mt-1 text-[11px] text-gray-500">
+                                                                Dipakai{" "}
+                                                                {usedAttempts}{" "}
+                                                                kali (tanpa
+                                                                batas)
+                                                            </p>
+                                                        )}
                                                     </div>
                                                     <div
                                                         className={`rounded-md border p-2 col-span-2 md:col-span-1 ${
@@ -484,11 +560,13 @@ export default function DetailCourse({
                                                                       .passed
                                                                     ? "border-emerald-200 bg-emerald-50"
                                                                     : "border-rose-200 bg-rose-50"
-                                                                : "border-slate-200 bg-white"
+                                                                : "bg-white"
                                                         }`}
                                                     >
-                                                        <p className="text-[11px] uppercase tracking-wide text-slate-500">
-                                                            Nilai Terbaik
+                                                        <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                                                            {showScore
+                                                                ? "Nilai Terbaik"
+                                                                : "Status"}
                                                         </p>
                                                         <p
                                                             className={`text-sm font-semibold ${
@@ -498,61 +576,55 @@ export default function DetailCourse({
                                                                           .passed
                                                                         ? "text-emerald-700"
                                                                         : "text-rose-700"
-                                                                    : "text-slate-800"
+                                                                    : "text-gray-800"
                                                             }`}
                                                         >
                                                             {courseTest.best_attempt
-                                                                ? courseTest
-                                                                      .best_attempt
-                                                                      .score
+                                                                ? showScore
+                                                                    ? courseTest
+                                                                          .best_attempt
+                                                                          .score
+                                                                    : bestAttemptLabel
                                                                 : "-"}
                                                         </p>
-                                                        {courseTest.best_attempt && (
-                                                            <p
-                                                                className={`text-xs font-medium ${
-                                                                    courseTest
-                                                                        .best_attempt
-                                                                        .passed
-                                                                        ? "text-emerald-700"
-                                                                        : "text-rose-700"
-                                                                }`}
-                                                            >
-                                                                {courseTest
-                                                                    .best_attempt
-                                                                    .passed
-                                                                    ? "Lulus"
-                                                                    : "Tidak lulus"}
-                                                            </p>
-                                                        )}
+                                                        {courseTest.best_attempt &&
+                                                            showScore && (
+                                                                <p
+                                                                    className={`text-xs font-medium ${
+                                                                        courseTest
+                                                                            .best_attempt
+                                                                            .passed
+                                                                            ? "text-emerald-700"
+                                                                            : "text-rose-700"
+                                                                    }`}
+                                                                >
+                                                                    {
+                                                                        bestAttemptLabel
+                                                                    }
+                                                                </p>
+                                                            )}
                                                     </div>
                                                 </div>
 
-                                                <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-slate-600 md:grid-cols-2">
-                                                    <div className="rounded-md border border-dashed border-slate-300 bg-white p-2">
+                                                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600">
+                                                    <div className="rounded-md border border-dashed bg-white p-2">
                                                         Jadwal Mulai:{" "}
-                                                        {courseTest.start_date
-                                                            ? formatLocalDateTime(
-                                                                  courseTest.start_date,
-                                                              )
-                                                            : "-"}
+                                                        {formatLocalDateTime(courseTest.start_date)}
                                                     </div>
-                                                    <div className="rounded-md border border-dashed border-slate-300 bg-white p-2">
+                                                    <div className="rounded-md border border-dashed bg-white p-2">
                                                         Jadwal Selesai:{" "}
-                                                        {courseTest.end_date
-                                                            ? formatLocalDateTime(
-                                                                  courseTest.end_date,
-                                                              )
-                                                            : "-"}
+                                                        {formatLocalDateTime(courseTest.end_date)}
                                                     </div>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-sm italic text-slate-500">
-                                        Belum ada ujian kelas.
-                                    </p>
-                                )}
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500 italic">
+                                    Belum ada ujian kelas.
+                                </p>
+                            )}
                             </div>
                         </div>
 

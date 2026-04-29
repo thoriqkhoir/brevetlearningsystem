@@ -16,6 +16,7 @@ class CourseTest extends Model
         'questions_to_show' => 'integer',
         'duration' => 'integer',
         'passing_score' => 'integer',
+        'max_attempts' => 'integer',
         'show_score' => 'boolean',
         'start_date' => 'datetime',
         'end_date' => 'datetime',

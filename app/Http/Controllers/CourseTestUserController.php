@@ -40,6 +40,10 @@ class CourseTestUserController extends Controller
             ->whereNull('submitted_at')
             ->first();
 
+        if (!$attempt && !$this->hasRemainingAttempts($courseTest, $user->id)) {
+            return back()->with('error', 'Batas kesempatan ujian sudah habis.');
+        }
+
         if (!$attempt) {
             CourseTestAttempt::create([
                 'user_id' => $user->id,
@@ -107,6 +111,12 @@ class CourseTestUserController extends Controller
             ->where('course_test_id', $courseTest->id)
             ->whereNull('submitted_at')
             ->first();
+
+        if (!$attempt && !$this->hasRemainingAttempts($courseTest, $user->id)) {
+            return redirect()
+                ->route('courses.courseTests.detail', [$course->id, $courseTest->id])
+                ->with('error', 'Batas kesempatan ujian sudah habis.');
+        }
 
         if (!$attempt) {
             $attempt = $this->getOrCreateAttempt($courseTest, $user->id);
@@ -467,6 +477,10 @@ class CourseTestUserController extends Controller
             ->first();
 
         if (!$attempt) {
+            if (!$this->hasRemainingAttempts($courseTest, $userId)) {
+                abort(403, 'Batas kesempatan ujian sudah habis.');
+            }
+
             $attempt = CourseTestAttempt::create([
                 'user_id' => $userId,
                 'course_test_id' => $courseTest->id,
@@ -478,6 +492,22 @@ class CourseTestUserController extends Controller
         }
 
         return $attempt;
+    }
+
+    private function hasRemainingAttempts(CourseTest $courseTest, string $userId): bool
+    {
+        $maxAttempts = max(0, (int) ($courseTest->max_attempts ?? 0));
+
+        if ($maxAttempts <= 0) {
+            return true;
+        }
+
+        $submittedCount = CourseTestAttempt::where('user_id', $userId)
+            ->where('course_test_id', $courseTest->id)
+            ->whereNotNull('submitted_at')
+            ->count();
+
+        return $submittedCount < $maxAttempts;
     }
 
     private function finalizeAttempt(CourseTest $courseTest, CourseTestAttempt $attempt): int
@@ -496,7 +526,7 @@ class CourseTestUserController extends Controller
 
         $attempt->score = $score;
         $attempt->passed = $score >= (int) ($courseTest->passing_score ?? 0);
-        $attempt->submitted_at = now();
+        $attempt->submitted_at = now('Asia/Jakarta');
         $attempt->save();
 
         return $score;

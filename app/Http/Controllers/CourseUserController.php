@@ -271,7 +271,14 @@ class CourseUserController extends Controller
                 ->groupBy('course_test_id');
 
             $courseTests = $courseTests->map(function ($courseTest) use ($attempts) {
-                $bestAttempt = $attempts->get($courseTest->id)?->reduce(function ($best, $current) {
+                $attemptItems = $attempts->get($courseTest->id);
+                $attemptCount = $attemptItems ? $attemptItems->count() : 0;
+                $maxAttempts = max(0, (int) ($courseTest->max_attempts ?? 0));
+                $attemptsRemaining = $maxAttempts > 0
+                    ? max($maxAttempts - $attemptCount, 0)
+                    : null;
+
+                $bestAttempt = $attemptItems?->reduce(function ($best, $current) {
                     if (!$best) {
                         return $current;
                     }
@@ -301,6 +308,14 @@ class CourseUserController extends Controller
                     'passed' => (bool) $bestAttempt->passed,
                     'submitted_at' => optional($bestAttempt->submitted_at)->toIso8601String(),
                 ] : null);
+
+                $courseTest->setAttribute('attempts_used', $attemptCount);
+                $courseTest->setAttribute('attempts_remaining', $attemptsRemaining);
+                $courseTest->setAttribute('attempts_status', $maxAttempts <= 0
+                    ? 'unlimited'
+                    : ($attemptCount <= 0
+                        ? 'unused'
+                        : ($attemptCount >= $maxAttempts ? 'exhausted' : 'partial')));
 
                 return $courseTest;
             })->values();
@@ -380,11 +395,13 @@ class CourseUserController extends Controller
             ->latest('submitted_at')
             ->first();
 
-        $attemptHistory = CourseTestAttempt::where('user_id', Auth::id())
+        $attempts = CourseTestAttempt::where('user_id', Auth::id())
             ->where('course_test_id', $courseTest->id)
             ->whereNotNull('submitted_at')
             ->orderBy('submitted_at', 'desc')
-            ->get()
+            ->get();
+
+        $attemptHistory = $attempts
             ->map(function ($attempt) {
                 return [
                     'id' => $attempt->id,
@@ -393,6 +410,13 @@ class CourseUserController extends Controller
                     'submitted_at' => optional($attempt->submitted_at)->toIso8601String(),
                 ];
             });
+
+        $attemptsUsed = $attempts->count();
+        $maxAttempts = max(0, (int) ($courseTest->max_attempts ?? 0));
+        $attemptsRemaining = $maxAttempts > 0
+            ? max($maxAttempts - $attemptsUsed, 0)
+            : null;
+        $canAttempt = $attemptsRemaining === null ? true : $attemptsRemaining > 0;
 
         $activeCourseTestId = $this->resolveActiveCourseTestId(Auth::id());
 
@@ -408,6 +432,10 @@ class CourseUserController extends Controller
                 'submitted_at' => optional($lastAttempt->submitted_at)->toIso8601String(),
             ] : null,
             'activeCourseTestId' => $activeCourseTestId,
+            'attemptsUsed' => $attemptsUsed,
+            'maxAttempts' => $maxAttempts,
+            'attemptsRemaining' => $attemptsRemaining,
+            'canAttempt' => $canAttempt,
         ]);
     }
 

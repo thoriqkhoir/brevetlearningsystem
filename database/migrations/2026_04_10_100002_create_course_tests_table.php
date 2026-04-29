@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('duration')->default(0);
             $table->integer('passing_score')->default(0);
             $table->integer('questions_to_show')->nullable();
+            $table->integer('max_attempts')->default(0);
             $table->timestamp('start_date')->nullable();
             $table->timestamp('end_date')->nullable();
             $table->boolean('show_score')->default(true);

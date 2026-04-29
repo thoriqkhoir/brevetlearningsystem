@@ -14,34 +14,53 @@ import { id } from "date-fns/locale";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 
-function parseLocalDateTime(value?: string | null) {
+function parseLocalDate(value?: string | null) {
     if (!value) return null;
-
-    const normalized = String(value).trim();
-
-    const matched = normalized.match(
-        /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/,
+    const match = String(value).match(
+        /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/,
     );
-
-    if (!matched) {
-        const parsed = new Date(normalized);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-    }
-
+    if (!match) return null;
     return new Date(
-        Number(matched[1]),
-        Number(matched[2]) - 1,
-        Number(matched[3]),
-        Number(matched[4]),
-        Number(matched[5]),
-        Number(matched[6] ?? 0),
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5]),
+        Number(match[6] ?? 0),
     );
+}
+
+function formatLocalDateTime(value?: string | null) {
+    const date = parseLocalDate(value);
+    if (!date) return value || "-";
+
+    const day = date.getDate();
+    const months = [
+        "Januari",
+        "Februari",
+        "Maret",
+        "April",
+        "Mei",
+        "Juni",
+        "Juli",
+        "Agustus",
+        "September",
+        "Oktober",
+        "November",
+        "Desember",
+    ];
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${day} ${month} ${year}, ${hours}.${minutes} WIB`;
 }
 
 function getStatus(start?: string | null, end?: string | null) {
     const now = new Date();
-    const startDate = parseLocalDateTime(start);
-    const endDate = parseLocalDateTime(end);
+    const startDate = parseLocalDate(start);
+    const endDate = parseLocalDate(end);
 
     if (startDate && now < startDate) {
         return {
@@ -63,16 +82,9 @@ function getStatus(start?: string | null, end?: string | null) {
     };
 }
 
-function formatLocalDateTime(value?: string | null) {
-    const date = parseLocalDateTime(value);
-    if (!date) return "-";
-
-    return format(date, "d MMMM yyyy, HH:mm", { locale: id });
-}
-
 function formatDateRange(start?: string | null, end?: string | null) {
-    const startDate = parseLocalDateTime(start);
-    const endDate = parseLocalDateTime(end);
+    const startDate = parseLocalDate(start);
+    const endDate = parseLocalDate(end);
 
     const startText = startDate
         ? format(startDate, "d MMMM yyyy", { locale: id })
@@ -91,23 +103,27 @@ export default function CourseTestDetail({
     attemptHistory = [],
     lastAttempt = null,
     activeCourseTestId = null,
+    attemptsUsed = 0,
+    maxAttempts = 0,
+    attemptsRemaining = null,
+    canAttempt = true,
 }: any) {
     const { flash }: any = usePage().props;
     const status = getStatus(courseTest?.start_date, courseTest?.end_date);
-    const questionsShown =
-        Number(courseTest?.questions_to_show ?? 0) > 0
-            ? Number(courseTest?.questions_to_show)
-            : Number(courseTest?.question_count ?? 0) > 0
-              ? Number(courseTest?.question_count)
-              : "Semua";
-    const startDate = parseLocalDateTime(courseTest?.start_date);
-    const endDate = parseLocalDateTime(courseTest?.end_date);
+    const startDate = parseLocalDate(courseTest?.start_date);
+    const endDate = parseLocalDate(courseTest?.end_date);
     const now = new Date();
     const isClosed = endDate ? now >= endDate : false;
     const notStarted = startDate ? now < startDate : false;
     const isActive = activeCourseTestId === courseTest?.id;
     const hasOtherActive =
         activeCourseTestId && activeCourseTestId !== courseTest?.id;
+    const isAttemptLimitReached = !canAttempt;
+    const isUnlimitedAttempts = Number(maxAttempts ?? 0) <= 0;
+    const attemptsText = isUnlimitedAttempts
+        ? "Tidak terbatas"
+        : `${attemptsRemaining ?? 0} / ${maxAttempts}`;
+    const showScore = courseTest?.show_score ?? true;
     const bestAttempt =
         attemptHistory.length > 0
             ? [...attemptHistory].sort((a: any, b: any) => {
@@ -126,6 +142,8 @@ export default function CourseTestDetail({
               })[0]
             : null;
 
+    const bestAttemptLabel = bestAttempt?.passed ? "Lulus" : "Tidak lulus";
+
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
         if (flash?.error) toast.error(flash.error);
@@ -136,7 +154,7 @@ export default function CourseTestDetail({
             <Head title={`Ujian Kelas - ${courseTest?.title ?? "Ujian"}`} />
 
             <div className="py-8 mx-auto lg:px-4">
-                <div className="max-w-7xl mx-auto p-4 space-y-4">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
@@ -209,15 +227,21 @@ export default function CourseTestDetail({
                                                 : "border-rose-200 bg-rose-100 text-rose-700"
                                         }`}
                                     >
-                                        Nilai Terbaik: {bestAttempt.score} ({" "}
-                                        {bestAttempt.passed
-                                            ? "Lulus"
-                                            : "Tidak lulus"}
-                                        )
+                                        {showScore ? (
+                                            <>
+                                                Nilai Terbaik:{" "}
+                                                {bestAttempt.score} ({" "}
+                                                {bestAttemptLabel})
+                                            </>
+                                        ) : (
+                                            <>Status: {bestAttemptLabel}</>
+                                        )}
                                     </span>
                                 ) : (
                                     <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                                        Nilai Terbaik: -
+                                        {showScore
+                                            ? "Nilai Terbaik: -"
+                                            : "Status: -"}
                                     </span>
                                 )}
                             </div>
@@ -236,9 +260,14 @@ export default function CourseTestDetail({
                                 </div>
                             </div>
                             <div className="rounded-lg border p-3">
-                                <div className="text-gray-500">Jumlah Soal</div>
+                                <div className="text-gray-500">
+                                    Kesempatan Mengerjakan
+                                </div>
                                 <div className="font-semibold text-gray-800">
-                                    {questionsShown}
+                                    {attemptsText}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                    Sudah digunakan: {attemptsUsed}
                                 </div>
                             </div>
                             <div className="rounded-lg border p-3">
@@ -251,11 +280,13 @@ export default function CourseTestDetail({
                             </div>
                             <div className="rounded-lg border p-3">
                                 <div className="text-gray-500">
-                                    Nilai Terbaik
+                                    {showScore ? "Nilai Terbaik" : "Status"}
                                 </div>
                                 <div className="font-semibold text-gray-800">
                                     {bestAttempt
-                                        ? `${bestAttempt.score} (${bestAttempt.passed ? "Lulus" : "Tidak lulus"})`
+                                        ? showScore
+                                            ? `${bestAttempt.score} (${bestAttemptLabel})`
+                                            : bestAttemptLabel
                                         : "-"}
                                 </div>
                             </div>
@@ -282,7 +313,8 @@ export default function CourseTestDetail({
                             <Button
                                 disabled={
                                     status.label !== "Sedang Berlangsung" ||
-                                    Boolean(hasOtherActive)
+                                    Boolean(hasOtherActive) ||
+                                    isAttemptLimitReached
                                 }
                                 onClick={() => {
                                     router.post(
@@ -317,9 +349,14 @@ export default function CourseTestDetail({
                                     Ujian kelas sudah ditutup.
                                 </p>
                             )}
+                            {isAttemptLimitReached && (
+                                <p className="mt-2 text-xs text-red-600">
+                                    Batas kesempatan ujian sudah habis.
+                                </p>
+                            )}
                             <p className="mt-2 text-xs text-gray-500">
                                 Anda dapat mengerjakan ulang selama ujian masih
-                                berlangsung.
+                                berlangsung dan kuota pengerjaan masih tersedia.
                             </p>
                         </div>
 
@@ -344,13 +381,28 @@ export default function CourseTestDetail({
                                                     <span className="mx-2 text-slate-400">
                                                         •
                                                     </span>
-                                                    Skor: {attempt.score}
-                                                    <span className="mx-2 text-slate-400">
-                                                        •
+                                                    {showScore ? (
+                                                        <>
+                                                            Skor:{" "}
+                                                            {attempt.score}
+                                                            <span className="mx-2 text-slate-400">
+                                                                •
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <>Status:</>
+                                                    )}
+                                                    <span
+                                                        className={`ml-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+                                                            attempt.passed
+                                                                ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                                                                : "border-rose-200 bg-rose-100 text-rose-700"
+                                                        }`}
+                                                    >
+                                                        {attempt.passed
+                                                            ? "Lulus"
+                                                            : "Tidak lulus"}
                                                     </span>
-                                                    {attempt.passed
-                                                        ? "Lulus"
-                                                        : "Tidak lulus"}
                                                     {attempt.submitted_at && (
                                                         <>
                                                             <span className="mx-2 text-slate-400">
@@ -377,7 +429,9 @@ export default function CourseTestDetail({
                                                             ],
                                                         )}
                                                     >
-                                                        Lihat Hasil
+                                                        {showScore
+                                                            ? "Lihat Hasil"
+                                                            : "Lihat Status"}
                                                     </Link>
                                                 </Button>
                                             </div>

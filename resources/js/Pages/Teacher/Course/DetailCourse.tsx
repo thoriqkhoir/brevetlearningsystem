@@ -102,6 +102,7 @@ export default function DetailCourse({
         question_bank_id: "",
         duration: "",
         passing_score: "",
+        max_attempts: "0",
         questions_to_show: "",
         start_date: null as Date | null,
         start_time: "",
@@ -359,6 +360,7 @@ export default function DetailCourse({
             question_bank_id: "",
             duration: "",
             passing_score: "",
+            max_attempts: "0",
             questions_to_show: "",
             start_date: null,
             start_time: "",
@@ -385,6 +387,7 @@ export default function DetailCourse({
             question_bank_id: courseTest.question_bank_id ?? "",
             duration: String(courseTest.duration ?? 0),
             passing_score: String(courseTest.passing_score ?? 0),
+            max_attempts: String(courseTest.max_attempts ?? 0),
             questions_to_show:
                 courseTest.questions_to_show !== null &&
                 typeof courseTest.questions_to_show !== "undefined"
@@ -471,12 +474,21 @@ export default function DetailCourse({
             return;
         }
 
+        const maxAttempts = Number(courseTestForm.max_attempts || 0);
+        if (!Number.isFinite(maxAttempts) || maxAttempts < 0) {
+            toast.error(
+                "Batas maksimal pengerjaan minimal 0 (0 = tanpa batas).",
+            );
+            return;
+        }
+
         const payload: any = {
             title: courseTestForm.title,
             description: courseTestForm.description || null,
             question_bank_id: courseTestForm.question_bank_id,
             duration: Number(courseTestForm.duration || 0),
             passing_score: Number(courseTestForm.passing_score || 0),
+            max_attempts: maxAttempts,
             questions_to_show: courseTestForm.questions_to_show
                 ? Number(courseTestForm.questions_to_show)
                 : null,
@@ -646,8 +658,8 @@ export default function DetailCourse({
     return (
         <TeacherLayout>
             <Head title={`Detail Kelas - ${course.name}`} />
-            <div className="teacher-page-shell">
-                <div className="teacher-page-stack">
+            <div className="py-8 mx-auto lg:px-4">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
@@ -663,7 +675,7 @@ export default function DetailCourse({
                     </Breadcrumb>
 
                     <div className="flex items-center justify-between">
-                        <h1 className="text-xl sm:teacher-page-title">
+                        <h1 className="text-xl sm:text-2xl font-semibold text-primary">
                             Detail Kelas - {course.name}
                         </h1>
                         <div className="flex flex-col sm:flex-col md:flex-row items-center gap-2 md:gap-2 ">
@@ -1123,7 +1135,7 @@ export default function DetailCourse({
                                             </div>
                                         </div>
 
-                                        <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                                        <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
                                             <div className="rounded-md border bg-white p-2">
                                                 <p className="text-[11px] uppercase tracking-wide text-gray-500">
                                                     Durasi
@@ -1149,6 +1161,19 @@ export default function DetailCourse({
                                                 <p className="text-sm font-semibold text-gray-800">
                                                     {courseTest.questions_to_show ||
                                                         "Semua"}
+                                                </p>
+                                            </div>
+                                            <div className="rounded-md border bg-white p-2">
+                                                <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                                                    Maksimal Pengerjaan
+                                                </p>
+                                                <p className="text-sm font-semibold text-gray-800">
+                                                    {Number(
+                                                        courseTest.max_attempts ??
+                                                            0,
+                                                    ) <= 0
+                                                        ? "Tidak terbatas"
+                                                        : courseTest.max_attempts}
                                                 </p>
                                             </div>
                                         </div>
@@ -1459,6 +1484,27 @@ export default function DetailCourse({
                                             }))
                                         }
                                     />
+                                </div>
+
+                                <div className="space-y-1">
+                                    <p className="text-xs text-muted-foreground">
+                                        Batas maksimal pengerjaan
+                                    </p>
+                                    <Input
+                                        type="number"
+                                        min={0}
+                                        placeholder="Contoh: 0 (tanpa batas)"
+                                        value={courseTestForm.max_attempts}
+                                        onChange={(e) =>
+                                            setCourseTestForm((prev) => ({
+                                                ...prev,
+                                                max_attempts: e.target.value,
+                                            }))
+                                        }
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Masukkan 0 untuk tanpa batas maksimal
+                                    </p>
                                 </div>
 
                                 <div className="space-y-1">
