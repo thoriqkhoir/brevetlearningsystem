@@ -867,6 +867,7 @@ Route::middleware(['auth', EnsureTeacher::class])->group(function () {
     Route::get('/teacher/question-banks/{questionBank}/questions/{question}/edit', [QuestionBankQuestionController::class, 'edit'])->name('teacher.questionBankQuestions.edit');
     Route::put('/teacher/question-banks/{questionBank}/questions/{question}', [QuestionBankQuestionController::class, 'update'])->name('teacher.questionBankQuestions.update');
     Route::delete('/teacher/question-banks/{questionBank}/questions/{question}', [QuestionBankQuestionController::class, 'destroy'])->name('teacher.questionBankQuestions.destroy');
+    Route::delete('/teacher/question-banks/{questionBank}/questions-all', [QuestionBankQuestionController::class, 'destroyAll'])->name('teacher.questionBankQuestions.destroyAll');
     Route::post('/teacher/question-banks/{questionBank}/questions/import', [QuestionBankQuestionController::class, 'import'])->name('teacher.questionBankQuestions.import');
 
     Route::get('/teacher/participants', [TeacherParticipantController::class, 'index'])->name('teacher.participants');

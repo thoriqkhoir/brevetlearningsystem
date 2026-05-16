@@ -139,6 +139,8 @@ export default function Question({
         useState<string>("");
     const [updatingQuestionsToShow, setUpdatingQuestionsToShow] =
         useState(false);
+    const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+    const [deletingAll, setDeletingAll] = useState(false);
 
     const maxQuestionsToShow = questionDisplaySettings?.max ?? questions.length;
     const effectiveQuestionsToShow =
@@ -240,6 +242,42 @@ export default function Question({
                 },
                 onFinish: () => {
                     setDeleting(false);
+                },
+            },
+        );
+    };
+
+    const handleDeleteAll = () => {
+        if (!canManageQuestions) {
+            toast.error(
+                "Hapus soal hanya bisa dilakukan dari halaman Bank Soal.",
+            );
+            return;
+        }
+        if (questions.length === 0) {
+            toast.error("Belum ada soal untuk dihapus.");
+            return;
+        }
+        setDeleteAllDialogOpen(true);
+    };
+
+    const performDeleteAll = () => {
+        if (!bankId || !canManageQuestions) return;
+        setDeletingAll(true);
+        router.delete(
+            route("teacher.questionBankQuestions.destroyAll", bankId),
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setDeletingAll(false);
+                    setDeleteAllDialogOpen(false);
+                },
+                onError: () => {
+                    setDeletingAll(false);
+                    toast.error("Gagal menghapus semua soal");
+                },
+                onFinish: () => {
+                    setDeletingAll(false);
                 },
             },
         );
@@ -381,8 +419,8 @@ export default function Question({
     return (
         <TeacherLayout>
             <Head title={`Soal Bank - ${bankName}`} />
-            <div className="teacher-page-shell">
-                <div className="teacher-page-stack">
+            <div className="py-8 mx-auto lg:px-4">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
                     <Breadcrumb>
                         <BreadcrumbList>
                             {isBankMode ? (
@@ -432,7 +470,7 @@ export default function Question({
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <h1 className="text-xl sm:teacher-page-title">
+                            <h1 className="text-xl sm:text-2xl font-semibold text-primary">
                                 Soal Bank - {bankName}
                             </h1>
                         </div>
@@ -638,20 +676,32 @@ export default function Question({
                                     </Dialog>
 
                                     {bankId && (
-                                        <Button
-                                            className="bg-green-600 hover:bg-green-700"
-                                            asChild
-                                        >
-                                            <Link
-                                                href={route(
-                                                    "teacher.questionBankQuestions.create",
-                                                    bankId,
-                                                )}
+                                        <>
+                                            {questions.length > 0 && (
+                                                <Button
+                                                    variant="outline"
+                                                    className="border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+                                                    onClick={handleDeleteAll}
+                                                >
+                                                    <Trash className="mr-2 h-4 w-4" />
+                                                    Hapus Semua
+                                                </Button>
+                                            )}
+                                            <Button
+                                                className="bg-green-600 hover:bg-green-700"
+                                                asChild
                                             >
-                                                <Plus size={16} />
-                                                Tambah Soal
-                                            </Link>
-                                        </Button>
+                                                <Link
+                                                    href={route(
+                                                        "teacher.questionBankQuestions.create",
+                                                        bankId,
+                                                    )}
+                                                >
+                                                    <Plus size={16} />
+                                                    Tambah Soal
+                                                </Link>
+                                            </Button>
+                                        </>
                                     )}
                                 </>
                             )}
@@ -1286,6 +1336,46 @@ export default function Question({
                                 <>
                                     <Trash className="mr-2 h-4 w-4" />
                                     Ya, Hapus
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Confirm Delete All Dialog */}
+            <Dialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Hapus Semua Soal?</DialogTitle>
+                        <DialogDescription>
+                            Tindakan ini tidak dapat dibatalkan. Semua soal dalam bank ini akan dihapus permanen.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                if (!deletingAll) setDeleteAllDialogOpen(false);
+                            }}
+                            disabled={deletingAll}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={performDeleteAll}
+                            disabled={deletingAll}
+                        >
+                            {deletingAll ? (
+                                <>
+                                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                    Menghapus Semua...
+                                </>
+                            ) : (
+                                <>
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Ya, Hapus Semua
                                 </>
                             )}
                         </Button>

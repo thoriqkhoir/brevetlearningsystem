@@ -58,6 +58,19 @@ class QuestionImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithVal
         return $question;
     }
 
+    public function prepareForValidation($data, $index)
+    {
+        $fields = ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option'];
+        
+        foreach ($fields as $field) {
+            if (array_key_exists($field, $data) && $data[$field] !== null) {
+                $data[$field] = trim((string) $data[$field]);
+            }
+        }
+
+        return $data;
+    }
+
     public function rules(): array
     {
         return [

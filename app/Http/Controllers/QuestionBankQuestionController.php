@@ -272,6 +272,30 @@ class QuestionBankQuestionController extends Controller
             ->with('success', 'Soal bank berhasil dihapus.');
     }
 
+    public function destroyAll(QuestionBank $questionBank)
+    {
+        $this->authorizeBank($questionBank);
+
+        $questions = $questionBank->questions()->with('options')->get();
+
+        foreach ($questions as $question) {
+            if ($question->image_url) {
+                Storage::disk('public')->delete($question->image_url);
+            }
+
+            foreach ($question->options as $option) {
+                if ($option->image_url) {
+                    Storage::disk('public')->delete($option->image_url);
+                }
+            }
+            $question->delete();
+        }
+
+        return redirect()
+            ->route('teacher.questionBankQuestions.index', $questionBank->id)
+            ->with('success', 'Semua soal bank berhasil dihapus.');
+    }
+
     public function import(Request $request, QuestionBank $questionBank)
     {
         $this->authorizeBank($questionBank);
