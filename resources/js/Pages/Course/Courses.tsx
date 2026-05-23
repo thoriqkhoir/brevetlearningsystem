@@ -78,6 +78,8 @@ function getStatus(start: string, end: string) {
 
 export default function Courses({ courses = [] }: any) {
     const { flash }: any = usePage().props;
+    const user = usePage().props.auth.user;
+    const noProfilePhoto = !user?.profile_url;
     const active_course = usePage().props.active_course as {
         id: number;
         name: string;
@@ -325,15 +327,23 @@ export default function Courses({ courses = [] }: any) {
                                     </div>
 
                                     <div className="mt-3 flex flex-wrap gap-2">
-                                        <Button variant="info" asChild>
-                                            <Link
-                                                href={route(
-                                                    "courses.detail",
-                                                    course.id,
-                                                )}
-                                            >
-                                                Lihat Detail
-                                            </Link>
+                                        <Button
+                                            variant="info"
+                                            disabled={noProfilePhoto}
+                                            asChild={!noProfilePhoto}
+                                        >
+                                            {noProfilePhoto ? (
+                                                "Lihat Detail"
+                                            ) : (
+                                                <Link
+                                                    href={route(
+                                                        "courses.detail",
+                                                        course.id,
+                                                    )}
+                                                >
+                                                    Lihat Detail
+                                                </Link>
+                                            )}
                                         </Button>
 
                                         {!isActive ? (
@@ -347,12 +357,13 @@ export default function Courses({ courses = [] }: any) {
                                                     )
                                                 }
                                                 disabled={
+                                                    noProfilePhoto ||
                                                     status.label !==
                                                         "Sedang Berlangsung" ||
                                                     Boolean(hasOtherActive)
                                                 }
                                             >
-                                                Mulai Mengerjakan
+                                                Mulai Praktik
                                             </Button>
                                         ) : (
                                             <Button
@@ -367,6 +378,21 @@ export default function Courses({ courses = [] }: any) {
                                             </Button>
                                         )}
                                     </div>
+
+                                    {noProfilePhoto && (
+                                        <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                                            <p className="font-semibold">⚠ Foto Profil Diperlukan</p>
+                                            <p className="mt-0.5">
+                                                Anda harus mengunggah foto profil terlebih dahulu sebelum mengerjakan kelas.{" "}
+                                                <a
+                                                    href={route("dashboard")}
+                                                    className="font-semibold underline hover:text-amber-900"
+                                                >
+                                                    Upload di Dashboard →
+                                                </a>
+                                            </p>
+                                        </div>
+                                    )}
 
                                     {status.label === "Sedang Berlangsung" ? (
                                         hasOtherActive && (

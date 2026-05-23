@@ -43,6 +43,7 @@ export default function TestDescription({
     const hasOtherActive = active_test?.id && active_test?.id !== test?.id;
     const isClosed = endDate ? nowMs >= endDate.getTime() : false;
     const notStarted = startDate ? nowMs < startDate.getTime() : false;
+    const noProfilePhoto = !user?.profile_url;
 
     return (
         <HeaderOnlyLayout
@@ -218,10 +219,11 @@ export default function TestDescription({
                                     <Button
                                         className="w-full"
                                         disabled={
-                                            !isActive &&
+                                            noProfilePhoto ||
+                                            (!isActive &&
                                             (Boolean(hasOtherActive) ||
                                                 notStarted ||
-                                                isClosed)
+                                                isClosed))
                                         }
                                         onClick={() =>
                                             router.post(
@@ -250,10 +252,25 @@ export default function TestDescription({
 
                                     {/* Hapus tombol Lihat Hasil Terakhir sesuai permintaan */}
 
-                                    {(isClosed ||
+                                    {(noProfilePhoto ||
+                                        isClosed ||
                                         hasOtherActive ||
                                         notStarted) && (
                                         <div className="text-xs text-red-600 space-y-1">
+                                            {noProfilePhoto && (
+                                                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-800">
+                                                    <p className="font-semibold text-sm">⚠ Foto Profil Diperlukan</p>
+                                                    <p className="mt-1">
+                                                        Anda harus mengunggah foto profil terlebih dahulu sebelum mengerjakan ujian.{" "}
+                                                        <a
+                                                            href={route("dashboard")}
+                                                            className="font-semibold underline hover:text-amber-900"
+                                                        >
+                                                            Upload di Dashboard →
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                            )}
                                             {isClosed && (
                                                 <p>Ujian telah ditutup.</p>
                                             )}

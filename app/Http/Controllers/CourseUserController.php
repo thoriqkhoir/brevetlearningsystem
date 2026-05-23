@@ -502,7 +502,13 @@ class CourseUserController extends Controller
 
     public function startWorking($id)
     {
+        $user = Auth::user();
         $course = Course::findOrFail($id);
+
+        // Require profile photo before starting course
+        if (empty($user->profile_url)) {
+            return back()->with('error', 'Anda harus mengunggah foto profil terlebih dahulu sebelum mengerjakan kelas. Silakan lengkapi profil Anda di Dashboard.');
+        }
 
         session(['active_course_id' => $course->id]);
 

@@ -6,6 +6,7 @@ export interface User {
     role: "admin" | "pengguna" | "pengajar";
     npwp?: string;
     address?: string;
+    profile_url?: string;
     institution?: string;
     max_class?: number;
     last_login_at?: string;

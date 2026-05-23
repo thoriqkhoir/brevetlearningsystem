@@ -26,6 +26,7 @@ class User extends Authenticatable
         'phone_number',
         'npwp',
         'address',
+        'profile_url',
         'institution',
         'max_class',
         'max_test',

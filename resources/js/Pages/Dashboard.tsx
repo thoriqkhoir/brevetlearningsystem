@@ -1,11 +1,11 @@
 import { Button } from "@/Components/ui/button";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, Link, usePage } from "@inertiajs/react";
-import { useEffect, useState } from "react";
+import { Head, Link, usePage, useForm } from "@inertiajs/react";
+import { useEffect, useState, useRef } from "react";
 import UpdatePasswordForm from "./Profile/Partials/UpdatePasswordForm";
 import Modal from "@/Components/ui/modal";
 import UpdateProfileInformationForm from "./Profile/Partials/UpdateProfileInformationForm";
-import { Building2, MoveLeft, School, Wallet } from "lucide-react";
+import { Building2, MoveLeft, School, Wallet, Camera, Upload, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function Dashboard({
@@ -22,6 +22,7 @@ export default function Dashboard({
     const { flash }: any = usePage().props;
     const [isProfileModalOpen, setProfileModalOpen] = useState(false);
     const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
+    const [isPhotoModalOpen, setPhotoModalOpen] = useState(false);
     const user = usePage().props.auth.user;
     const active_course = usePage().props.active_course as {
         id: number;
@@ -73,6 +74,58 @@ export default function Dashboard({
             ? "border-rose-200 bg-rose-50/80"
             : "border-teal-100 bg-gradient-to-r from-teal-50/80 to-cyan-50/80";
 
+    // Photo upload form
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const photoForm = useForm<{ profile_photo: File | null }>({
+        profile_photo: null,
+    });
+
+    const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validate file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                toast.error("Ukuran gambar maksimal 2MB.");
+                return;
+            }
+            // Validate file type
+            const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+            if (!allowedTypes.includes(file.type)) {
+                toast.error("Format gambar harus JPG, JPEG, PNG, atau WebP.");
+                return;
+            }
+            photoForm.setData("profile_photo", file);
+            const reader = new FileReader();
+            reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handlePhotoUpload = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!photoForm.data.profile_photo) {
+            toast.error("Silakan pilih foto terlebih dahulu.");
+            return;
+        }
+        photoForm.post(route("profile.photo.upload"), {
+            forceFormData: true,
+            onSuccess: () => {
+                setPhotoModalOpen(false);
+                setPhotoPreview(null);
+                photoForm.reset();
+            },
+        });
+    };
+
+    const clearPhotoPreview = () => {
+        setPhotoPreview(null);
+        photoForm.setData("profile_photo", null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
     useEffect(() => {
         if (flash?.success) {
             toast.success(flash.success);
@@ -121,9 +174,35 @@ export default function Dashboard({
                                 Informasi Pengguna
                             </p>
                             <div className="mt-6 flex flex-col items-center">
-                                <div className="mt-2 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-teal-600 to-cyan-700 text-4xl font-semibold text-white shadow-lg ring-4 ring-white">
-                                    {getInitials(user.name)}
+                                {/* Profile Photo with Upload */}
+                                <div className="relative group">
+                                    {user.profile_url ? (
+                                        <img
+                                            src={user.profile_url}
+                                            alt={`Foto profil ${user.name}`}
+                                            className="mt-2 h-24 w-24 rounded-3xl object-cover shadow-lg ring-4 ring-white"
+                                        />
+                                    ) : (
+                                        <div className="mt-2 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-teal-600 to-cyan-700 text-4xl font-semibold text-white shadow-lg ring-4 ring-white">
+                                            {getInitials(user.name)}
+                                        </div>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setPhotoModalOpen(true)}
+                                        className="absolute inset-0 mt-2 flex items-center justify-center rounded-3xl bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100 cursor-pointer"
+                                        title="Ubah foto profil"
+                                    >
+                                        <Camera className="h-6 w-6 text-white" />
+                                    </button>
                                 </div>
+
+                                {!user.profile_url && (
+                                    <p className="mt-2 text-xs text-amber-600 font-medium">
+                                        ⚠ Foto profil belum diunggah
+                                    </p>
+                                )}
+
                                 <h2 className="mt-3 text-xl font-semibold text-slate-800">
                                     {user.name}
                                 </h2>
@@ -200,6 +279,102 @@ export default function Dashboard({
                                     title="Edit Profile"
                                 >
                                     <UpdatePasswordForm />
+                                </Modal>
+
+                                {/* Photo Upload Modal */}
+                                <Modal
+                                    isOpen={isPhotoModalOpen}
+                                    onClose={() => {
+                                        setPhotoModalOpen(false);
+                                        clearPhotoPreview();
+                                    }}
+                                    title="Upload Foto Profil"
+                                >
+                                    <div className="max-w-md">
+                                        <p className="text-sm text-slate-600 mb-4">
+                                            Unggah foto profil Anda. Foto profil wajib diunggah sebelum mengerjakan ujian.
+                                        </p>
+
+                                        <form onSubmit={handlePhotoUpload} className="space-y-4">
+                                            {/* Preview area */}
+                                            <div className="flex flex-col items-center gap-4">
+                                                {photoPreview ? (
+                                                    <div className="relative">
+                                                        <img
+                                                            src={photoPreview}
+                                                            alt="Preview foto profil"
+                                                            className="h-32 w-32 rounded-2xl object-cover shadow-md ring-4 ring-teal-100"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={clearPhotoPreview}
+                                                            className="absolute -top-2 -right-2 rounded-full bg-rose-500 p-1 text-white shadow-md hover:bg-rose-600 transition-colors"
+                                                        >
+                                                            <X className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    </div>
+                                                ) : user.profile_url ? (
+                                                    <img
+                                                        src={user.profile_url}
+                                                        alt="Foto profil saat ini"
+                                                        className="h-32 w-32 rounded-2xl object-cover shadow-md ring-4 ring-teal-100"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-32 w-32 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 text-5xl font-semibold text-white shadow-md ring-4 ring-teal-100">
+                                                        {getInitials(user.name)}
+                                                    </div>
+                                                )}
+
+                                                <div
+                                                    className="flex w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-teal-200 bg-teal-50/50 px-4 py-4 transition-colors hover:border-teal-400 hover:bg-teal-50"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                >
+                                                    <div className="flex flex-col items-center gap-1.5">
+                                                        <Upload className="h-6 w-6 text-teal-600" />
+                                                        <span className="text-sm font-medium text-teal-700">
+                                                            Klik untuk pilih foto
+                                                        </span>
+                                                        <span className="text-xs text-slate-500">
+                                                            JPG, PNG, WebP • Maks 2MB
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                                                    onChange={handlePhotoSelect}
+                                                />
+                                            </div>
+
+                                            {photoForm.errors.profile_photo && (
+                                                <p className="text-sm text-rose-600">
+                                                    {photoForm.errors.profile_photo}
+                                                </p>
+                                            )}
+
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="submit"
+                                                    disabled={!photoForm.data.profile_photo || photoForm.processing}
+                                                    className="flex-1"
+                                                >
+                                                    {photoForm.processing ? "Mengunggah..." : "Simpan Foto"}
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setPhotoModalOpen(false);
+                                                        clearPhotoPreview();
+                                                    }}
+                                                >
+                                                    Batal
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </Modal>
                             </div>
                         </div>

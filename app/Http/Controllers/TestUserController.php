@@ -574,6 +574,11 @@ class TestUserController extends Controller
         $user = Auth::user();
         $test = Test::findOrFail($id);
 
+        // Require profile photo before starting exam
+        if (empty($user->profile_url)) {
+            return back()->with('error', 'Anda harus mengunggah foto profil terlebih dahulu sebelum mengerjakan ujian. Silakan lengkapi profil Anda di Dashboard.');
+        }
+
         $tz = 'Asia/Jakarta';
         $now = now($tz);
         $start = !empty($test->start_date) ? Carbon::parse($test->start_date, $tz) : null;
