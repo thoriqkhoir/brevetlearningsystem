@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('phone_number');
             $table->string('npwp')->nullable();
             $table->string('address')->nullable();
+            $table->string('profile_url')->nullable();
             $table->string('institution')->nullable();
             $table->tinyInteger('max_class')->nullable();
             $table->tinyInteger('max_test')->nullable();
