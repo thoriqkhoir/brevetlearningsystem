@@ -179,9 +179,17 @@ export default function AdminLayout({ children }: PropsWithChildren) {
                                             <p className="font-medium text-slate-700">
                                                 {user.name}
                                             </p>
-                                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 text-lg font-semibold text-white">
-                                                {getInitials(user.name)}
-                                            </div>
+                                            {user.profile_url ? (
+                                                <img
+                                                    src={user.profile_url}
+                                                    alt={`Foto profil ${user.name}`}
+                                                    className="h-10 w-10 rounded-2xl object-cover shadow-sm ring-2 ring-teal-100"
+                                                />
+                                            ) : (
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 text-lg font-semibold text-white">
+                                                    {getInitials(user.name)}
+                                                </div>
+                                            )}
                                             <ChevronDown className="h-4 w-4 text-slate-500" />
                                         </div>
                                     </DropdownMenuTrigger>

@@ -79,9 +79,22 @@ export default function DetailPengguna({
                     </Breadcrumb>
 
                     <div className="flex items-center justify-between">
-                        <h1 className="text-2xl font-semibold text-primary">
-                            {user.name}
-                        </h1>
+                        <div className="flex items-center gap-4">
+                            {user.profile_url ? (
+                                <img
+                                    src={user.profile_url}
+                                    alt={`Foto profil ${user.name}`}
+                                    className="h-14 w-14 rounded-2xl object-cover shadow-sm ring-2 ring-teal-100"
+                                />
+                            ) : (
+                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xl font-bold text-white shadow-sm">
+                                    {user.name?.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase() || "??"}
+                                </div>
+                            )}
+                            <h1 className="text-2xl font-semibold text-primary">
+                                {user.name}
+                            </h1>
+                        </div>
 
                         <div className="flex gap-2">
                             <AlertDialog

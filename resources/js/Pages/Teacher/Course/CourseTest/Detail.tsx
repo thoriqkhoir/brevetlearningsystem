@@ -48,6 +48,15 @@ export default function CourseTestTeacherDetail({
     participants = [],
     attemptHistory = [],
 }: any) {
+    const getInitials = (name: string) => {
+        return name
+            ?.split(" ")
+            .map((n) => n[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase() || "??";
+    };
+
     const attemptedParticipants = Number(
         statistics?.attempted_participants ?? 0,
     );
@@ -231,10 +240,20 @@ export default function CourseTestTeacherDetail({
                                                             className="border-b last:border-b-0"
                                                         >
                                                             <td className="py-2 font-medium text-gray-800">
-                                                                {participant
-                                                                    ?.user
-                                                                    ?.name ||
-                                                                    "-"}
+                                                                <div className="flex items-center gap-3">
+                                                                    {participant?.user?.profile_url ? (
+                                                                        <img
+                                                                            src={participant.user.profile_url}
+                                                                            alt={`Foto profil ${participant.user.name}`}
+                                                                            className="h-8 w-8 rounded-xl object-cover shadow-sm ring-1 ring-teal-100"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xs font-bold text-white shadow-sm shrink-0">
+                                                                            {getInitials(participant?.user?.name || "??")}
+                                                                        </div>
+                                                                    )}
+                                                                    <span>{participant?.user?.name || "-"}</span>
+                                                                </div>
                                                             </td>
                                                             <td className="py-2 text-gray-600">
                                                                 {participant
@@ -310,9 +329,20 @@ export default function CourseTestTeacherDetail({
                                                             className="border-b last:border-b-0"
                                                         >
                                                             <td className="py-2 font-medium text-gray-800">
-                                                                {attempt?.user
-                                                                    ?.name ||
-                                                                    "-"}
+                                                                <div className="flex items-center gap-3">
+                                                                    {attempt?.user?.profile_url ? (
+                                                                        <img
+                                                                            src={attempt.user.profile_url}
+                                                                            alt={`Foto profil ${attempt.user.name}`}
+                                                                            className="h-8 w-8 rounded-xl object-cover shadow-sm ring-1 ring-teal-100"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xs font-bold text-white shadow-sm shrink-0">
+                                                                            {getInitials(attempt?.user?.name || "??")}
+                                                                        </div>
+                                                                    )}
+                                                                    <span>{attempt?.user?.name || "-"}</span>
+                                                                </div>
                                                             </td>
                                                             <td className="py-2 text-gray-600">
                                                                 {attempt?.user

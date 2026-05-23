@@ -37,6 +37,15 @@ export default function DetailCourse({
     );
     const [pdfViewOpen, setPdfViewOpen] = useState(false);
 
+    const getInitials = (name: string) => {
+        return name
+            ?.split(" ")
+            .map((n) => n[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase() || "??";
+    };
+
     useEffect(() => {
         if (page > pageCount) setPage(pageCount);
     }, [pageCount]);
@@ -300,7 +309,20 @@ export default function DetailCourse({
                                                         1}
                                                 </td>
                                                 <td className="py-2 px-3 border">
-                                                    {p.user?.name || "-"}
+                                                    <div className="flex items-center gap-3">
+                                                        {p.user?.profile_url ? (
+                                                            <img
+                                                                src={p.user.profile_url}
+                                                                alt={`Foto profil ${p.user.name}`}
+                                                                className="h-8 w-8 rounded-xl object-cover shadow-sm ring-1 ring-teal-100"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xs font-bold text-white shadow-sm shrink-0">
+                                                                {getInitials(p.user?.name || "??")}
+                                                            </div>
+                                                        )}
+                                                        <span className="font-medium text-slate-700">{p.user?.name || "-"}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="py-2 px-3 border">
                                                     {p.user?.email || "-"}

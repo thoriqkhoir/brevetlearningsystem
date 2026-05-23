@@ -196,9 +196,17 @@ export default function Dashboard({
                     <div className="rounded-2xl border border-teal-100 bg-gradient-to-r from-teal-50 via-white to-amber-50 p-6 shadow-sm">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xl font-bold text-white shadow-md">
-                                    {user ? getInitials(user.name) : "??"}
-                                </div>
+                                {user?.profile_url ? (
+                                    <img
+                                        src={user.profile_url}
+                                        alt={`Foto profil ${user.name}`}
+                                        className="h-14 w-14 rounded-2xl object-cover shadow-md ring-2 ring-white"
+                                    />
+                                ) : (
+                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xl font-bold text-white shadow-md">
+                                        {user ? getInitials(user.name) : "??"}
+                                    </div>
+                                )}
                                 <div>
                                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
                                         Teacher Portal

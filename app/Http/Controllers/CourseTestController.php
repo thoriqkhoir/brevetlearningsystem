@@ -88,7 +88,7 @@ class CourseTestController extends Controller
         $courseTest->load('questionBank');
 
         $participants = $course->participants()
-            ->with('user:id,name,email')
+            ->with('user:id,name,email,profile_url')
             ->get(['id', 'course_id', 'user_id']);
 
         $submittedAttempts = CourseTestAttempt::where('course_test_id', $courseTest->id)
@@ -97,7 +97,7 @@ class CourseTestController extends Controller
 
         $attemptHistory = CourseTestAttempt::where('course_test_id', $courseTest->id)
             ->whereNotNull('submitted_at')
-            ->with('user:id,name,email')
+            ->with('user:id,name,email,profile_url')
             ->orderBy('submitted_at', 'desc')
             ->get()
             ->map(function ($attempt) {

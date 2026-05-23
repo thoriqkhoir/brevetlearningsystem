@@ -30,6 +30,7 @@ export type ParticipantColumns = {
         id: string;
         name: string;
         email: string;
+        profile_url?: string | null;
     };
     average_score: number | null;
     feedback: string | null;
@@ -136,9 +137,34 @@ export const participantColumns = (
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Nama" />
         ),
-        cell: ({ row }) => (
-            <p className="w-[180px]">{row.original.user?.name || "-"}</p>
-        ),
+        cell: ({ row }) => {
+            const user = row.original.user;
+            const getInitials = (name: string) => {
+                return name
+                    ?.split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .substring(0, 2)
+                    .toUpperCase() || "??";
+            };
+
+            return (
+                <div className="flex items-center gap-3 w-[220px]">
+                    {user?.profile_url ? (
+                        <img
+                            src={user.profile_url}
+                            alt={`Foto profil ${user.name}`}
+                            className="h-8 w-8 rounded-xl object-cover shadow-sm ring-1 ring-teal-100"
+                        />
+                    ) : (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xs font-bold text-white shadow-sm shrink-0">
+                            {getInitials(user?.name || "??")}
+                        </div>
+                    )}
+                    <p className="font-medium text-slate-700">{user?.name || "-"}</p>
+                </div>
+            );
+        },
     },
     {
         accessorKey: "user.email",

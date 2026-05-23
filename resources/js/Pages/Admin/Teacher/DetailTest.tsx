@@ -11,6 +11,15 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 export default function AdminDetailTest({ teacher, test = {}, participants = [] }: any) {
+  const getInitials = (name: string) => {
+    return name
+        ?.split(" ")
+        .map((n) => n[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase() || "??";
+  };
+
   return (
     <AdminLayout>
       <Head title={`Detail Ujian - ${test?.title ?? ""}`} />
@@ -125,7 +134,22 @@ export default function AdminDetailTest({ teacher, test = {}, participants = [] 
                   <tbody>
                     {participants.map((p: any) => (
                       <tr key={p.id} className="border-b last:border-0">
-                        <td className="py-2 pr-4">{p.user?.name || '-'}</td>
+                        <td className="py-2 pr-4">
+                          <div className="flex items-center gap-3">
+                            {p.user?.profile_url ? (
+                              <img
+                                src={p.user.profile_url}
+                                alt={`Foto profil ${p.user.name}`}
+                                className="h-8 w-8 rounded-xl object-cover shadow-sm ring-1 ring-teal-100"
+                              />
+                            ) : (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xs font-bold text-white shadow-sm shrink-0">
+                                {getInitials(p.user?.name || "??")}
+                              </div>
+                            )}
+                            <span className="font-medium text-slate-700">{p.user?.name || "-"}</span>
+                          </div>
+                        </td>
                         <td className="py-2 pr-4">{p.user?.email || '-'}</td>
                       </tr>
                     ))}

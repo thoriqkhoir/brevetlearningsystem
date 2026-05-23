@@ -55,6 +55,16 @@ export default function ParticipantDetail({
     attempts = [],
 }: any) {
     const { flash }: any = usePage().props;
+
+    const getInitials = (name: string) => {
+        return name
+            ?.split(" ")
+            .map((n) => n[0])
+            .join("")
+            .substring(0, 2)
+            .toUpperCase() || "??";
+    };
+
     const [feedbackData, setFeedbackData] = useState(
         participant.feedback || ""
     );
@@ -146,11 +156,22 @@ export default function ParticipantDetail({
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <div className="text-sm text-gray-500">
+                                <div className="text-sm text-gray-500 mb-1">
                                     Nama
                                 </div>
-                                <div className="font-medium">
-                                    {participant.user?.name || "-"}
+                                <div className="flex items-center gap-3">
+                                    {participant.user?.profile_url ? (
+                                        <img
+                                            src={participant.user.profile_url}
+                                            alt={`Foto profil ${participant.user.name}`}
+                                            className="h-10 w-10 rounded-xl object-cover shadow-sm ring-1 ring-teal-100"
+                                        />
+                                    ) : (
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-700 text-sm font-bold text-white shadow-sm shrink-0">
+                                            {getInitials(participant.user?.name || "??")}
+                                        </div>
+                                    )}
+                                    <span className="font-medium text-lg text-slate-700">{participant.user?.name || "-"}</span>
                                 </div>
                             </div>
                             <div>
