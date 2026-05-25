@@ -240,6 +240,7 @@ class CourseTestController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'show_score' => 'nullable|boolean',
+            'show_correct_answers' => 'nullable|boolean',
         ]);
     }
 

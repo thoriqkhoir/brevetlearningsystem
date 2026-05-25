@@ -24,6 +24,7 @@ return new class extends Migration
             $table->timestamp('start_date')->nullable();
             $table->timestamp('end_date')->nullable();
             $table->boolean('show_score')->default(true);
+            $table->boolean('show_correct_answers')->default(true);
             $table->timestamps();
 
             $table->index(['course_id', 'start_date', 'end_date']);

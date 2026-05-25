@@ -83,6 +83,7 @@ class CourseTestImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithV
             'start_date' => $startDate,
             'end_date' => $endDate,
             'show_score' => $this->normalizeBoolean($row['show_score'] ?? null),
+            'show_correct_answers' => $this->normalizeBoolean($row['show_correct_answers'] ?? null),
         ]);
 
         return null;
@@ -151,6 +152,7 @@ class CourseTestImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithV
                 },
             ],
             'show_score' => 'nullable',
+            'show_correct_answers' => 'nullable',
         ];
     }
 

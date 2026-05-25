@@ -109,6 +109,7 @@ export default function DetailCourse({
         end_date: null as Date | null,
         end_time: "",
         show_score: true,
+        show_correct_answers: true,
     });
     const scheduleImportInputRef = useRef<HTMLInputElement | null>(null);
     const courseTestImportInputRef = useRef<HTMLInputElement | null>(null);
@@ -301,6 +302,10 @@ export default function DetailCourse({
                 {
                     preserveScroll: true,
                     onSuccess,
+                    onError: (errors: any) => {
+                        const firstError = Object.values(errors)[0];
+                        if (firstError) toast.error(firstError as string);
+                    },
                 },
             );
             return;
@@ -312,6 +317,10 @@ export default function DetailCourse({
             {
                 preserveScroll: true,
                 onSuccess,
+                onError: (errors: any) => {
+                    const firstError = Object.values(errors)[0];
+                    if (firstError) toast.error(firstError as string);
+                },
             },
         );
     };
@@ -367,6 +376,7 @@ export default function DetailCourse({
             end_date: null,
             end_time: "",
             show_score: true,
+            show_correct_answers: true,
         });
     };
 
@@ -398,6 +408,7 @@ export default function DetailCourse({
             end_date: endParts.date,
             end_time: endParts.time,
             show_score: !!courseTest.show_score,
+            show_correct_answers: !!courseTest.show_correct_answers,
         });
         setTestDialogOpen(true);
     };
@@ -495,6 +506,7 @@ export default function DetailCourse({
             start_date: startDateText,
             end_date: endDateText,
             show_score: courseTestForm.show_score,
+            show_correct_answers: courseTestForm.show_correct_answers,
         };
 
         const onSuccess = () => {
@@ -513,6 +525,10 @@ export default function DetailCourse({
                 {
                     preserveScroll: true,
                     onSuccess,
+                    onError: (errors: any) => {
+                        const firstError = Object.values(errors)[0];
+                        if (firstError) toast.error(firstError as string);
+                    },
                 },
             );
             return;
@@ -521,6 +537,10 @@ export default function DetailCourse({
         router.post(route("teacher.courseTests.store", course.id), payload, {
             preserveScroll: true,
             onSuccess,
+            onError: (errors: any) => {
+                const firstError = Object.values(errors)[0];
+                if (firstError) toast.error(firstError as string);
+            },
         });
     };
 
@@ -631,6 +651,10 @@ export default function DetailCourse({
                     setAddParticipantOpen(false);
                     setSearchQuery("");
                     setSearchResults([]);
+                },
+                onError: (errors: any) => {
+                    const firstError = Object.values(errors)[0];
+                    if (firstError) toast.error(firstError as string);
                 },
             },
         );
@@ -1744,6 +1768,22 @@ export default function DetailCourse({
                                         }
                                     />
                                     Tampilkan nilai ke peserta
+                                </label>
+
+                                <label className="md:col-span-2 flex items-center gap-2 text-sm">
+                                    <Checkbox
+                                        checked={
+                                            courseTestForm.show_correct_answers
+                                        }
+                                        onCheckedChange={(checked) =>
+                                            setCourseTestForm((prev) => ({
+                                                ...prev,
+                                                show_correct_answers:
+                                                    checked === true,
+                                            }))
+                                        }
+                                    />
+                                    Tampilkan jawaban benar salah ke peserta
                                 </label>
                                 <Button
                                     className="md:col-span-2"

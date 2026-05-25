@@ -13,11 +13,12 @@ class CourseTest extends Model
     protected $guarded = ['created_at', 'updated_at'];
 
     protected $casts = [
-        'questions_to_show' => 'integer',
+        'questions_to_show' => 'integer',   
         'duration' => 'integer',
         'passing_score' => 'integer',
         'max_attempts' => 'integer',
         'show_score' => 'boolean',
+        'show_correct_answers' => 'boolean',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
     ];

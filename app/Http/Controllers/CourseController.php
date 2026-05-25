@@ -88,6 +88,7 @@ class CourseController extends Controller
                     'start_date' => $courseTestPayload['start_date'] ?? null,
                     'end_date' => $courseTestPayload['end_date'] ?? null,
                     'show_score' => $courseTestPayload['show_score'] ?? true,
+                    'show_correct_answers' => $courseTestPayload['show_correct_answers'] ?? true,
                 ]);
             }
         });
@@ -224,7 +225,7 @@ class CourseController extends Controller
     {
         $original = Course::with([
             'courseSchedules:id,course_id,title,scheduled_at,zoom_link',
-            'courseTests:id,course_id,question_bank_id,title,description,duration,passing_score,questions_to_show,start_date,end_date,show_score',
+            'courseTests:id,course_id,question_bank_id,title,description,duration,passing_score,questions_to_show,start_date,end_date,show_score,show_correct_answers',
         ])->findOrFail($id);
 
         if ($original->teacher_id !== Auth::id()) {
@@ -271,6 +272,7 @@ class CourseController extends Controller
                     'start_date' => $courseTest->start_date,
                     'end_date' => $courseTest->end_date,
                     'show_score' => $courseTest->show_score,
+                    'show_correct_answers' => $courseTest->show_correct_answers,
                 ]);
             }
         });
@@ -431,6 +433,7 @@ class CourseController extends Controller
             'course_tests.*.start_date' => 'nullable|date',
             'course_tests.*.end_date' => 'nullable|date|after_or_equal:course_tests.*.start_date',
             'course_tests.*.show_score' => 'nullable|boolean',
+            'course_tests.*.show_correct_answers' => 'nullable|boolean',
         ]);
     }
 
