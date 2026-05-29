@@ -9,6 +9,7 @@ import {
     BreadcrumbSeparator,
 } from "@/Components/ui/breadcrumb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
+import { Upload } from "lucide-react";
 
 function parseLocalDate(value?: string | null) {
     if (!value) return null;
@@ -208,8 +209,24 @@ export default function CourseTestTeacherDetail({
 
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-6">
                                 <h2 className="text-lg font-semibold text-primary">
-                                    Peserta & Riwayat Pengerjaan
+                                    Peserta &amp; Riwayat Pengerjaan
                                 </h2>
+                                <Button variant="default" asChild>
+                                    <a
+                                        href={route(
+                                            "teacher.courseTests.exportParticipants",
+                                            {
+                                                course: course.id,
+                                                courseTest: courseTest.id,
+                                            },
+                                        )}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <Upload className="w-4 h-4" />
+                                        Ekspor Peserta (.xlsx)
+                                    </a>
+                                </Button>
                             </div>
 
                             <TabsContent value="participants" className="mt-4">

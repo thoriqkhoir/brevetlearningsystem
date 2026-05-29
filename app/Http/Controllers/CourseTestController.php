@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\CourseTestParticipantsExport;
 use App\Imports\CourseTestImport;
 use App\Models\Course;
 use App\Models\CourseTest;
@@ -179,6 +180,16 @@ class CourseTestController extends Controller
             'participants' => $participantsData,
             'attemptHistory' => $attemptHistory,
         ]);
+    }
+
+    public function exportParticipants(Course $course, CourseTest $courseTest)
+    {
+        $this->authorizeCourse($course);
+        $this->ensureCourseTestBelongsToCourse($course, $courseTest);
+
+        $fileName = 'peserta_ujian_kelas_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $courseTest->title ?? 'test') . '.xlsx';
+
+        return Excel::download(new CourseTestParticipantsExport($course, $courseTest), $fileName);
     }
 
     private function authorizeCourse(Course $course): void

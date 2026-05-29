@@ -29,9 +29,9 @@ export default function HeaderOnlyLayout({
             <header className="sticky top-0 z-40 w-full border-b border-teal-100 bg-gradient-to-r from-teal-50 via-white to-amber-50/90 backdrop-blur-sm">
                 <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3">
-                        <Button variant="outline" onClick={handleBack}>
+                        {/* <Button variant="outline" onClick={handleBack}>
                             <ArrowLeft size={16} className="mr-1" /> Kembali
-                        </Button>
+                        </Button> */}
                         {title && (
                             <h1 className="truncate text-sm font-medium text-slate-700 sm:text-base md:text-lg">
                                 {title}

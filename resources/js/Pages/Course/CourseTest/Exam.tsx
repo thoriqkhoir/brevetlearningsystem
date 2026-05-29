@@ -49,8 +49,18 @@ export default function Exam({
 }: any) {
     const total = questionIndex?.length ?? 0;
 
-    // Timer based on server-provided deadline to avoid client drift. Persist remaining in localStorage by test id.
-    // We'll compute canSubmit using union of server and local answers (local-only mode)
+    useEffect(() => {
+        const prevent = (e: Event) => e.preventDefault();
+        document.addEventListener("selectstart", prevent);
+        document.addEventListener("copy", prevent);
+        document.addEventListener("contextmenu", prevent);
+        return () => {
+            document.removeEventListener("selectstart", prevent);
+            document.removeEventListener("copy", prevent);
+            document.removeEventListener("contextmenu", prevent);
+        };
+    }, []);
+    
     const [answersVersion, setAnswersVersion] = useState(0);
 
     const storageKey = useMemo(() => {
@@ -521,7 +531,7 @@ export default function Exam({
                 ])}
             >
                 <Head title={`Ujian - ${test?.title ?? "Ujian"}`} />
-                <div className="py-4 mx-auto px-4 bg-white min-h-[calc(100vh-3.5rem)]">
+                <div className="py-4 mx-auto px-4 bg-white min-h-[calc(100vh-3.5rem)] select-none">
                     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[1fr,320px] gap-4">
                         {/* Left: Question Card */}
                         <div className="bg-white border rounded-xl p-6 shadow-sm">
@@ -668,13 +678,14 @@ export default function Exam({
                                     {currentQuestion.question_type ===
                                         "short_answer" && (
                                         <textarea
-                                            className="w-full border rounded p-3"
+                                            className="w-full border rounded p-3 select-text"
                                             rows={4}
                                             placeholder="Tulis jawaban Anda"
                                             defaultValue={
                                                 effectiveAnswer?.answer
                                             }
                                             name={`q_${currentQuestion.id}`}
+                                            onContextMenu={(e) => e.stopPropagation()}
                                             onBlur={(e) => {
                                                 const val =
                                                     e.currentTarget.value;

@@ -904,6 +904,7 @@ Route::middleware(['auth', EnsureTeacher::class])->group(function () {
     Route::post('/teacher/courses/{course}/tests', [CourseTestController::class, 'store'])->name('teacher.courseTests.store');
     Route::post('/teacher/courses/{course}/tests/import', [CourseTestController::class, 'import'])->name('teacher.courseTests.import');
     Route::get('/teacher/courses/{course}/tests/{courseTest}/detail', [CourseTestController::class, 'detail'])->name('teacher.courseTests.detail');
+    Route::get('/teacher/courses/{course}/tests/{courseTest}/export-participants', [CourseTestController::class, 'exportParticipants'])->name('teacher.courseTests.exportParticipants');
     Route::put('/teacher/courses/{course}/tests/{courseTest}', [CourseTestController::class, 'update'])->name('teacher.courseTests.update');
     Route::delete('/teacher/courses/{course}/tests/{courseTest}', [CourseTestController::class, 'destroy'])->name('teacher.courseTests.destroy');
 
