@@ -10,7 +10,7 @@ import { Download, FileDown, RefreshCcw, Trash, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-export default function DaftarPengguna({ users, events }: any) {
+export default function DaftarPengguna({ users }: any) {
     const { flash }: any = usePage().props;
     const [initialUsers, setInitialUsers] = useState(
         users.map((user: any) => ({
@@ -29,11 +29,6 @@ export default function DaftarPengguna({ users, events }: any) {
     }>({
         file: null,
     });
-
-    const eventOptions = events.map((event: any) => ({
-        value: String(event.id),
-        label: event.name,
-    }));
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -190,7 +185,6 @@ export default function DaftarPengguna({ users, events }: any) {
                             columns={columns}
                             data={initialUsers}
                             setSelectedIds={handleSelectIds}
-                            eventOptions={eventOptions}
                         />
                     </div>
                 </div>

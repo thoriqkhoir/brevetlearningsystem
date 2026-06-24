@@ -28,11 +28,6 @@ const adminItems = () => {
                     icon: School,
                 },
                 {
-                    title: "Daftar Event",
-                    url: route("admin.events"),
-                    icon: CalendarFold,
-                },
-                {
                     title: "Daftar Kelas",
                     url: route("admin.courses"),
                     icon: BookOpen,

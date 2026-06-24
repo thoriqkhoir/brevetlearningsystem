@@ -107,7 +107,6 @@ use App\Http\Controllers\TestUserController;
 use App\Http\Controllers\BusinessEntityController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\CYController;
-use App\Http\Controllers\EventController;
 use App\Http\Controllers\MPController;
 use App\Http\Controllers\NIKRegistrationController;
 use App\Http\Controllers\SPController;
@@ -839,13 +838,6 @@ Route::middleware(['auth', EnsureAdmin::class])->group(function () {
     Route::get('/admin/teachers/{id}/course/{courseId}', [TeacherController::class, 'showCourse'])->name('admin.showTeacherCourse');
     Route::get('/admin/teachers/{teacherId}/courses/{courseId}/modules', [TeacherController::class, 'showCourseModules'])->name('admin.showTeacherCourseModules');
     Route::get('/admin/teachers/{id}/test/{testId}', [TeacherController::class, 'showTest'])->name('admin.showTeacherTest');
-
-    Route::get('/admin/events', [EventController::class, 'index'])->name('admin.events');
-    Route::get('/admin/events/create', [EventController::class, 'create'])->name('admin.createEvent');
-    Route::post('/admin/events/store', [EventController::class, 'store'])->name('admin.storeEvent');
-    Route::get('/admin/events/{id}/edit', [EventController::class, 'edit'])->name('admin.editEvent');
-    Route::put('/admin/events/{id}', [EventController::class, 'update'])->name('admin.updateEvent');
-    Route::delete('/admin/events/destroy/{id}', [EventController::class, 'destroy'])->name('admin.destroyEvent');
 
     Route::get('/admin/courses', [AdminCourseListController::class, 'index'])->name('admin.courses');
     Route::get('/admin/tests', [AdminTestListController::class, 'index'])->name('admin.tests');

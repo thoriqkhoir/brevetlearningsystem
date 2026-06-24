@@ -12,13 +12,14 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\UserImport;
 use App\Models\Bupot;
 use App\Models\Event;
+use App\Models\Course;
 
 class AdminController extends Controller
 {
     public function index()
     {
         $userCount = User::where('role', 'pengguna')->count();
-        $eventCount = Event::count();
+        $courseCount = Course::count();
         $userLoginToday = User::where('role', 'pengguna')
             ->where('last_login_at', '>=', now()->startOfDay())
             ->count();
@@ -28,11 +29,23 @@ class AdminController extends Controller
         $sptPpnCount = Spt::where('form_id', 1)->count();
         $sptUnifikasiCount = Spt::where('form_id', 2)->count();
         $sptPph21Count = Spt::where('form_id', 3)->count();
+        $sptOpCount = Spt::where('form_id', 4)->count();
+        $sptBadanCount = Spt::where('form_id', 5)->count();
+
+        $now = now();
+        $runningCourses = Course::query()
+            ->with(['user:id,name,email'])
+            ->withCount('participants')
+            ->whereNotNull('start_date')
+            ->whereNotNull('end_date')
+            ->where('start_date', '<=', $now)
+            ->where('end_date', '>=', $now)
+            ->orderByDesc('created_at')
+            ->get();
 
         return Inertia::render('Admin/Dashboard', [
-
             'userCount' => $userCount,
-            'eventCount' => $eventCount,
+            'courseCount' => $courseCount,
             'userLoginToday' => $userLoginToday,
             'outputInvoiceCount' => $outputInvoiceCount,
             'inputInvoiceCount' => $inputInvoiceCount,
@@ -40,6 +53,9 @@ class AdminController extends Controller
             'sptPpnCount' => $sptPpnCount,
             'sptUnifikasiCount' => $sptUnifikasiCount,
             'sptPph21Count' => $sptPph21Count,
+            'sptOpCount' => $sptOpCount,
+            'sptBadanCount' => $sptBadanCount,
+            'runningCourses' => $runningCourses,
         ]);
     }
 
@@ -50,27 +66,21 @@ class AdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $events = Event::select('id', 'name')->get();
-
         return Inertia::render('Admin/DaftarPengguna', [
             'users' => $users,
-            'events' => $events,
         ]);
     }
 
     public function create()
     {
-        $events = Event::all();
-        return Inertia::render('Admin/FormCreateUser', [
-            'events' => $events,
-        ]);
+        return Inertia::render('Admin/FormCreateUser');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'id' => 'required|uuid',
-            'event_id' => 'required|exists:events,id',
+            'event_id' => 'nullable|integer',
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'phone_number' => 'required|string|min:8|max:255',
@@ -88,7 +98,7 @@ class AdminController extends Controller
         try {
             $user = new User();
             $user->id = $validated['id'];
-            $user->event_id = $validated['event_id'];
+            $user->event_id = $validated['event_id'] ?? 1;
             $user->name = $validated['name'];
             $user->email = $validated['email'];
             $user->phone_number = $validated['phone_number'];
@@ -142,18 +152,16 @@ class AdminController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        $events = Event::all();
 
         return Inertia::render('Admin/FormEditUser', [
             'user' => $user,
-            'events' => $events,
         ]);
     }
 
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'event_id' => 'required|exists:events,id',
+            'event_id' => 'nullable|integer',
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
             'phone_number' => 'required|string|max:255',
@@ -166,7 +174,7 @@ class AdminController extends Controller
 
         try {
             $user = User::findOrFail($id);
-            $user->event_id = $validated['event_id'];
+            $user->event_id = $validated['event_id'] ?? 1;
             $user->name = $validated['name'];
             $user->email = $validated['email'];
             $user->phone_number = $validated['phone_number'];

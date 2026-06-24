@@ -35,16 +35,28 @@ const chartConfig = {
         label: "SPT PPH 21/26",
         color: "hsl(var(--chart-3))",
     },
+    op: {
+        label: "SPT Orang Pribadi",
+        color: "hsl(var(--chart-4))",
+    },
+    badan: {
+        label: "SPT Badan",
+        color: "hsl(var(--chart-5))",
+    },
 } satisfies ChartConfig;
 
 export function SPTChart({
     sptPpnCount,
     sptUnifikasiCount,
     sptPph21Count,
+    sptOpCount,
+    sptBadanCount,
 }: {
     sptPpnCount: number;
     sptUnifikasiCount: number;
     sptPph21Count: number;
+    sptOpCount: number;
+    sptBadanCount: number;
 }) {
     const chartData = [
         { spt: "SPT PPN", visitors: sptPpnCount, fill: "var(--color-ppn)" },
@@ -58,11 +70,21 @@ export function SPTChart({
             visitors: sptPph21Count,
             fill: "var(--color-pph21)",
         },
+        {
+            spt: "SPT Orang Pribadi",
+            visitors: sptOpCount,
+            fill: "var(--color-op)",
+        },
+        {
+            spt: "SPT Badan",
+            visitors: sptBadanCount,
+            fill: "var(--color-badan)",
+        },
     ];
 
     const totalVisitors = React.useMemo(() => {
         return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
-    }, [sptPpnCount, sptUnifikasiCount, sptPph21Count]);
+    }, [sptPpnCount, sptUnifikasiCount, sptPph21Count, sptOpCount, sptBadanCount]);
 
     return (
         <Card className="flex flex-col col-span-2">
@@ -131,11 +153,15 @@ export function SPTChart({
                     Distribusi berdasarkan jenis SPT{" "}
                     <TrendingUp className="h-4 w-4" />
                 </div>
-                <div className="leading-none text-muted-foreground">
-                    PPN: {sptPpnCount} | Unifikasi: {sptUnifikasiCount} | PPH
-                    21/26: {sptPph21Count}
+                <div className="leading-none text-muted-foreground text-xs flex flex-wrap gap-x-2 gap-y-1">
+                    <span>PPN: {sptPpnCount}</span> | 
+                    <span>Unifikasi: {sptUnifikasiCount}</span> | 
+                    <span>PPh 21/26: {sptPph21Count}</span> | 
+                    <span>Orang Pribadi: {sptOpCount}</span> | 
+                    <span>Badan: {sptBadanCount}</span>
                 </div>
             </CardFooter>
         </Card>
     );
 }
+

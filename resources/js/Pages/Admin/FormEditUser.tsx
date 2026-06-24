@@ -52,8 +52,7 @@ const formSchema = z.object({
     access_rights: z.array(z.enum(["efaktur", "ebupot"])).nullable(),
 });
 
-export default function FormEditUser({ user, events }: any) {
-    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+export default function FormEditUser({ user }: any) {
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -301,125 +300,6 @@ export default function FormEditUser({ user, events }: any) {
                                                 );
                                             }}
                                         /> */}
-                                        <FormField
-                                            control={form.control}
-                                            name="event_id"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        Event*
-                                                    </FormLabel>
-                                                    <Popover
-                                                        open={isPopoverOpen}
-                                                        onOpenChange={
-                                                            setIsPopoverOpen
-                                                        }
-                                                    >
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    role="combobox"
-                                                                    className={cn(
-                                                                        "w-full justify-between",
-                                                                        !field.value &&
-                                                                            "text-muted-foreground",
-                                                                        "whitespace-normal break-words"
-                                                                    )}
-                                                                >
-                                                                    <span className="truncate">
-                                                                        {field.value
-                                                                            ? events.find(
-                                                                                  (
-                                                                                      event: any
-                                                                                  ) =>
-                                                                                      event.id ===
-                                                                                      field.value
-                                                                              )
-                                                                                  ?.name
-                                                                            : "Pilih Event"}
-                                                                    </span>
-                                                                    <ChevronsUpDown className="opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-full p-0">
-                                                            <Command>
-                                                                <CommandInput
-                                                                    placeholder="Cari Event..."
-                                                                    className="h-9"
-                                                                />
-                                                                <CommandList>
-                                                                    <CommandEmpty>
-                                                                        Tidak
-                                                                        ada
-                                                                        event
-                                                                        yang
-                                                                        tersedia.
-                                                                    </CommandEmpty>
-                                                                    <CommandGroup>
-                                                                        {events?.length >
-                                                                        0 ? (
-                                                                            events.map(
-                                                                                (
-                                                                                    event: any
-                                                                                ) => (
-                                                                                    <CommandItem
-                                                                                        key={
-                                                                                            event.id
-                                                                                        }
-                                                                                        value={
-                                                                                            event.id
-                                                                                        }
-                                                                                        onSelect={() => {
-                                                                                            field.onChange(
-                                                                                                event.id
-                                                                                            );
-                                                                                            setIsPopoverOpen(
-                                                                                                false
-                                                                                            );
-                                                                                        }}
-                                                                                    >
-                                                                                        {
-                                                                                            event.name
-                                                                                        }
-                                                                                        <Check
-                                                                                            className={cn(
-                                                                                                "ml-auto",
-                                                                                                event.id ===
-                                                                                                    field.value
-                                                                                                    ? "opacity-100"
-                                                                                                    : "opacity-0"
-                                                                                            )}
-                                                                                        />
-                                                                                    </CommandItem>
-                                                                                )
-                                                                            )
-                                                                        ) : (
-                                                                            <CommandItem value="">
-                                                                                Tidak
-                                                                                ada
-                                                                                event
-                                                                                yang
-                                                                                tersedia.
-                                                                            </CommandItem>
-                                                                        )}
-                                                                    </CommandGroup>
-                                                                </CommandList>
-                                                            </Command>
-                                                        </PopoverContent>
-                                                    </Popover>
-
-                                                    <FormDescription>
-                                                        Tambahkan Event di
-                                                        Halaman Daftar Event
-                                                        jika event yang Anda
-                                                        cari tidak ada.
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
                                     </div>
                                 </div>
                                 <Button type="submit">Simpan Perubahan</Button>

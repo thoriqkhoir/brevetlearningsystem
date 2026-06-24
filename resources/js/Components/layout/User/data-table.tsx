@@ -33,7 +33,7 @@ interface DataTableUserProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
     setSelectedIds: (ids: string[]) => void;
-    eventOptions: { value: string; label: string }[];
+    eventOptions?: { value: string; label: string }[];
     searchPlaceholder?: string;
 }
 
@@ -41,7 +41,7 @@ export function DataTableUser<TData extends { id: string }, TValue>({
     columns,
     data,
     setSelectedIds,
-    eventOptions,
+    eventOptions = [],
     searchPlaceholder = "Cari Nama Pengguna...",
 }: DataTableUserProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
