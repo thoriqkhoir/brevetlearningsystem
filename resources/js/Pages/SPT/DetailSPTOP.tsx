@@ -956,6 +956,7 @@ const DetailSPTOP = ({
         form.watch("i_14_d") === true;
 
     // Simpan watched values ke variabel agar bisa dipakai di dependency array
+    const watchedB1B3 = form.watch("b_1b_3");
     const watchedB1B4 = form.watch("b_1b_4");
     const watchedB1C = form.watch("b_1c");
 
@@ -963,6 +964,15 @@ const DetailSPTOP = ({
         (form.watch("e_11_a") ?? 0) <= 0 || (form.watch("f_12_b") ?? 0) <= 0;
 
     const isH13BEnabled = form.watch("h_13_a") === false;
+
+    // Calculate total net income L3A4 Part A
+    const l3a4aTotal = useMemo(() => {
+        return (lampiranData?.l3a4a ?? []).reduce(
+            (sum: number, item: any) =>
+                sum + (Number(item?.net_income ?? 0) || 0),
+            0,
+        );
+    }, [lampiranData?.l3a4a]);
 
     // Auto-fill b_1c_value dari total net income L3A4B
     const [l3a4bTotal, setL3a4bTotal] = useState<number>(() => {
@@ -990,8 +1000,13 @@ const DetailSPTOP = ({
         }
     }, [l3a4bTotal, watchedB1C]);
 
-    // Auto-fill b_1b_5 dari Laba (Rugi) Sebelum Pajak berdasarkan b_1b_4
+    // Auto-fill b_1b_5 dari Laba (Rugi) Sebelum Pajak berdasarkan b_1b_4 ATAU dari l3a4aTotal jika b_1b_3 === "ya"
     useEffect(() => {
+        if (watchedB1B3 === "ya") {
+            form.setValue("b_1b_5", l3a4aTotal);
+            return;
+        }
+
         if (!watchedB1B4) {
             form.setValue("b_1b_5", 0);
             return;
@@ -1023,7 +1038,7 @@ const DetailSPTOP = ({
         }
 
         form.setValue("b_1b_5", Number(labaRow.fiscal_amount ?? 0));
-    }, [watchedB1B4, lampiranData?.l3a13a1, masterAccounts]);
+    }, [watchedB1B4, watchedB1B3, l3a4aTotal, lampiranData?.l3a13a1, masterAccounts]);
 
     // HAPUS dua useMemo ini (tidak terpakai, menyebabkan error):
     // const labaSebelumPajakAccount = useMemo(...)
@@ -1527,8 +1542,13 @@ const DetailSPTOP = ({
         );
     };
 
-    // Auto-fill b_1b_5 dari Laba (Rugi) Sebelum Pajak berdasarkan b_1b_4
+    // Auto-fill b_1b_5 dari Laba (Rugi) Sebelum Pajak berdasarkan b_1b_4 ATAU dari l3a4aTotal jika b_1b_3 === "ya"
     useEffect(() => {
+        if (watchedB1B3 === "ya") {
+            form.setValue("b_1b_5", l3a4aTotal);
+            return;
+        }
+
         if (!watchedB1B4) {
             form.setValue("b_1b_5", 0);
             return;
@@ -1560,7 +1580,7 @@ const DetailSPTOP = ({
         }
 
         form.setValue("b_1b_5", Number(labaRow.fiscal_amount ?? 0));
-    }, [watchedB1B4, lampiranData?.l3a13a1, masterAccounts]);
+    }, [watchedB1B4, watchedB1B3, l3a4aTotal, lampiranData?.l3a13a1, masterAccounts]);
 
     // Update b_1c_value setiap kali l3a4bTotal berubah
     useEffect(() => {

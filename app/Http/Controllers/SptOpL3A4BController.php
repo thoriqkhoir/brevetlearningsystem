@@ -101,15 +101,22 @@ class SptOpL3A4BController extends Controller
     }
 
     /**
-     * Update B.1c value (penghasilan neto) on SptOp from totals in Lampiran 3A-4 A & B.
+     * Update B.1c value (penghasilan neto) and potentially B.1b.5 on SptOp from totals in Lampiran 3A-4 A & B.
      */
     private function updateSptOpB1cValue(string $sptOpId): void
     {
         $totalNetA = (int) SptOpL3A4A::where('spt_op_id', $sptOpId)->sum('net_income');
         $totalNetB = (int) SptOpL3A4B::where('spt_op_id', $sptOpId)->sum('net_income');
 
-        SptOp::where('id', $sptOpId)->update([
-            'b_1c_value' => $totalNetA + $totalNetB,
-        ]);
+        $sptOp = SptOp::find($sptOpId);
+        if ($sptOp) {
+            $updateData = [
+                'b_1c_value' => $totalNetA + $totalNetB,
+            ];
+            if ($sptOp->b_1b_3 === 'ya') {
+                $updateData['b_1b_5'] = $totalNetA;
+            }
+            $sptOp->update($updateData);
+        }
     }
 }

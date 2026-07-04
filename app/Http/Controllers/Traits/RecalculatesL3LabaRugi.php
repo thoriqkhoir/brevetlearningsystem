@@ -46,6 +46,10 @@ trait RecalculatesL3LabaRugi
             return;
         }
 
+        if ($sptOp->b_1b_3 === 'ya') {
+            return;
+        }
+
         // Load all A.1 rows for this spt_op + type, eager-load master_account
         $rows = SptOpL3A13A1::where('spt_op_id', $sptOpId)
             ->where('type', $type)
