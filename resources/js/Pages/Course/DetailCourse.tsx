@@ -776,7 +776,7 @@ export default function DetailCourse({
                         </Tabs>
                     </div> */}
 
-                        <AlertDialog>
+                        {/* <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive">
                                     <DoorOpen /> Keluar Kelas
@@ -812,7 +812,7 @@ export default function DetailCourse({
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
-                        </AlertDialog>
+                        </AlertDialog> */}
                     </div>
                 </div>
             </div>
