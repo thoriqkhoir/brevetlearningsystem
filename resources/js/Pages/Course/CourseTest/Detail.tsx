@@ -9,8 +9,6 @@ import {
     BreadcrumbSeparator,
 } from "@/Components/ui/breadcrumb";
 import { CalendarClock, GraduationCap, NotebookPen } from "lucide-react";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 
@@ -57,43 +55,25 @@ function formatLocalDateTime(value?: string | null) {
     return `${day} ${month} ${year}, ${hours}.${minutes} WIB`;
 }
 
-function getStatus(start?: string | null, end?: string | null) {
-    const now = new Date();
-    const startDate = parseLocalDate(start);
-    const endDate = parseLocalDate(end);
-
-    if (startDate && now < startDate) {
-        return {
-            label: "Belum Mulai",
-            color: "text-slate-700 bg-slate-100 border border-slate-200",
-        };
+function getCourseTestStatusDisplay(serverStatus: string) {
+    switch (serverStatus) {
+        case 'upcoming':
+            return {
+                label: "Belum Mulai",
+                color: "text-slate-700 bg-slate-100 border border-slate-200",
+            };
+        case 'finished':
+            return {
+                label: "Selesai",
+                color: "text-rose-700 bg-rose-100 border border-rose-200",
+            };
+        case 'ongoing':
+        default:
+            return {
+                label: "Sedang Berlangsung",
+                color: "text-emerald-700 bg-emerald-100 border border-emerald-200",
+            };
     }
-
-    if (endDate && now > endDate) {
-        return {
-            label: "Selesai",
-            color: "text-rose-700 bg-rose-100 border border-rose-200",
-        };
-    }
-
-    return {
-        label: "Sedang Berlangsung",
-        color: "text-emerald-700 bg-emerald-100 border border-emerald-200",
-    };
-}
-
-function formatDateRange(start?: string | null, end?: string | null) {
-    const startDate = parseLocalDate(start);
-    const endDate = parseLocalDate(end);
-
-    const startText = startDate
-        ? format(startDate, "d MMMM yyyy", { locale: id })
-        : "-";
-    const endText = endDate
-        ? format(endDate, "d MMMM yyyy", { locale: id })
-        : "-";
-
-    return `${startText} - ${endText}`;
 }
 
 export default function CourseTestDetail({
@@ -107,14 +87,12 @@ export default function CourseTestDetail({
     maxAttempts = 0,
     attemptsRemaining = null,
     canAttempt = true,
+    courseTestStatus = 'ongoing',
 }: any) {
     const { flash }: any = usePage().props;
-    const status = getStatus(courseTest?.start_date, courseTest?.end_date);
-    const startDate = parseLocalDate(courseTest?.start_date);
-    const endDate = parseLocalDate(courseTest?.end_date);
-    const now = new Date();
-    const isClosed = endDate ? now >= endDate : false;
-    const notStarted = startDate ? now < startDate : false;
+    const status = getCourseTestStatusDisplay(courseTestStatus);
+    const isClosed = courseTestStatus === 'finished';
+    const notStarted = courseTestStatus === 'upcoming';
     const isActive = activeCourseTestId === courseTest?.id;
     const hasOtherActive =
         activeCourseTestId && activeCourseTestId !== courseTest?.id;
@@ -312,7 +290,7 @@ export default function CourseTestDetail({
                         <div className="pt-1">
                             <Button
                                 disabled={
-                                    status.label !== "Sedang Berlangsung" ||
+                                    courseTestStatus !== 'ongoing' ||
                                     Boolean(hasOtherActive) ||
                                     isAttemptLimitReached
                                 }

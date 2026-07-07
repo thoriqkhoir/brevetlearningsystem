@@ -50,30 +50,29 @@ function formatLocalDateTime(value?: string | null) {
     });
 }
 
-function getStatus(start: string, end: string) {
-    const now = new Date();
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-
-    if (now < startDate)
-        return {
-            label: "Belum Mulai",
-            color: "border border-amber-200 bg-amber-100 text-amber-800",
-        };
-    if (now > endDate)
-        return {
-            label: "Selesai",
-            color: "border border-rose-200 bg-rose-100 text-rose-700",
-        };
-    if (now >= startDate && now <= endDate)
-        return {
-            label: "Sedang Berlangsung",
-            color: "border border-emerald-200 bg-emerald-100 text-emerald-700",
-        };
-    return {
-        label: "-",
-        color: "border border-slate-200 bg-slate-100 text-slate-500",
-    };
+function getCourseStatusDisplay(serverStatus: string) {
+    switch (serverStatus) {
+        case 'upcoming':
+            return {
+                label: "Belum Mulai",
+                color: "border border-amber-200 bg-amber-100 text-amber-800",
+            };
+        case 'finished':
+            return {
+                label: "Selesai",
+                color: "border border-rose-200 bg-rose-100 text-rose-700",
+            };
+        case 'ongoing':
+            return {
+                label: "Sedang Berlangsung",
+                color: "border border-emerald-200 bg-emerald-100 text-emerald-700",
+            };
+        default:
+            return {
+                label: "-",
+                color: "border border-slate-200 bg-slate-100 text-slate-500",
+            };
+    }
 }
 
 export default function Courses({ courses = [] }: any) {
@@ -211,10 +210,7 @@ export default function Courses({ courses = [] }: any) {
                         )}
 
                         {courses.map((course: any) => {
-                            const status = getStatus(
-                                course.start_date,
-                                course.end_date,
-                            );
+                            const status = getCourseStatusDisplay(course.course_status ?? 'ongoing');
                             const isActive = active_course?.id === course.id;
                             const hasOtherActive =
                                 active_course?.id &&
@@ -358,8 +354,7 @@ export default function Courses({ courses = [] }: any) {
                                                 }
                                                 disabled={
                                                     noProfilePhoto ||
-                                                    status.label !==
-                                                        "Sedang Berlangsung" ||
+                                                    course.course_status !== 'ongoing' ||
                                                     Boolean(hasOtherActive)
                                                 }
                                             >

@@ -1,22 +1,19 @@
 import { Head, usePage, router } from "@inertiajs/react";
-import { useEffect, useState } from "react";
 import HeaderOnlyLayout from "@/Layouts/HeaderOnlyLayout";
 import { Button } from "@/Components/ui/button";
 import { FileText, User as UserIcon, AlertTriangle } from "lucide-react";
 
-function getStatus(start?: string | null, end?: string | null) {
-    if (!start) return { label: "-", color: "bg-gray-100 text-gray-500" };
-    const now = new Date();
-    const startDate = new Date(start);
-    const endDate = end ? new Date(end) : null;
-    if (now < startDate)
-        return { label: "Belum Mulai", color: "bg-gray-100 text-gray-500" };
-    if (endDate && now > endDate)
-        return { label: "Selesai", color: "bg-red-100 text-red-700" };
-    return {
-        label: "Sedang Berlangsung",
-        color: "bg-green-100 text-green-700",
-    };
+function getTestStatusDisplay(serverStatus: string) {
+    switch (serverStatus) {
+        case 'upcoming':
+            return { label: "Belum Mulai", color: "bg-gray-100 text-gray-500" };
+        case 'finished':
+            return { label: "Selesai", color: "bg-red-100 text-red-700" };
+        case 'ongoing':
+            return { label: "Sedang Berlangsung", color: "bg-green-100 text-green-700" };
+        default:
+            return { label: "-", color: "bg-gray-100 text-gray-500" };
+    }
 }
 
 export default function TestDescription({
@@ -29,21 +26,16 @@ export default function TestDescription({
     const { auth, active_test }: any = usePage().props;
     const user = auth?.user;
 
-    const startDate = test?.start_date ? new Date(test.start_date) : null;
-    const endDate = test?.end_date ? new Date(test.end_date) : null;
-    // tick every 2s to auto-refresh UI when start_date is reached
-    const [nowMs, setNowMs] = useState<number>(Date.now());
-    useEffect(() => {
-        const id = window.setInterval(() => setNowMs(Date.now()), 2000);
-        return () => window.clearInterval(id);
-    }, []);
-    const status = getStatus(test?.start_date ?? null, test?.end_date ?? null);
+    const status = getTestStatusDisplay(test?.test_status ?? 'ongoing');
     const isActive = active_test?.id === test?.id;
     const isSubmitted = Boolean(lastAttempt?.id);
     const hasOtherActive = active_test?.id && active_test?.id !== test?.id;
-    const isClosed = endDate ? nowMs >= endDate.getTime() : false;
-    const notStarted = startDate ? nowMs < startDate.getTime() : false;
+    const isClosed = test?.test_status === 'finished';
+    const notStarted = test?.test_status === 'upcoming';
     const noProfilePhoto = !user?.profile_url;
+
+    const startDate = test?.start_date ? new Date(test.start_date) : null;
+    const endDate = test?.end_date ? new Date(test.end_date) : null;
 
     return (
         <HeaderOnlyLayout

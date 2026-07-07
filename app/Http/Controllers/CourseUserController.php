@@ -171,6 +171,21 @@ class CourseUserController extends Controller
             $course->next_test_upcoming = $nextTestUpcoming;
             $course->next_upcoming = $nextUpcoming;
 
+            $rawStart = $course->getRawOriginal('start_date');
+            $rawEnd   = $course->getRawOriginal('end_date');
+            $courseStart = $rawStart ? $this->parseScheduleDateTime($rawStart, $tz) : null;
+            $courseEnd   = $rawEnd   ? $this->parseScheduleDateTime($rawEnd,   $tz) : null;
+
+            if (!$courseStart && !$courseEnd) {
+                $course->course_status = 'ongoing';
+            } elseif ($courseStart && $now->lt($courseStart)) {
+                $course->course_status = 'upcoming';
+            } elseif ($courseEnd && $now->gt($courseEnd)) {
+                $course->course_status = 'finished';
+            } else {
+                $course->course_status = 'ongoing';
+            }
+
             return $course;
         });
 
@@ -420,6 +435,23 @@ class CourseUserController extends Controller
 
         $activeCourseTestId = $this->resolveActiveCourseTestId(Auth::id());
 
+        $tz = 'Asia/Jakarta';
+        $now = now($tz);
+        $rawStart = $courseTest->getRawOriginal('start_date');
+        $rawEnd   = $courseTest->getRawOriginal('end_date');
+        $ctStart  = $rawStart ? $this->parseScheduleDateTime($rawStart, $tz) : null;
+        $ctEnd    = $rawEnd   ? $this->parseScheduleDateTime($rawEnd,   $tz) : null;
+
+        if (!$ctStart && !$ctEnd) {
+            $courseTestStatus = 'ongoing';
+        } elseif ($ctStart && $now->lt($ctStart)) {
+            $courseTestStatus = 'upcoming';
+        } elseif ($ctEnd && $now->gt($ctEnd)) {
+            $courseTestStatus = 'finished';
+        } else {
+            $courseTestStatus = 'ongoing';
+        }
+
         return Inertia::render('Course/CourseTest/Detail', [
             'course' => $course,
             'courseTest' => $courseTest,
@@ -436,6 +468,7 @@ class CourseUserController extends Controller
             'maxAttempts' => $maxAttempts,
             'attemptsRemaining' => $attemptsRemaining,
             'canAttempt' => $canAttempt,
+            'courseTestStatus' => $courseTestStatus,
         ]);
     }
 

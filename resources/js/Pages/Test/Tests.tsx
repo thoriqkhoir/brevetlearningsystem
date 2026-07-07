@@ -14,21 +14,17 @@ import {
 } from "@/Components/ui/dialog";
 import { Input } from "@/Components/ui/input";
 
-function getStatusAt(start: string, end: string, nowMs: number) {
-    const now = new Date(nowMs);
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-
-    if (now < startDate)
-        return { label: "Belum Mulai", color: "text-gray-500 bg-gray-100" };
-    if (now > endDate)
-        return { label: "Selesai", color: "text-red-700 bg-red-100" };
-    if (now >= startDate && now <= endDate)
-        return {
-            label: "Sedang Berlangsung",
-            color: "text-green-700 bg-green-100",
-        };
-    return { label: "-", color: "text-gray-400 bg-gray-50" };
+function getTestStatusDisplay(serverStatus: string) {
+    switch (serverStatus) {
+        case 'upcoming':
+            return { label: "Belum Mulai", color: "text-gray-500 bg-gray-100" };
+        case 'finished':
+            return { label: "Selesai", color: "text-red-700 bg-red-100" };
+        case 'ongoing':
+            return { label: "Sedang Berlangsung", color: "text-green-700 bg-green-100" };
+        default:
+            return { label: "-", color: "text-gray-400 bg-gray-50" };
+    }
 }
 
 export default function Tests({ tests = [] }: any) {
@@ -41,12 +37,6 @@ export default function Tests({ tests = [] }: any) {
     const [open, setOpen] = useState(false);
     const [classCode, setClassCode] = useState("");
     const [loading, setLoading] = useState(false);
-    // tick every 2s to auto-refresh status (Belum Mulai -> Sedang Berlangsung)
-    const [nowMs, setNowMs] = useState<number>(Date.now());
-    useEffect(() => {
-        const id = window.setInterval(() => setNowMs(Date.now()), 2000);
-        return () => window.clearInterval(id);
-    }, []);
 
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
@@ -119,11 +109,7 @@ export default function Tests({ tests = [] }: any) {
                             </div>
                         )}
                         {tests.map((test: any) => {
-                            const status = getStatusAt(
-                                test.start_date,
-                                test.end_date,
-                                nowMs
-                            );
+                            const status = getTestStatusDisplay(test.test_status ?? 'ongoing');
                             const isActive = active_test?.id === test.id;
                             const hasOtherActive =
                                 active_test?.id &&
@@ -219,14 +205,12 @@ export default function Tests({ tests = [] }: any) {
                                                 variant="outline"
                                                 className="text-green-700 bg-green-50 border-green-400 hover:bg-green-100 hover:text-green-700"
                                                 disabled={
-                                                    status.label !==
-                                                        "Sedang Berlangsung" ||
+                                                    test.test_status !== 'ongoing' ||
                                                     Boolean(hasOtherActive)
                                                 }
                                             >
                                                 Mulai Mengerjakan
                                             </Button>
-                                    
                                     </div>
                                     {status.label === "Sedang Berlangsung" ? (
                                         hasOtherActive && (

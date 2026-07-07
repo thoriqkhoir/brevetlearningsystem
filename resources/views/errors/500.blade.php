@@ -82,7 +82,17 @@
             <p>Maaf, terjadi kendala pada sistem. Silakan coba lagi atau kembali ke beranda.</p>
 
             <div class="actions">
-                <a class="btn primary" href="{{ url('/') }}">Kembali ke Beranda</a>
+                @auth
+                    @if(auth()->user()->role === 'admin')
+                        <a class="btn primary" href="{{ url('/admin/dashboard') }}">Kembali ke Beranda</a>
+                    @elseif(auth()->user()->role === 'pengajar')
+                        <a class="btn primary" href="{{ url('/teacher/dashboard') }}">Kembali ke Beranda</a>
+                    @else
+                        <a class="btn primary" href="{{ url('/') }}">Kembali ke Beranda</a>
+                    @endif
+                @else
+                    <a class="btn primary" href="{{ url('/') }}">Kembali ke Beranda</a>
+                @endauth
                 <a class="btn" href="{{ url()->previous() }}">Kembali</a>
             </div>
         </main>

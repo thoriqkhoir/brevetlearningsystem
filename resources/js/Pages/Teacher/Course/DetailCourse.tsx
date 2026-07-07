@@ -1802,19 +1802,37 @@ export default function DetailCourse({
                             <h2 className="text-lg font-bold text-primary">
                                 Daftar Peserta ({participants.length})
                             </h2>
-                            <Dialog
-                                open={addParticipantOpen}
-                                onOpenChange={setAddParticipantOpen}
-                            >
-                                <DialogTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    className="text-green-700 bg-green-50 border-green-200 hover:bg-green-100"
+                                    asChild
+                                >
+                                    <a
+                                        href={route(
+                                            "teacher.courses.exportParticipants",
+                                            course.id
+                                        )}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                     >
-                                        <UserPlus size={16} />
-                                        Tambah Peserta
-                                    </Button>
-                                </DialogTrigger>
+                                        <Download size={16} />
+                                        Ekspor Peserta (.xlsx)
+                                    </a>
+                                </Button>
+                                <Dialog
+                                    open={addParticipantOpen}
+                                    onOpenChange={setAddParticipantOpen}
+                                >
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
+                                        >
+                                            <UserPlus size={16} />
+                                            Tambah Peserta
+                                        </Button>
+                                    </DialogTrigger>
                                 <DialogContent className="max-w-md">
                                     <DialogHeader>
                                         <DialogTitle>
@@ -1890,6 +1908,7 @@ export default function DetailCourse({
                                     </div>
                                 </DialogContent>
                             </Dialog>
+                            </div>
                         </div>
 
                         <DataTableParticipant

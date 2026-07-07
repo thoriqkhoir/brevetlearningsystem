@@ -125,8 +125,11 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     if (Auth::check()) {
-        if (Auth::user() && Auth::user()->is_admin) {
+        $user = Auth::user();
+        if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'pengajar') {
+            return redirect()->route('teacher.dashboard');
         }
         return redirect()->route('dashboard');
     }
@@ -877,6 +880,7 @@ Route::middleware(['auth', EnsureTeacher::class])->group(function () {
     Route::get('/teacher/courses/create', [CourseController::class, 'create'])->name('teacher.createCourse');
     Route::post('/teacher/courses', [CourseController::class, 'store'])->name('teacher.storeCourse');
     Route::get('/teacher/courses/{id}', [CourseController::class, 'show'])->name('teacher.showCourse');
+    Route::get('/teacher/courses/{id}/export-participants', [CourseController::class, 'exportParticipants'])->name('teacher.courses.exportParticipants');
     Route::get('/teacher/courses/{id}/participants/{participantId}', [CourseController::class, 'showParticipant'])->name('teacher.showParticipant');
     Route::get('/teacher/courses/{id}/edit', [CourseController::class, 'edit'])->name('teacher.editCourse');
     Route::put('/teacher/courses/{id}', [CourseController::class, 'update'])->name('teacher.updateCourse');

@@ -44,7 +44,7 @@ export default function HeaderOnlyLayout({
 
             <main className="relative z-10 flex-1">{children}</main>
 
-            <Toaster position="top-right" />
+            <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} />
         </div>
     );
 }

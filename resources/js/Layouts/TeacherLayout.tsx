@@ -95,7 +95,7 @@ export default function TeacherLayout({ children }: PropsWithChildren) {
             <Sidebar className="border-r border-teal-100 bg-white/95 backdrop-blur-sm">
                 <SidebarHeader className="border-b border-teal-100/70 bg-gradient-to-r from-teal-50/80 to-amber-50/70">
                     <Link
-                        href={route("admin.dashboard")}
+                        href={route("teacher.dashboard")}
                         className="m-3 w-3/5 mx-auto"
                     >
                         <img
@@ -145,7 +145,7 @@ export default function TeacherLayout({ children }: PropsWithChildren) {
                                 <div className="mr-4 space-x-2 flex items-center">
                                     <SidebarTrigger />
                                     <Link
-                                        href={route("admin.dashboard")}
+                                        href={route("teacher.dashboard")}
                                         className="block sm:hidden w-1/6"
                                     >
                                         <img
@@ -239,7 +239,7 @@ export default function TeacherLayout({ children }: PropsWithChildren) {
                                             <SheetTitle>
                                                 <Link
                                                     href={route(
-                                                        "admin.dashboard",
+                                                        "teacher.dashboard",
                                                     )}
                                                     className="block sm:hidden w-1/6 mx-auto"
                                                 >
@@ -285,7 +285,6 @@ export default function TeacherLayout({ children }: PropsWithChildren) {
                 </header>
 
                 <main className="relative z-10">
-                    <Toaster position="top-center" />
                     {children}
                 </main>
             </div>
@@ -296,6 +295,7 @@ export default function TeacherLayout({ children }: PropsWithChildren) {
                 title="Log Out"
                 description="Apakah Anda yakin ingin logout?"
             />
+            <Toaster position="top-center" containerStyle={{ zIndex: 99999 }} />
         </SidebarProvider>
     );
 }

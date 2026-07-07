@@ -23,7 +23,7 @@ class TestParticipantsExport implements FromArray, WithHeadings, WithTitle
 
     public function headings(): array
     {
-        return ['No', 'Nama', 'Email', 'Nilai Terbaik', 'Feedback'];
+        return ['No', 'Nama', 'Email', 'No. WA', 'Institusi', 'Nilai Terbaik', 'Feedback'];
     }
 
     public function array(): array
@@ -50,6 +50,8 @@ class TestParticipantsExport implements FromArray, WithHeadings, WithTitle
                 $no++,
                 optional($p->user)->name,
                 optional($p->user)->email,
+                optional($p->user)->phone_number,
+                optional($p->user)->institution,
                 $best,
                 $p->feedback,
             ];

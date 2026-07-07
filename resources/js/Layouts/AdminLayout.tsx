@@ -285,7 +285,6 @@ export default function AdminLayout({ children }: PropsWithChildren) {
                 </header>
 
                 <main className="relative z-10">
-                    <Toaster position="top-center" />
                     {children}
                 </main>
             </div>
@@ -296,6 +295,7 @@ export default function AdminLayout({ children }: PropsWithChildren) {
                 title="Log Out"
                 description="Apakah Anda yakin ingin logout?"
             />
+            <Toaster position="top-center" containerStyle={{ zIndex: 99999 }} />
         </SidebarProvider>
     );
 }

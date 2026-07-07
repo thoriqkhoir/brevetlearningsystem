@@ -13,6 +13,12 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'pengajar') {
+            return redirect()->route('teacher.dashboard');
+        }
+
         $activeCourseId = session('active_course_id');
 
         if ($activeCourseId) {

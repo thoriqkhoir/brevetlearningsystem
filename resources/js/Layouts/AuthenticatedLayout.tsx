@@ -206,13 +206,23 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                     <SidebarTrigger />
                                     <Link
                                         href={route("dashboard")}
-                                        className="block md:hidden w-20"
+                                        className="block md:hidden w-16"
                                     >
                                         <img
                                             src="/images/logo.png"
                                             alt="Brevet Learning System"
                                         />
                                     </Link>
+
+                                    {/* Mobile Active Identity Indicator */}
+                                    <div className="md:hidden flex flex-col justify-center max-w-[140px] pl-2 border-l border-slate-200">
+                                        <span className="text-[9px] text-slate-500 font-medium leading-none mb-0.5 truncate">
+                                            {activeBusinessEntity && activeBusinessEntity.id !== user.id ? "Impersonating:" : "Orang Pribadi:"}
+                                        </span>
+                                        <span className="text-[11px] font-semibold text-teal-700 leading-none truncate">
+                                            {activeBusinessEntity ? activeBusinessEntity.name : user.name}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="hidden md:flex md:items-center">
@@ -363,7 +373,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                     </SheetTrigger>
                                     <SheetContent
                                         side={"top"}
-                                        className="border-teal-100 bg-gradient-to-br from-white via-teal-50/70 to-amber-50/70"
+                                        className="border-teal-100 bg-gradient-to-br from-white via-teal-50/70 to-amber-50/70 overflow-y-auto max-h-[95vh]"
                                     >
                                         <SheetHeader>
                                             <SheetTitle>
@@ -394,7 +404,54 @@ export default function Authenticated({ children }: PropsWithChildren) {
                                                             : "-"}
                                                     </span>
                                                 </h3>
-                                                <Button asChild>
+
+                                                {/* Impersonate & Business Entity Selector for Mobile */}
+                                                <div className="mt-4 mb-4 rounded-xl border border-teal-100 bg-white/60 p-3 text-left shadow-sm">
+                                                    <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">
+                                                        Pilih Identitas (Impersonate)
+                                                    </p>
+                                                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                                                        <button
+                                                            onClick={() =>
+                                                                router.post(route("impersonate.personal"))
+                                                            }
+                                                            className={`w-full text-left text-xs rounded-lg p-2 transition-colors ${
+                                                                !activeBusinessEntity || activeBusinessEntity.id === user.id
+                                                                    ? "bg-teal-600 text-white font-medium shadow-sm"
+                                                                    : "hover:bg-teal-50 text-slate-700"
+                                                            }`}
+                                                        >
+                                                            {user.npwp} {user.name} (Personal)
+                                                        </button>
+
+                                                        {businessEntities.map((e) => (
+                                                            <button
+                                                                key={e.id}
+                                                                onClick={() =>
+                                                                    router.post(route("impersonate.business", e.id))
+                                                                }
+                                                                className={`w-full text-left text-xs rounded-lg p-2 transition-colors ${
+                                                                    activeBusinessEntity && activeBusinessEntity.id === e.id
+                                                                        ? "bg-teal-600 text-white font-medium shadow-sm"
+                                                                        : "hover:bg-teal-50 text-slate-700"
+                                                                }`}
+                                                            >
+                                                                {e.npwp} {e.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+
+                                                    <div className="mt-2 border-t border-teal-100/50 pt-2">
+                                                        <Link
+                                                            href={route("business-entities.create")}
+                                                            className="flex items-center justify-center gap-1 w-full text-center text-xs font-medium text-teal-600 hover:text-teal-700 rounded-lg p-2 hover:bg-teal-50 transition-colors"
+                                                        >
+                                                            + Tambah Badan Usaha
+                                                        </Link>
+                                                    </div>
+                                                </div>
+
+                                                <Button asChild className="w-full">
                                                     <Link
                                                         href={route("logout")}
                                                         method="post"
@@ -1267,7 +1324,6 @@ export default function Authenticated({ children }: PropsWithChildren) {
                 </nav>
 
                 <main className="relative z-10">
-                    <Toaster position="top-center" />
                     {children}
                 </main>
             </div>
@@ -1278,6 +1334,7 @@ export default function Authenticated({ children }: PropsWithChildren) {
                 title="Log Out"
                 description="Apakah Anda yakin ingin logout?"
             />
+            <Toaster position="top-center" containerStyle={{ zIndex: 99999 }} />
         </SidebarProvider>
     );
 }

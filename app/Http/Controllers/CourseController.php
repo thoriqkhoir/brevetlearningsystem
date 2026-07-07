@@ -137,6 +137,18 @@ class CourseController extends Controller
         ]);
     }
 
+    public function exportParticipants($id)
+    {
+        $course = Course::findOrFail($id);
+        if ($course->teacher_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $fileName = 'peserta_kelas_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $course->title ?? 'course') . '.xlsx';
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\CourseParticipantsExport($course), $fileName);
+    }
+
     public function showParticipant($courseId, $participantId)
     {
         $course = Course::findOrFail($courseId);
@@ -226,6 +238,7 @@ class CourseController extends Controller
         $original = Course::with([
             'courseSchedules:id,course_id,title,scheduled_at,zoom_link',
             'courseTests:id,course_id,question_bank_id,title,description,duration,passing_score,questions_to_show,start_date,end_date,show_score,show_correct_answers',
+            'modules',
         ])->findOrFail($id);
 
         if ($original->teacher_id !== Auth::id()) {
@@ -273,6 +286,29 @@ class CourseController extends Controller
                     'end_date' => $courseTest->end_date,
                     'show_score' => $courseTest->show_score,
                     'show_correct_answers' => $courseTest->show_correct_answers,
+                ]);
+            }
+
+            foreach ($original->modules as $module) {
+                $filePath = $module->file_path;
+
+                if ($module->isFile() && $module->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($module->file_path)) {
+                    $oldPath = $module->file_path;
+                    $filename = time() . '_' . basename($oldPath);
+                    $newPath = 'course-modules/' . $filename;
+                    \Illuminate\Support\Facades\Storage::disk('public')->copy($oldPath, $newPath);
+                    $filePath = $newPath;
+                }
+
+                $duplicateCourse->modules()->create([
+                    'title' => $module->title,
+                    'description' => $module->description,
+                    'type' => $module->type,
+                    'file_path' => $filePath,
+                    'original_filename' => $module->original_filename,
+                    'link_url' => $module->link_url,
+                    'is_active' => $module->is_active ?? true,
+                    'order' => $module->order,
                 ]);
             }
         });

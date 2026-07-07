@@ -30,6 +30,7 @@ export type ParticipantColumns = {
         id: string;
         name: string;
         email: string;
+        phone_number: string;
         profile_url?: string | null;
     };
     average_score: number | null;
@@ -173,6 +174,14 @@ export const participantColumns = (
             <DataTableColumnHeader column={column} title="Email" />
         ),
         cell: ({ row }) => <p>{row.original.user?.email || "-"}</p>,
+    },
+    {
+        accessorKey: "user.phone_number",
+        id: "user_phone_number", // Tambahkan id untuk search
+        header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="No. WA" />
+        ),
+        cell: ({ row }) => <p>{row.original.user?.phone_number || "-"}</p>,
     },
     {
         accessorKey: "average_score",

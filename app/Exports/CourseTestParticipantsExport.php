@@ -27,13 +27,13 @@ class CourseTestParticipantsExport implements FromArray, WithHeadings, WithTitle
 
     public function headings(): array
     {
-        return ['No', 'Nama', 'Email', 'Nilai Terbaik', 'Keterangan'];
+        return ['No', 'Nama', 'Email', 'No. WA', 'Institusi', 'Nilai Terbaik', 'Keterangan'];
     }
 
     public function array(): array
     {
         $participants = $this->course->participants()
-            ->with('user:id,name,email')
+            ->with('user:id,name,email,phone_number,institution')
             ->get(['id', 'course_id', 'user_id']);
 
         $submittedAttempts = CourseTestAttempt::where('course_test_id', $this->courseTest->id)
@@ -66,6 +66,8 @@ class CourseTestParticipantsExport implements FromArray, WithHeadings, WithTitle
                 $no++,
                 optional($participant->user)->name,
                 optional($participant->user)->email,
+                optional($participant->user)->phone_number,
+                optional($participant->user)->institution,
                 $bestScore,
                 $keterangan,
             ];

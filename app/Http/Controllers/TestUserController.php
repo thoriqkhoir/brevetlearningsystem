@@ -41,9 +41,26 @@ class TestUserController extends Controller
                 if (!is_null($best)) {
                     $bestScore = (int) $best;
                 }
-                $test->score = $bestScore; // dipakai di UI sebagai Nilai Terbaik
+                $test->score = $bestScore;
             } else {
                 $test->score = null;
+            }
+
+            $tz = 'Asia/Jakarta';
+            $now = now($tz);
+            $rawStart = $test->getRawOriginal('start_date');
+            $rawEnd   = $test->getRawOriginal('end_date');
+            $testStart = $rawStart ? $this->parseWibDateTime($rawStart, $tz) : null;
+            $testEnd   = $rawEnd   ? $this->parseWibDateTime($rawEnd,   $tz) : null;
+
+            if (!$testStart && !$testEnd) {
+                $test->test_status = 'ongoing';
+            } elseif ($testStart && $now->lt($testStart)) {
+                $test->test_status = 'upcoming';
+            } elseif ($testEnd && $now->gt($testEnd)) {
+                $test->test_status = 'finished';
+            } else {
+                $test->test_status = 'ongoing';
             }
 
             return $test;
@@ -113,6 +130,23 @@ class TestUserController extends Controller
                     'submitted_at' => optional($a->submitted_at)->toIso8601String(),
                 ];
             });
+
+        $tz = 'Asia/Jakarta';
+        $now = now($tz);
+        $rawStart = $test->getRawOriginal('start_date');
+        $rawEnd   = $test->getRawOriginal('end_date');
+        $testStart = $rawStart ? $this->parseWibDateTime($rawStart, $tz) : null;
+        $testEnd   = $rawEnd   ? $this->parseWibDateTime($rawEnd,   $tz) : null;
+
+        if (!$testStart && !$testEnd) {
+            $test->test_status = 'ongoing';
+        } elseif ($testStart && $now->lt($testStart)) {
+            $test->test_status = 'upcoming';
+        } elseif ($testEnd && $now->gt($testEnd)) {
+            $test->test_status = 'finished';
+        } else {
+            $test->test_status = 'ongoing';
+        }
 
         return Inertia::render('Test/TestDescription', [
             'test' => $test,
@@ -782,5 +816,29 @@ class TestUserController extends Controller
         }
 
         return $questions->take($limit)->values();
+    }
+
+    private function parseWibDateTime(?string $value, string $timezone): ?Carbon
+    {
+        if (empty($value)) {
+            return null;
+        }
+        $normalized = trim((string) $value);
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/', $normalized, $matched) === 1) {
+            return Carbon::create(
+                (int) $matched[1],
+                (int) $matched[2],
+                (int) $matched[3],
+                (int) $matched[4],
+                (int) $matched[5],
+                (int) ($matched[6] ?? 0),
+                $timezone,
+            );
+        }
+        try {
+            return Carbon::parse($normalized, $timezone);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }
