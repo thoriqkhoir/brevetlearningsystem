@@ -1,0 +1,1 @@
+import{j as r}from"./app-BkWqXm6q.js";import{TableL1A7 as e}from"./TableL1A7-nDuEdRXb.js";import"./table-Bh_aRKux.js";import"./utils-jAU0Cazi.js";function p({totalAcquisitionCost:t,totalAmountNow:o}){return r.jsx("div",{className:"space-y-4",children:r.jsx(e,{totalAcquisitionCost:t,totalAmountNow:o})})}export{p as SectionL1A7,p as default};
