@@ -58,14 +58,26 @@ function formatLocalDateTime(value?: string | null) {
 function getCourseTestStatusDisplay(serverStatus: string) {
     switch (serverStatus) {
         case 'upcoming':
+        case 'remedial_upcoming':
             return {
                 label: "Belum Mulai",
                 color: "text-slate-700 bg-slate-100 border border-slate-200",
             };
         case 'finished':
+        case 'remedial_finished':
             return {
                 label: "Selesai",
                 color: "text-rose-700 bg-rose-100 border border-rose-200",
+            };
+        case 'remedial_active':
+            return {
+                label: "Remedial Aktif",
+                color: "text-rose-700 bg-rose-100 border border-rose-200",
+            };
+        case 'remedial_not_eligible':
+            return {
+                label: "Sudah Lulus",
+                color: "text-emerald-700 bg-emerald-100 border border-emerald-200",
             };
         case 'ongoing':
         default:
@@ -88,19 +100,24 @@ export default function CourseTestDetail({
     attemptsRemaining = null,
     canAttempt = true,
     courseTestStatus = 'ongoing',
+    isRemedialMode = false,
 }: any) {
     const { flash }: any = usePage().props;
     const status = getCourseTestStatusDisplay(courseTestStatus);
-    const isClosed = courseTestStatus === 'finished';
-    const notStarted = courseTestStatus === 'upcoming';
+    const isClosed = courseTestStatus === 'finished' || courseTestStatus === 'remedial_finished';
+    const notStarted = courseTestStatus === 'upcoming' || courseTestStatus === 'remedial_upcoming';
+    const isNotEligible = courseTestStatus === 'remedial_not_eligible';
     const isActive = activeCourseTestId === courseTest?.id;
     const hasOtherActive =
         activeCourseTestId && activeCourseTestId !== courseTest?.id;
     const isAttemptLimitReached = !canAttempt;
-    const isUnlimitedAttempts = Number(maxAttempts ?? 0) <= 0;
-    const attemptsText = isUnlimitedAttempts
-        ? "Tidak terbatas"
-        : `${attemptsRemaining ?? 0} / ${maxAttempts}`;
+    const isUnlimitedAttempts = isRemedialMode || Number(maxAttempts ?? 0) <= 0;
+    const passingScore = Number(courseTest?.passing_score ?? 70);
+    const attemptsText = isRemedialMode
+        ? `Tidak terbatas (hingga nilai >= ${passingScore})`
+        : (isUnlimitedAttempts
+            ? "Tidak terbatas"
+            : `${attemptsRemaining ?? 0} / ${maxAttempts}`);
     const showScore = courseTest?.show_score ?? true;
     const bestAttempt =
         attemptHistory.length > 0
@@ -290,9 +307,10 @@ export default function CourseTestDetail({
                         <div className="pt-1">
                             <Button
                                 disabled={
-                                    courseTestStatus !== 'ongoing' ||
+                                    (courseTestStatus !== 'ongoing' && courseTestStatus !== 'remedial_active') ||
                                     Boolean(hasOtherActive) ||
-                                    isAttemptLimitReached
+                                    isAttemptLimitReached ||
+                                    isNotEligible
                                 }
                                 onClick={() => {
                                     router.post(
@@ -307,7 +325,7 @@ export default function CourseTestDetail({
                                 {isActive
                                     ? "Lanjutkan Ujian"
                                     : lastAttempt
-                                      ? "Ulangi Mengerjakan"
+                                      ? (isRemedialMode ? "Kerjakan Remedial" : "Ulangi Mengerjakan")
                                       : "Mulai Ujian"}
                             </Button>
                             {hasOtherActive && (
@@ -319,22 +337,30 @@ export default function CourseTestDetail({
                             )}
                             {!hasOtherActive && notStarted && (
                                 <p className="mt-2 text-xs text-red-600">
-                                    Ujian kelas belum mulai.
+                                    {isRemedialMode ? "Remedial belum dimulai." : "Ujian kelas belum mulai."}
                                 </p>
                             )}
                             {!hasOtherActive && isClosed && (
                                 <p className="mt-2 text-xs text-red-600">
-                                    Ujian kelas sudah ditutup.
+                                    {isRemedialMode ? "Remedial telah ditutup." : "Ujian kelas sudah ditutup."}
                                 </p>
                             )}
-                            {isAttemptLimitReached && (
+                            {isNotEligible && (
+                                <p className="mt-2 text-xs text-emerald-600 font-semibold">
+                                    Anda telah lulus ujian kelas ini (nilai &gt;= {passingScore}).
+                                </p>
+                            )}
+                            {isAttemptLimitReached && !isNotEligible && (
                                 <p className="mt-2 text-xs text-red-600">
-                                    Batas kesempatan ujian sudah habis.
+                                    {isRemedialMode
+                                        ? `Anda sudah lulus ujian remedial ini (nilai >= ${passingScore}).`
+                                        : "Batas kesempatan ujian sudah habis."}
                                 </p>
                             )}
                             <p className="mt-2 text-xs text-gray-500">
-                                Anda dapat mengerjakan ulang selama ujian masih
-                                berlangsung dan kuota pengerjaan masih tersedia.
+                                {isRemedialMode
+                                    ? `Anda dapat mengerjakan remedial berulang kali selama masa remedial berlangsung dan Anda belum mencapai nilai kelulusan (>= ${passingScore}).`
+                                    : "Anda dapat mengerjakan ulang selama ujian masih berlangsung dan kuota pengerjaan masih tersedia."}
                             </p>
                         </div>
 

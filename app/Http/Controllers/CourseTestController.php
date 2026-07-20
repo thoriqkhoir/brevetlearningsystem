@@ -23,6 +23,15 @@ class CourseTestController extends Controller
         $this->authorizeCourse($course);
 
         $validated = $this->validateCourseTestPayload($request);
+        
+        if ($request->input('remedial_enabled')) {
+            $validated['remedial_enabled'] = true;
+            $validated['remedial_end_date'] = $request->input('remedial_end_date');
+        } else {
+            $validated['remedial_enabled'] = false;
+            $validated['remedial_end_date'] = null;
+        }
+
         $this->validateCourseDateWindow($course, $validated);
 
         $course->courseTests()->create($validated);
@@ -36,6 +45,15 @@ class CourseTestController extends Controller
         $this->ensureCourseTestBelongsToCourse($course, $courseTest);
 
         $validated = $this->validateCourseTestPayload($request);
+
+        if ($request->input('remedial_enabled')) {
+            $validated['remedial_enabled'] = true;
+            $validated['remedial_end_date'] = $request->input('remedial_end_date');
+        } else {
+            $validated['remedial_enabled'] = false;
+            $validated['remedial_end_date'] = null;
+        }
+
         $this->validateCourseDateWindow($course, $validated);
 
         $courseTest->update($validated);
@@ -252,6 +270,8 @@ class CourseTestController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'show_score' => 'nullable|boolean',
             'show_correct_answers' => 'nullable|boolean',
+            'remedial_enabled' => 'nullable|boolean',
+            'remedial_end_date' => 'nullable|date',
         ]);
     }
 
@@ -275,6 +295,21 @@ class CourseTestController extends Controller
             throw ValidationException::withMessages([
                 'end_date' => 'Waktu selesai ujian tidak boleh melebihi tanggal selesai kelas.',
             ]);
+        }
+
+        // Validate remedial end date if remedial is enabled
+        if (!empty($payload['remedial_enabled'])) {
+            $remedialEndDate = $payload['remedial_end_date'] ?? null;
+            if ($remedialEndDate) {
+                $remEnd = Carbon::parse($remedialEndDate);
+                $remStart = $courseEnd ? $courseEnd->copy()->addDay()->startOfDay() : now()->addDay()->startOfDay();
+
+                if ($remEnd->lt($remStart)) {
+                    throw ValidationException::withMessages([
+                        'remedial_end_date' => 'Waktu selesai remedial tidak boleh sebelum waktu mulai remedial (' . $remStart->format('Y-m-d H:i') . ').',
+                    ]);
+                }
+            }
         }
     }
 }

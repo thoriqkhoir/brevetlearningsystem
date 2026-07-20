@@ -162,6 +162,23 @@ export default function DetailCourse({
                             </BreadcrumbList>
                         </Breadcrumb>
 
+                        {course.has_active_remedial && (
+                            <div className="mt-2 mb-4 rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-800 flex items-start gap-3 shadow-sm">
+                                <span className="text-xl leading-none">⚠️</span>
+                                <div>
+                                    <h4 className="font-semibold text-rose-900 mb-0.5">Informasi Ujian Remedial</h4>
+                                    <p className="text-xs text-rose-700 leading-relaxed">
+                                        Anda memiliki ujian remedial aktif yang perlu diselesaikan di kelas ini.
+                                        {!isActive ? (
+                                            <> Silakan klik tombol <strong>Mulai Mengerjakan</strong> di bawah untuk membuka akses pengerjaan remedial.</>
+                                        ) : (
+                                            <> Akses kelas aktif. Silakan pilih tab <strong>Ujian Kelas</strong> di bawah untuk mulai mengerjakan ujian remedial.</>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid gap-4 xl:grid-cols-[1fr_auto]">
                             <div className="rounded-3xl border border-cyan-200/70 bg-white/85 p-6 shadow-sm backdrop-blur-sm">
                                 <div className="flex items-start gap-4">
@@ -210,8 +227,7 @@ export default function DetailCourse({
                                             )
                                         }
                                         disabled={
-                                            status.label !==
-                                                "Sedang Berlangsung" ||
+                                            (status.label !== "Sedang Berlangsung" && !course.has_active_remedial) ||
                                             hasOtherActive
                                         }
                                     >
@@ -229,32 +245,34 @@ export default function DetailCourse({
                                     </Button>
                                 )}
 
-                                {status.label === "Sedang Berlangsung" ? (
-                                    hasOtherActive && (
-                                        <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                                            Anda memiliki kelas aktif lain.
-                                            Selesaikan kelas tersebut terlebih
-                                            dahulu sebelum mengerjakan kelas
-                                            ini.
+                                {status.label === "Sedang Berlangsung" && hasOtherActive && (
+                                    <div className="mt-2 rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-xs text-rose-700 leading-relaxed">
+                                        <strong>Kelas Aktif Lain:</strong> Anda memiliki kelas aktif lain. Selesaikan kelas tersebut terlebih dahulu sebelum mengerjakan kelas ini.
+                                    </div>
+                                )}
+
+                                {status.label === "Belum Mulai" && (
+                                    <div className="mt-2 rounded-xl border border-amber-100 bg-amber-50/60 p-3 text-xs text-amber-800 leading-relaxed">
+                                        <strong>Kelas Belum Mulai:</strong> Tunggu waktu mulai kelas untuk dapat mengerjakan.
+                                    </div>
+                                )}
+
+                                {status.label === "Selesai" && (
+                                    course.has_active_remedial ? (
+                                        <div className="mt-2 rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-xs text-rose-800 leading-relaxed">
+                                            <p className="font-semibold text-rose-900 mb-0.5">⚠️ Perlu Remedial</p>
+                                            <p className="text-rose-700">
+                                                Terdapat ujian remedial yang perlu Anda kerjakan pada kelas ini.
+                                                {course.remedial_deadline && (
+                                                    <> Batas akhir pengumpulan: <span className="font-semibold">{formatLocalDateTime(course.remedial_deadline)} WIB</span>.</>
+                                                )}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs text-slate-500 leading-relaxed">
+                                            Kelas sudah selesai. Anda tidak dapat mengerjakan kelas ini lagi.
                                         </div>
                                     )
-                                ) : (
-                                    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                                        {status.label === "Belum Mulai" && (
-                                            <span>
-                                                Kelas belum mulai. Tunggu waktu
-                                                mulai kelas untuk dapat
-                                                mengerjakan.
-                                            </span>
-                                        )}
-                                        {status.label === "Selesai" && (
-                                            <span className="text-rose-700">
-                                                Kelas sudah selesai. Anda tidak
-                                                dapat mengerjakan kelas ini
-                                                lagi.
-                                            </span>
-                                        )}
-                                    </div>
                                 )}
                             </div>
                         </div>
@@ -409,13 +427,16 @@ export default function DetailCourse({
                                 {courseTests.length > 0 ? (
                                 <div className="space-y-2">
                                     {courseTests.map((courseTest: any) => {
+                                        const isRemedialMode = !!courseTest?.is_remedial_mode;
                                         const maxAttempts = Number(
                                             courseTest?.max_attempts ?? 0,
                                         );
                                         const usedAttempts = Number(
                                             courseTest?.attempts_used ?? 0,
                                         );
-                                        const isUnlimited = maxAttempts <= 0;
+                                        const isUnlimited = isRemedialMode
+                                            ? (courseTest?.remedial_status !== 'passed')
+                                            : maxAttempts <= 0;
                                         const progress = isUnlimited
                                             ? 100
                                             : maxAttempts > 0
@@ -428,29 +449,41 @@ export default function DetailCourse({
                                                     ),
                                                 )
                                               : 0;
-                                        const attemptStatus = isUnlimited
-                                            ? {
-                                                  label: "Tanpa batas",
-                                                  text: "text-blue-700 bg-blue-100",
-                                                  bar: "bg-blue-500",
-                                              }
-                                            : usedAttempts <= 0
-                                              ? {
-                                                    label: "Belum mengerjakan",
-                                                    text: "text-emerald-700 bg-emerald-100",
-                                                    bar: "bg-emerald-500",
-                                                }
-                                              : usedAttempts >= maxAttempts
+                                        const attemptStatus = isRemedialMode
+                                            ? (courseTest?.remedial_status === 'passed'
                                                 ? {
-                                                      label: "Habis",
-                                                      text: "text-rose-700 bg-rose-100",
-                                                      bar: "bg-rose-500",
+                                                      label: "Lulus Remedial",
+                                                      text: "text-emerald-700 bg-emerald-100",
+                                                      bar: "bg-emerald-500",
                                                   }
                                                 : {
-                                                      label: "Mengerjakan sebagian",
-                                                      text: "text-amber-700 bg-amber-100",
-                                                      bar: "bg-amber-500",
-                                                  };
+                                                      label: "Remedial Aktif",
+                                                      text: "text-rose-700 bg-rose-100",
+                                                      bar: "bg-rose-500",
+                                                  })
+                                            : (isUnlimited
+                                                ? {
+                                                      label: "Tanpa batas",
+                                                      text: "text-blue-700 bg-blue-100",
+                                                      bar: "bg-blue-500",
+                                                  }
+                                                : usedAttempts <= 0
+                                                  ? {
+                                                        label: "Belum mengerjakan",
+                                                        text: "text-emerald-700 bg-emerald-100",
+                                                        bar: "bg-emerald-500",
+                                                    }
+                                                  : usedAttempts >= maxAttempts
+                                                    ? {
+                                                          label: "Habis",
+                                                          text: "text-rose-700 bg-rose-100",
+                                                          bar: "bg-rose-500",
+                                                      }
+                                                    : {
+                                                          label: "Mengerjakan sebagian",
+                                                          text: "text-amber-700 bg-amber-100",
+                                                          bar: "bg-amber-500",
+                                                      });
                                         const showScore =
                                             courseTest?.show_score ?? true;
                                         const bestAttemptLabel = courseTest
@@ -465,8 +498,13 @@ export default function DetailCourse({
                                             >
                                                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                                                     <div>
-                                                        <div className="font-semibold text-gray-800 text-base">
+                                                        <div className="font-semibold text-gray-800 text-base flex flex-wrap items-center gap-2">
                                                             {courseTest.title}
+                                                            {isRemedialMode && (
+                                                                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold text-rose-700 bg-rose-100 border border-rose-200">
+                                                                    Remedial
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
 
@@ -509,9 +547,11 @@ export default function DetailCourse({
                                                         </p>
                                                         <div className="mt-1 flex items-center justify-between gap-2">
                                                             <p className="text-sm font-semibold text-gray-800">
-                                                                {isUnlimited
-                                                                    ? "Tidak terbatas"
-                                                                    : `${usedAttempts} / ${maxAttempts}`}
+                                                                {isRemedialMode
+                                                                     ? (courseTest?.remedial_status === 'passed' ? "Lulus Remedial" : "Tidak terbatas")
+                                                                     : (isUnlimited
+                                                                         ? "Tidak terbatas"
+                                                                         : `${usedAttempts} / ${maxAttempts}`)}
                                                             </p>
                                                             <span
                                                                 className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${attemptStatus.text}`}
@@ -615,6 +655,16 @@ export default function DetailCourse({
                                                         Jadwal Selesai:{" "}
                                                         {formatLocalDateTime(courseTest.end_date)}
                                                     </div>
+                                                    {courseTest.is_remedial_mode && courseTest.remedial_status === 'active' && (
+                                                        <div className="rounded-md border border-rose-100 bg-rose-50/40 p-2 text-rose-700 md:col-span-2 font-semibold">
+                                                            Batas Remedial:{" "}
+                                                            {courseTest.remedial_end_date ? (
+                                                                formatLocalDateTime(courseTest.remedial_end_date)
+                                                            ) : (
+                                                                "Tanpa batas waktu"
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );

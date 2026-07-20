@@ -93,6 +93,7 @@ export default function DetailCourse({
     const [testDialogOpen, setTestDialogOpen] = useState(false);
     const [testStartDateOpen, setTestStartDateOpen] = useState(false);
     const [testEndDateOpen, setTestEndDateOpen] = useState(false);
+    const [remedialEndDateOpen, setRemedialEndDateOpen] = useState(false);
     const [editingCourseTestId, setEditingCourseTestId] = useState<
         string | null
     >(null);
@@ -110,6 +111,9 @@ export default function DetailCourse({
         end_time: "",
         show_score: true,
         show_correct_answers: true,
+        remedial_enabled: false,
+        remedial_end_date: null as Date | null,
+        remedial_end_time: "",
     });
     const scheduleImportInputRef = useRef<HTMLInputElement | null>(null);
     const courseTestImportInputRef = useRef<HTMLInputElement | null>(null);
@@ -163,6 +167,16 @@ export default function DetailCourse({
         );
 
         return format(localDate, "d MMMM yyyy, HH:mm", { locale: id });
+    };
+
+    const getMinRemedialDate = () => {
+        if (!course?.end_date) return null;
+        const datePart = course.end_date.split(" ")[0];
+        const [year, month, day] = datePart.split("-").map(Number);
+        const minDate = new Date(year, month - 1, day);
+        minDate.setDate(minDate.getDate() + 1);
+        minDate.setHours(0, 0, 0, 0);
+        return minDate;
     };
 
     const parseDateTimeParts = (value?: string | null) => {
@@ -377,6 +391,9 @@ export default function DetailCourse({
             end_time: "",
             show_score: true,
             show_correct_answers: true,
+            remedial_enabled: false,
+            remedial_end_date: null,
+            remedial_end_time: "",
         });
     };
 
@@ -389,6 +406,7 @@ export default function DetailCourse({
     const openEditCourseTestDialog = (courseTest: any) => {
         const startParts = parseDateTimeParts(courseTest.start_date);
         const endParts = parseDateTimeParts(courseTest.end_date);
+        const remedialParts = parseDateTimeParts(courseTest.remedial_end_date);
 
         setEditingCourseTestId(courseTest.id);
         setCourseTestForm({
@@ -409,6 +427,9 @@ export default function DetailCourse({
             end_time: endParts.time,
             show_score: !!courseTest.show_score,
             show_correct_answers: !!courseTest.show_correct_answers,
+            remedial_enabled: !!courseTest.remedial_enabled,
+            remedial_end_date: remedialParts.date,
+            remedial_end_time: remedialParts.time ?? "",
         });
         setTestDialogOpen(true);
     };
@@ -466,6 +487,35 @@ export default function DetailCourse({
             }
         }
 
+        if (courseTestForm.remedial_enabled) {
+            if (!courseTestForm.remedial_end_date || !courseTestForm.remedial_end_time) {
+                toast.error("Lengkapi tanggal dan jam selesai remedial.");
+                return;
+            }
+
+            const minDate = getMinRemedialDate();
+            if (minDate) {
+                const selectedEndDateText = combineDateTime(
+                    courseTestForm.remedial_end_date,
+                    courseTestForm.remedial_end_time,
+                );
+                if (selectedEndDateText) {
+                    const selectedEndDate = parseLocalDateTimeText(selectedEndDateText);
+                    if (selectedEndDate && selectedEndDate < minDate) {
+                        toast.error(
+                            `Waktu selesai remedial tidak boleh sebelum waktu mulai remedial (${format(minDate, "yyyy-MM-dd HH:mm")}).`
+                        );
+                        return;
+                    }
+                }
+            }
+        }
+
+        const remedialEndDateText = combineDateTime(
+            courseTestForm.remedial_end_date,
+            courseTestForm.remedial_end_time,
+        );
+
         const selectedBank = questionBanks.find(
             (bank: any) => bank.id === courseTestForm.question_bank_id,
         );
@@ -507,12 +557,23 @@ export default function DetailCourse({
             end_date: endDateText,
             show_score: courseTestForm.show_score,
             show_correct_answers: courseTestForm.show_correct_answers,
+            remedial_enabled: courseTestForm.remedial_enabled,
+            remedial_end_date: remedialEndDateText,
         };
 
         const onSuccess = () => {
             setTestDialogOpen(false);
             setEditingCourseTestId(null);
             resetCourseTestForm();
+        };
+
+        const onError = (errors: any) => {
+            const firstError = Object.values(errors)[0] as string;
+            if (firstError) {
+                toast.error(firstError);
+            } else {
+                toast.error("Terjadi kesalahan validasi.");
+            }
         };
 
         if (editingCourseTestId) {
@@ -1785,6 +1846,79 @@ export default function DetailCourse({
                                     />
                                     Tampilkan jawaban benar salah ke peserta
                                 </label>
+                                 <label className="md:col-span-2 flex items-center gap-2 text-sm mt-3 border-t border-slate-100 pt-3 cursor-pointer">
+                                     <Checkbox
+                                         checked={courseTestForm.remedial_enabled}
+                                         onCheckedChange={(checked) =>
+                                             setCourseTestForm((prev) => ({
+                                                 ...prev,
+                                                 remedial_enabled: checked === true,
+                                             }))
+                                         }
+                                     />
+                                     <span className="font-semibold text-rose-700">Aktifkan Remedial untuk ujian ini</span>
+                                 </label>
+                                 {courseTestForm.remedial_enabled && (
+                                     <div className="md:col-span-2 space-y-3 bg-rose-50/50 border border-rose-100 rounded-xl p-3.5">
+                                         <p className="text-xs text-rose-700 leading-relaxed font-medium">
+                                             Info: Remedial akan dibuka secara otomatis 1 hari setelah kelas berakhir (mulai tanggal {getMinRemedialDate() ? format(getMinRemedialDate()!, "d MMMM yyyy", { locale: id }) : "-"} pukul 00.00 WIB). Nilai kelulusan remedial mengikuti passing score yang diatur pada ujian ini dengan durasi dan kumpulan soal yang sama. Siswa memiliki kesempatan mengerjakan tanpa batas hingga nilainya mencapai passing score atau lebih.
+                                         </p>
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-semibold text-rose-900">
+                                                Waktu Selesai Remedial
+                                            </p>
+                                            <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-2">
+                                                <Popover
+                                                    open={remedialEndDateOpen}
+                                                    onOpenChange={setRemedialEndDateOpen}
+                                                >
+                                                    <PopoverTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            className={cn(
+                                                                "w-full min-w-0 justify-start text-left font-normal border-rose-200 bg-white",
+                                                                !courseTestForm.remedial_end_date && "text-muted-foreground",
+                                                            )}
+                                                        >
+                                                            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                                                            {courseTestForm.remedial_end_date ? (
+                                                                format(courseTestForm.remedial_end_date, "yyyy-MM-dd")
+                                                            ) : (
+                                                                <span className="truncate">Pilih tanggal selesai</span>
+                                                            )}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={courseTestForm.remedial_end_date || undefined}
+                                                            onSelect={(date) => {
+                                                                setCourseTestForm((prev) => ({
+                                                                    ...prev,
+                                                                    remedial_end_date: date ?? null,
+                                                                }));
+                                                                setRemedialEndDateOpen(false);
+                                                            }}
+                                                            disabled={getMinRemedialDate() ? { before: getMinRemedialDate()! } : undefined}
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <Input
+                                                    type="time"
+                                                    className="w-full min-w-[120px] border-rose-200 bg-white"
+                                                    value={courseTestForm.remedial_end_time}
+                                                    onChange={(e) =>
+                                                        setCourseTestForm((prev) => ({
+                                                            ...prev,
+                                                            remedial_end_time: e.target.value,
+                                                        }))
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 <Button
                                     className="md:col-span-2"
                                     onClick={submitCourseTest}

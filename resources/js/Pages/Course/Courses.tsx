@@ -354,7 +354,7 @@ export default function Courses({ courses = [] }: any) {
                                                 }
                                                 disabled={
                                                     noProfilePhoto ||
-                                                    course.course_status !== 'ongoing' ||
+                                                    (course.course_status !== 'ongoing' && !course.has_active_remedial) ||
                                                     Boolean(hasOtherActive)
                                                 }
                                             >
@@ -389,32 +389,35 @@ export default function Courses({ courses = [] }: any) {
                                         </div>
                                     )}
 
-                                    {status.label === "Sedang Berlangsung" ? (
-                                        hasOtherActive && (
-                                            <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                                                Anda memiliki kelas aktif lain.
-                                                Selesaikan kelas tersebut
-                                                terlebih dahulu sebelum
-                                                mengerjakan kelas ini.
+                                    {status.label === "Sedang Berlangsung" && hasOtherActive && (
+                                        <div className="mt-3 rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-sm text-rose-700">
+                                            <p className="font-semibold flex items-center gap-1.5">
+                                                ⚠️ Kelas Aktif Lain
+                                            </p>
+                                            <p className="mt-1 text-xs text-rose-600 leading-relaxed">
+                                                Anda memiliki kelas aktif lain. Selesaikan kelas tersebut terlebih dahulu sebelum mengerjakan kelas ini.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {status.label === "Selesai" && (
+                                        course.has_active_remedial ? (
+                                            <div className="mt-3 rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-sm text-rose-800">
+                                                <p className="font-semibold flex items-center gap-1.5 mb-1 text-rose-900">
+                                                    ⚠️ Perlu Remedial
+                                                </p>
+                                                <p className="text-xs text-rose-700 leading-relaxed">
+                                                    Terdapat ujian remedial yang perlu Anda kerjakan pada kelas ini.
+                                                    {course.remedial_deadline && (
+                                                        <> Batas akhir pengumpulan: <span className="font-semibold">{new Date(course.remedial_deadline).toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} WIB</span>.</>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs text-slate-500 leading-relaxed">
+                                                Kelas sudah selesai. Anda tidak dapat mengerjakan kelas ini lagi.
                                             </div>
                                         )
-                                    ) : (
-                                        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                                            {status.label === "Belum Mulai" && (
-                                                <p>
-                                                    Kelas belum mulai. Tunggu
-                                                    waktu mulai kelas untuk
-                                                    dapat mengerjakan.
-                                                </p>
-                                            )}
-                                            {status.label === "Selesai" && (
-                                                <p className="text-rose-700">
-                                                    Kelas sudah selesai. Anda
-                                                    tidak dapat mengerjakan
-                                                    kelas ini lagi.
-                                                </p>
-                                            )}
-                                        </div>
                                     )}
                                 </div>
                             );

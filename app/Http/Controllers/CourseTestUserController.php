@@ -24,15 +24,47 @@ class CourseTestUserController extends Controller
 
         $tz = 'Asia/Jakarta';
         $now = now($tz);
-        $start = $this->parseScheduleDateTime($courseTest->getRawOriginal('start_date'), $tz);
-        $end = $this->parseScheduleDateTime($courseTest->getRawOriginal('end_date'), $tz);
 
-        if ($start && $now->lt($start)) {
-            return back()->with('error', 'Ujian kelas belum mulai.');
+        $courseEnd = $course->end_date ? Carbon::parse($course->end_date, $tz) : null;
+        $remedialStart = $courseEnd ? $courseEnd->copy()->addDay()->startOfDay() : null;
+        $remedialEnd = $courseTest->remedial_end_date ? Carbon::parse($courseTest->remedial_end_date, $tz) : null;
+
+        $isRemedialActive = false;
+        $isRemedialEligible = false;
+
+        $attempts = CourseTestAttempt::where('user_id', $user->id)
+            ->where('course_test_id', $courseTest->id)
+            ->whereNotNull('submitted_at')
+            ->get();
+
+        $passingScore = (int) ($courseTest->passing_score ?? 70);
+        $bestRegularScore = $attempts->where('test_type', 'exam')->max('score');
+        $isFailedRegular = is_null($bestRegularScore) || $bestRegularScore < $passingScore;
+
+        if ($courseTest->remedial_enabled && $remedialStart && $now->greaterThanOrEqualTo($remedialStart)) {
+            if (!$remedialEnd || $now->lessThanOrEqualTo($remedialEnd)) {
+                $isRemedialActive = true;
+            }
+            $isRemedialEligible = $isFailedRegular;
         }
 
-        if ($end && $now->greaterThanOrEqualTo($end)) {
-            return back()->with('error', 'Ujian kelas telah ditutup.');
+        if ($isRemedialActive) {
+            if (!$isRemedialEligible) {
+                return back()->with('error', 'Anda tidak berhak mengikuti ujian remedial ini.');
+            }
+            $testType = 'remedial';
+        } else {
+            $testType = 'exam';
+            $start = $this->parseScheduleDateTime($courseTest->getRawOriginal('start_date'), $tz);
+            $end = $this->parseScheduleDateTime($courseTest->getRawOriginal('end_date'), $tz);
+
+            if ($start && $now->lt($start)) {
+                return back()->with('error', 'Ujian kelas belum mulai.');
+            }
+
+            if ($end && $now->greaterThanOrEqualTo($end)) {
+                return back()->with('error', 'Ujian kelas telah ditutup.');
+            }
         }
 
         $attempt = CourseTestAttempt::where('user_id', $user->id)
@@ -41,14 +73,14 @@ class CourseTestUserController extends Controller
             ->first();
 
         if (!$attempt && !$this->hasRemainingAttempts($courseTest, $user->id)) {
-            return back()->with('error', 'Batas kesempatan ujian sudah habis.');
+            return back()->with('error', $isRemedialActive ? 'Anda sudah lulus ujian remedial ini.' : 'Batas kesempatan ujian sudah habis.');
         }
 
         if (!$attempt) {
             CourseTestAttempt::create([
                 'user_id' => $user->id,
                 'course_test_id' => $courseTest->id,
-                'test_type' => 'exam',
+                'test_type' => $testType,
                 'score' => 0,
                 'passed' => false,
                 'started_at' => now($tz),
@@ -78,29 +110,65 @@ class CourseTestUserController extends Controller
 
         $tz = 'Asia/Jakarta';
         $now = now($tz);
+
+        $courseEnd = $course->end_date ? Carbon::parse($course->end_date, $tz) : null;
+        $remedialStart = $courseEnd ? $courseEnd->copy()->addDay()->startOfDay() : null;
+        $remedialEnd = $courseTest->remedial_end_date ? Carbon::parse($courseTest->remedial_end_date, $tz) : null;
+
         $start = $this->parseScheduleDateTime($courseTest->getRawOriginal('start_date'), $tz);
         $end = $this->parseScheduleDateTime($courseTest->getRawOriginal('end_date'), $tz);
 
-        if ($start && $now->lt($start)) {
-            return redirect()
-                ->route('courses.courseTests.detail', [$course->id, $courseTest->id])
-                ->with('error', 'Ujian kelas belum mulai.');
-        }
+        $isRemedialActive = false;
+        $isRemedialEligible = false;
 
-        $submittedAttempt = CourseTestAttempt::where('user_id', $user->id)
+        $attempts = CourseTestAttempt::where('user_id', $user->id)
             ->where('course_test_id', $courseTest->id)
             ->whereNotNull('submitted_at')
-            ->latest('submitted_at')
-            ->first();
+            ->orderBy('submitted_at', 'desc')
+            ->get();
 
-        if ($submittedAttempt && $end && $now->greaterThanOrEqualTo($end)) {
-            return redirect()->route('courses.courseTests.result', [$course->id, $courseTest->id, $submittedAttempt->id]);
+        $passingScore = (int) ($courseTest->passing_score ?? 70);
+        $bestRegularScore = $attempts->where('test_type', 'exam')->max('score');
+        $isFailedRegular = is_null($bestRegularScore) || $bestRegularScore < $passingScore;
+
+        if ($courseTest->remedial_enabled && $remedialStart && $now->greaterThanOrEqualTo($remedialStart)) {
+            if (!$remedialEnd || $now->lessThanOrEqualTo($remedialEnd)) {
+                $isRemedialActive = true;
+            }
+            $isRemedialEligible = $isFailedRegular;
         }
 
-        if (!$submittedAttempt && $end && $now->greaterThanOrEqualTo($end)) {
-            return redirect()
-                ->route('courses.courseTests.detail', [$course->id, $courseTest->id])
-                ->with('error', 'Ujian kelas telah ditutup.');
+        if ($isRemedialActive) {
+            if (!$isRemedialEligible) {
+                return redirect()
+                    ->route('courses.detail', $course->id)
+                    ->with('error', 'Anda tidak berhak mengikuti ujian remedial ini.');
+            }
+            
+            // Check if remedial has ended
+            if ($remedialEnd && $now->greaterThanOrEqualTo($remedialEnd)) {
+                return redirect()
+                    ->route('courses.courseTests.detail', [$course->id, $courseTest->id])
+                    ->with('error', 'Ujian remedial telah ditutup.');
+            }
+        } else {
+            if ($start && $now->lt($start)) {
+                return redirect()
+                    ->route('courses.courseTests.detail', [$course->id, $courseTest->id])
+                    ->with('error', 'Ujian kelas belum mulai.');
+            }
+
+            $submittedAttempt = $attempts->first();
+
+            if ($submittedAttempt && $end && $now->greaterThanOrEqualTo($end)) {
+                return redirect()->route('courses.courseTests.result', [$course->id, $courseTest->id, $submittedAttempt->id]);
+            }
+
+            if (!$submittedAttempt && $end && $now->greaterThanOrEqualTo($end)) {
+                return redirect()
+                    ->route('courses.courseTests.detail', [$course->id, $courseTest->id])
+                    ->with('error', 'Ujian kelas telah ditutup.');
+            }
         }
 
         if (session('active_course_test_id') !== $courseTest->id) {
@@ -161,10 +229,12 @@ class CourseTestUserController extends Controller
             $effectiveDeadline = $durationDeadline;
         }
 
-        if ($end) {
+        $deadline = $attempt->test_type === 'remedial' ? $remedialEnd : $end;
+
+        if ($deadline) {
             $effectiveDeadline = $effectiveDeadline
-                ? ($end->lt($effectiveDeadline) ? $end : $effectiveDeadline)
-                : $end;
+                ? ($deadline->lt($effectiveDeadline) ? $deadline : $effectiveDeadline)
+                : $deadline;
         }
 
         if ($effectiveDeadline && $now->gt($effectiveDeadline)) {
@@ -481,10 +551,25 @@ class CourseTestUserController extends Controller
                 abort(403, 'Batas kesempatan ujian sudah habis.');
             }
 
+            // Determine test type
+            $tz = 'Asia/Jakarta';
+            $now = now($tz);
+            $course = $courseTest->course;
+            $courseEnd = $course->end_date ? Carbon::parse($course->end_date, $tz) : null;
+            $remedialStart = $courseEnd ? $courseEnd->copy()->addDay()->startOfDay() : null;
+            $remedialEnd = $courseTest->remedial_end_date ? Carbon::parse($courseTest->remedial_end_date, $tz) : null;
+
+            $isRemedialActive = false;
+            if ($courseTest->remedial_enabled && $remedialStart && $now->greaterThanOrEqualTo($remedialStart)) {
+                if (!$remedialEnd || $now->lessThanOrEqualTo($remedialEnd)) {
+                    $isRemedialActive = true;
+                }
+            }
+
             $attempt = CourseTestAttempt::create([
                 'user_id' => $userId,
                 'course_test_id' => $courseTest->id,
-                'test_type' => 'exam',
+                'test_type' => $isRemedialActive ? 'remedial' : 'exam',
                 'score' => 0,
                 'passed' => false,
                 'started_at' => now('Asia/Jakarta'),
@@ -496,6 +581,30 @@ class CourseTestUserController extends Controller
 
     private function hasRemainingAttempts(CourseTest $courseTest, string $userId): bool
     {
+        $tz = 'Asia/Jakarta';
+        $now = now($tz);
+        $course = $courseTest->course;
+        $courseEnd = $course->end_date ? Carbon::parse($course->end_date, $tz) : null;
+        $remedialStart = $courseEnd ? $courseEnd->copy()->addDay()->startOfDay() : null;
+        $remedialEnd = $courseTest->remedial_end_date ? Carbon::parse($courseTest->remedial_end_date, $tz) : null;
+
+        $isRemedialActive = false;
+        if ($courseTest->remedial_enabled && $remedialStart && $now->greaterThanOrEqualTo($remedialStart)) {
+            if (!$remedialEnd || $now->lessThanOrEqualTo($remedialEnd)) {
+                $isRemedialActive = true;
+            }
+        }
+
+        if ($isRemedialActive) {
+            // Remedial attempts are unlimited until they score >= passing_score
+            $passingScore = (int) ($courseTest->passing_score ?? 70);
+            $bestScore = CourseTestAttempt::where('user_id', $userId)
+                ->where('course_test_id', $courseTest->id)
+                ->whereNotNull('submitted_at')
+                ->max('score') ?? 0;
+            return $bestScore < $passingScore;
+        }
+
         $maxAttempts = max(0, (int) ($courseTest->max_attempts ?? 0));
 
         if ($maxAttempts <= 0) {
@@ -504,6 +613,7 @@ class CourseTestUserController extends Controller
 
         $submittedCount = CourseTestAttempt::where('user_id', $userId)
             ->where('course_test_id', $courseTest->id)
+            ->where('test_type', 'exam')
             ->whereNotNull('submitted_at')
             ->count();
 
@@ -525,7 +635,8 @@ class CourseTestUserController extends Controller
         $score = $total > 0 ? (int) round(($correct / $total) * 100) : 0;
 
         $attempt->score = $score;
-        $attempt->passed = $score >= (int) ($courseTest->passing_score ?? 0);
+        $passingScore = (int) ($courseTest->passing_score ?? 70);
+        $attempt->passed = $score >= $passingScore;
         $attempt->submitted_at = now('Asia/Jakarta');
         $attempt->save();
 

@@ -28,9 +28,12 @@ class CourseUserController extends Controller
         $courses = Course::whereHas('participants', function ($q) use ($user) {
             $q->where('user_id', $user->id);
         })
-            ->with(['participants' => function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            }])
+            ->with([
+                'participants' => function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                },
+                'courseTests',
+            ])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -186,6 +189,43 @@ class CourseUserController extends Controller
                 $course->course_status = 'ongoing';
             }
 
+            $hasActiveRemedial = false;
+            $remedialDeadline = null;
+
+            $testIds = $course->courseTests->pluck('id');
+            $allAttempts = CourseTestAttempt::where('user_id', $user->id)
+                ->whereIn('course_test_id', $testIds)
+                ->whereNotNull('submitted_at')
+                ->get()
+                ->groupBy('course_test_id');
+
+            $courseEndParsed = $courseEnd;
+            $remedialStart = $courseEndParsed ? $courseEndParsed->copy()->addDay()->startOfDay() : null;
+
+            foreach ($course->courseTests as $courseTest) {
+                if ($courseTest->remedial_enabled && $remedialStart && $now->greaterThanOrEqualTo($remedialStart)) {
+                    $remedialEnd = $courseTest->remedial_end_date ? Carbon::parse($courseTest->remedial_end_date, $tz) : null;
+                    if (!$remedialEnd || $now->lessThanOrEqualTo($remedialEnd)) {
+                        $attemptsForTest = $allAttempts->get($courseTest->id, collect());
+                        $passingScore = (int) ($courseTest->passing_score ?? 70);
+                        $bestScore = $attemptsForTest->max('score');
+                        $isFailed = is_null($bestScore) || $bestScore < $passingScore;
+
+                        if ($isFailed) {
+                            $hasActiveRemedial = true;
+                            if ($remedialEnd) {
+                                if (!$remedialDeadline || $remedialEnd->greaterThan($remedialDeadline)) {
+                                    $remedialDeadline = $remedialEnd;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            $course->has_active_remedial = $hasActiveRemedial;
+            $course->remedial_deadline = $remedialDeadline ? $remedialDeadline->toIso8601String() : null;
+
             return $course;
         });
 
@@ -285,14 +325,38 @@ class CourseUserController extends Controller
                 ->get()
                 ->groupBy('course_test_id');
 
-            $courseTests = $courseTests->map(function ($courseTest) use ($attempts) {
+            $courseTests = $courseTests->map(function ($courseTest) use ($attempts, $user, $course) {
                 $attemptItems = $attempts->get($courseTest->id);
                 $attemptCount = $attemptItems ? $attemptItems->count() : 0;
+                
+                // Regular attempts info
+                $regularAttempts = $attemptItems ? $attemptItems->where('test_type', 'exam') : collect();
+                $regularCount = $regularAttempts->count();
+                
                 $maxAttempts = max(0, (int) ($courseTest->max_attempts ?? 0));
-                $attemptsRemaining = $maxAttempts > 0
-                    ? max($maxAttempts - $attemptCount, 0)
-                    : null;
-
+                
+                // Remedial check
+                $isRemedialActive = false;
+                $isRemedialEligible = false;
+                
+                $tz = 'Asia/Jakarta';
+                $now = now($tz);
+                $courseEnd = $course->end_date ? Carbon::parse($course->end_date, $tz) : null;
+                $remedialStart = $courseEnd ? $courseEnd->copy()->addDay()->startOfDay() : null;
+                $remedialEnd = $courseTest->remedial_end_date ? Carbon::parse($courseTest->remedial_end_date, $tz) : null;
+                
+                $passingScore = (int) ($courseTest->passing_score ?? 70);
+                $bestRegularScore = $regularAttempts->max('score');
+                $isFailedRegular = is_null($bestRegularScore) || $bestRegularScore < $passingScore;
+                
+                if ($courseTest->remedial_enabled && $remedialStart && $now->greaterThanOrEqualTo($remedialStart)) {
+                    if (!$remedialEnd || $now->lessThanOrEqualTo($remedialEnd)) {
+                        $isRemedialActive = true;
+                    }
+                    $isRemedialEligible = $isFailedRegular;
+                }
+                
+                // Best score overall (exam or remedial)
                 $bestAttempt = $attemptItems?->reduce(function ($best, $current) {
                     if (!$best) {
                         return $current;
@@ -316,6 +380,33 @@ class CourseUserController extends Controller
 
                     return $best;
                 });
+                
+                // For remedial phase, attempts_used and attempts_remaining should adapt:
+                if ($isRemedialActive && $isRemedialEligible) {
+                    $bestRemedialScore = $attemptItems ? $attemptItems->where('test_type', 'remedial')->max('score') : 0;
+                    $hasPassedRemedial = ($bestRegularScore >= $passingScore) || ($bestRemedialScore >= $passingScore);
+                    
+                    $courseTest->setAttribute('is_remedial_mode', true);
+                    $courseTest->setAttribute('is_remedial_eligible', true);
+                    $courseTest->setAttribute('remedial_status', $hasPassedRemedial ? 'passed' : 'active');
+                    
+                    $courseTest->setAttribute('attempts_used', $attemptCount);
+                    $courseTest->setAttribute('attempts_remaining', $hasPassedRemedial ? 0 : null);
+                    $courseTest->setAttribute('attempts_status', $hasPassedRemedial ? 'exhausted' : 'unlimited');
+                } else {
+                    $courseTest->setAttribute('is_remedial_mode', false);
+                    $courseTest->setAttribute('is_remedial_eligible', false);
+                    $courseTest->setAttribute('remedial_status', 'none');
+                    
+                    $attemptsRemaining = $maxAttempts > 0 ? max($maxAttempts - $regularCount, 0) : null;
+                    $courseTest->setAttribute('attempts_used', $regularCount);
+                    $courseTest->setAttribute('attempts_remaining', $attemptsRemaining);
+                    $courseTest->setAttribute('attempts_status', $maxAttempts <= 0
+                        ? 'unlimited'
+                        : ($regularCount <= 0
+                            ? 'unused'
+                            : ($regularCount >= $maxAttempts ? 'exhausted' : 'partial')));
+                }
 
                 $courseTest->setAttribute('best_attempt', $bestAttempt ? [
                     'id' => $bestAttempt->id,
@@ -324,17 +415,29 @@ class CourseUserController extends Controller
                     'submitted_at' => optional($bestAttempt->submitted_at)->toIso8601String(),
                 ] : null);
 
-                $courseTest->setAttribute('attempts_used', $attemptCount);
-                $courseTest->setAttribute('attempts_remaining', $attemptsRemaining);
-                $courseTest->setAttribute('attempts_status', $maxAttempts <= 0
-                    ? 'unlimited'
-                    : ($attemptCount <= 0
-                        ? 'unused'
-                        : ($attemptCount >= $maxAttempts ? 'exhausted' : 'partial')));
-
                 return $courseTest;
             })->values();
         }
+
+        $hasActiveRemedial = false;
+        $remedialDeadline = null;
+        $tz = 'Asia/Jakarta';
+        $now = now($tz);
+
+        foreach ($courseTests as $ct) {
+            if ($ct->is_remedial_mode && $ct->remedial_status === 'active') {
+                $hasActiveRemedial = true;
+                $remEnd = $ct->remedial_end_date ? Carbon::parse($ct->remedial_end_date, $tz) : null;
+                if ($remEnd) {
+                    if (!$remedialDeadline || $remEnd->greaterThan($remedialDeadline)) {
+                        $remedialDeadline = $remEnd;
+                    }
+                }
+            }
+        }
+
+        $course->setAttribute('has_active_remedial', $hasActiveRemedial);
+        $course->setAttribute('remedial_deadline', $remedialDeadline ? $remedialDeadline->toIso8601String() : null);
 
         return Inertia::render('Course/DetailCourse', [
             'course' => $course,
@@ -404,17 +507,32 @@ class CourseUserController extends Controller
             ->where('course_id', $course->id)
             ->findOrFail($courseTestId);
 
-        $lastAttempt = CourseTestAttempt::where('user_id', Auth::id())
-            ->where('course_test_id', $courseTest->id)
-            ->whereNotNull('submitted_at')
-            ->latest('submitted_at')
-            ->first();
+        $tz = 'Asia/Jakarta';
+        $now = now($tz);
+
+        $courseEnd = $course->end_date ? Carbon::parse($course->end_date, $tz) : null;
+        $remedialStart = $courseEnd ? $courseEnd->copy()->addDay()->startOfDay() : null;
+        $remedialEnd = $courseTest->remedial_end_date ? Carbon::parse($courseTest->remedial_end_date, $tz) : null;
+
+        $isRemedialActive = false;
+        $isRemedialEligible = false;
 
         $attempts = CourseTestAttempt::where('user_id', Auth::id())
             ->where('course_test_id', $courseTest->id)
             ->whereNotNull('submitted_at')
             ->orderBy('submitted_at', 'desc')
             ->get();
+
+        $passingScore = (int) ($courseTest->passing_score ?? 70);
+        $bestRegularScore = $attempts->where('test_type', 'exam')->max('score');
+        $isFailedRegular = is_null($bestRegularScore) || $bestRegularScore < $passingScore;
+
+        if ($courseTest->remedial_enabled && $remedialStart && $now->greaterThanOrEqualTo($remedialStart)) {
+            if (!$remedialEnd || $now->lessThanOrEqualTo($remedialEnd)) {
+                $isRemedialActive = true;
+            }
+            $isRemedialEligible = $isFailedRegular;
+        }
 
         $attemptHistory = $attempts
             ->map(function ($attempt) {
@@ -423,33 +541,59 @@ class CourseUserController extends Controller
                     'score' => (int) $attempt->score,
                     'passed' => (bool) $attempt->passed,
                     'submitted_at' => optional($attempt->submitted_at)->toIso8601String(),
+                    'test_type' => $attempt->test_type,
                 ];
             });
 
-        $attemptsUsed = $attempts->count();
-        $maxAttempts = max(0, (int) ($courseTest->max_attempts ?? 0));
-        $attemptsRemaining = $maxAttempts > 0
-            ? max($maxAttempts - $attemptsUsed, 0)
-            : null;
-        $canAttempt = $attemptsRemaining === null ? true : $attemptsRemaining > 0;
+        $lastAttempt = $attempts->first();
+
+        if ($isRemedialActive && $isRemedialEligible) {
+            $bestRemedialScore = $attempts->where('test_type', 'remedial')->max('score') ?? 0;
+            $hasPassed = ($bestRegularScore >= $passingScore) || ($bestRemedialScore >= $passingScore);
+            
+            $canAttempt = !$hasPassed;
+            $maxAttempts = 0;
+            $attemptsRemaining = $hasPassed ? 0 : null;
+            $attemptsUsed = $attempts->count();
+        } else {
+            $regularAttemptsCount = $attempts->where('test_type', 'exam')->count();
+            $maxAttempts = max(0, (int) ($courseTest->max_attempts ?? 0));
+            $attemptsRemaining = $maxAttempts > 0
+                ? max($maxAttempts - $regularAttemptsCount, 0)
+                : null;
+            $canAttempt = $attemptsRemaining === null ? true : $attemptsRemaining > 0;
+            $attemptsUsed = $regularAttemptsCount;
+        }
 
         $activeCourseTestId = $this->resolveActiveCourseTestId(Auth::id());
 
-        $tz = 'Asia/Jakarta';
-        $now = now($tz);
         $rawStart = $courseTest->getRawOriginal('start_date');
         $rawEnd   = $courseTest->getRawOriginal('end_date');
         $ctStart  = $rawStart ? $this->parseScheduleDateTime($rawStart, $tz) : null;
         $ctEnd    = $rawEnd   ? $this->parseScheduleDateTime($rawEnd,   $tz) : null;
 
-        if (!$ctStart && !$ctEnd) {
-            $courseTestStatus = 'ongoing';
-        } elseif ($ctStart && $now->lt($ctStart)) {
-            $courseTestStatus = 'upcoming';
-        } elseif ($ctEnd && $now->gt($ctEnd)) {
-            $courseTestStatus = 'finished';
+        if ($isRemedialActive && $isRemedialEligible) {
+            $courseTestStatus = 'remedial_active';
+        } elseif ($courseTest->remedial_enabled && $remedialStart && $now->greaterThanOrEqualTo($remedialStart)) {
+            if ($isRemedialEligible) {
+                if ($remedialEnd && $now->gt($remedialEnd)) {
+                    $courseTestStatus = 'remedial_finished';
+                } else {
+                    $courseTestStatus = 'remedial_active';
+                }
+            } else {
+                $courseTestStatus = 'remedial_not_eligible';
+            }
         } else {
-            $courseTestStatus = 'ongoing';
+            if (!$ctStart && !$ctEnd) {
+                $courseTestStatus = 'ongoing';
+            } elseif ($ctStart && $now->lt($ctStart)) {
+                $courseTestStatus = 'upcoming';
+            } elseif ($ctEnd && $now->gt($ctEnd)) {
+                $courseTestStatus = 'finished';
+            } else {
+                $courseTestStatus = 'ongoing';
+            }
         }
 
         return Inertia::render('Course/CourseTest/Detail', [
@@ -462,6 +606,7 @@ class CourseUserController extends Controller
                 'score' => (int) $lastAttempt->score,
                 'passed' => (bool) $lastAttempt->passed,
                 'submitted_at' => optional($lastAttempt->submitted_at)->toIso8601String(),
+                'test_type' => $lastAttempt->test_type,
             ] : null,
             'activeCourseTestId' => $activeCourseTestId,
             'attemptsUsed' => $attemptsUsed,
@@ -469,6 +614,7 @@ class CourseUserController extends Controller
             'attemptsRemaining' => $attemptsRemaining,
             'canAttempt' => $canAttempt,
             'courseTestStatus' => $courseTestStatus,
+            'isRemedialMode' => $isRemedialActive && $isRemedialEligible,
         ]);
     }
 
@@ -535,13 +681,7 @@ class CourseUserController extends Controller
 
     public function startWorking($id)
     {
-        $user = Auth::user();
         $course = Course::findOrFail($id);
-
-        // Require profile photo before starting course
-        if (empty($user->profile_url)) {
-            return back()->with('error', 'Anda harus mengunggah foto profil terlebih dahulu sebelum mengerjakan kelas. Silakan lengkapi profil Anda di Dashboard.');
-        }
 
         session(['active_course_id' => $course->id]);
 
