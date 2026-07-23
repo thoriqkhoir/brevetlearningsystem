@@ -87,6 +87,7 @@ export default function Courses({ courses = [] }: any) {
     const [open, setOpen] = useState(false);
     const [classCode, setClassCode] = useState("");
     const [loading, setLoading] = useState(false);
+    const hasJoinedCourse = Array.isArray(courses) && courses.length > 0;
 
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
@@ -114,7 +115,7 @@ export default function Courses({ courses = [] }: any) {
             <div className="relative min-h-[100svh] overflow-hidden bg-gradient-to-b from-teal-50/70 via-white to-amber-50/60">
                 <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,_rgba(13,148,136,0.18),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(245,158,11,0.16),_transparent_40%)]" />
                 <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
-                    <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_auto]">
+                    <div className="mb-6 grid gap-4 lg:grid-cols-2">
                         <div className="rounded-3xl border border-teal-200/70 bg-white/85 p-6 shadow-sm backdrop-blur-sm">
                             <div className="flex items-start gap-4">
                                 <div className="mt-0.5 h-16 w-1 rounded-full bg-gradient-to-b from-teal-500 to-amber-500" />
@@ -153,14 +154,26 @@ export default function Courses({ courses = [] }: any) {
                                 Aksi Cepat
                             </p>
                             <p className="mt-1 text-sm text-slate-600">
-                                Masukkan kode dari pengajar untuk bergabung ke
-                                kelas baru.
+                                {hasJoinedCourse
+                                    ? "Anda telah terdaftar di 1 kelas."
+                                    : "Masukkan kode dari pengajar untuk bergabung ke kelas baru."}
                             </p>
+                            {hasJoinedCourse && (
+                                <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-800 leading-relaxed">
+                                    <p className="font-semibold flex items-center gap-1 text-amber-900">
+                                        ℹ️ Ketentuan Pendaftaran Kelas
+                                    </p>
+                                    <p className="mt-1">
+                                        Anda hanya boleh terdaftar di 1 kelas. Jika ingin bergabung ke kelas lain, silakan minta admin pelatihan atau pengajar untuk mengeluarkan Anda dari kelas saat ini.
+                                    </p>
+                                </div>
+                            )}
                             <Dialog open={open} onOpenChange={setOpen}>
                                 <DialogTrigger asChild>
                                     <Button
                                         variant="accent"
                                         className="mt-3 w-full"
+                                        disabled={hasJoinedCourse}
                                     >
                                         <Plus size={18} />
                                         Gabung Kelas
@@ -177,24 +190,33 @@ export default function Courses({ courses = [] }: any) {
                                             kelas.
                                         </DialogDescription>
                                     </DialogHeader>
-                                    <div className="flex flex-col gap-4">
-                                        <Input
-                                            placeholder="Kode Kelas"
-                                            value={classCode}
-                                            onChange={(e) =>
-                                                setClassCode(e.target.value)
-                                            }
-                                            autoFocus
-                                        />
-                                        <Button
-                                            onClick={handleJoinClass}
-                                            disabled={loading || !classCode}
-                                        >
-                                            {loading
-                                                ? "Memproses..."
-                                                : "Gabung"}
-                                        </Button>
-                                    </div>
+                                    {hasJoinedCourse ? (
+                                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                                            <p className="font-semibold">⚠️ Tidak Dapat Bergabung Kelas Lain</p>
+                                            <p className="mt-1 text-xs text-amber-700 leading-relaxed">
+                                                Anda saat ini sudah terdaftar di 1 kelas. Sesuai aturan, Anda hanya dapat terdaftar di 1 kelas. Harap hubungi admin pelatihan atau pengajar kelas untuk mengeluarkan Anda dari kelas yang ada sebelum bergabung ke kelas baru.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-4">
+                                            <Input
+                                                placeholder="Kode Kelas"
+                                                value={classCode}
+                                                onChange={(e) =>
+                                                    setClassCode(e.target.value)
+                                                }
+                                                autoFocus
+                                            />
+                                            <Button
+                                                onClick={handleJoinClass}
+                                                disabled={loading || !classCode}
+                                            >
+                                                {loading
+                                                    ? "Memproses..."
+                                                    : "Gabung"}
+                                            </Button>
+                                        </div>
+                                    )}
                                 </DialogContent>
                             </Dialog>
                         </div>

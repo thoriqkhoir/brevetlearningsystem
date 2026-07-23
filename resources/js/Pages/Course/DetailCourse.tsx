@@ -231,7 +231,7 @@ export default function DetailCourse({
                                             hasOtherActive
                                         }
                                     >
-                                        Mulai Mengerjakan
+                                        Mulai Praktik
                                     </Button>
                                 ) : (
                                     <Button

@@ -240,19 +240,19 @@ class CourseUserController extends Controller
             'code' => 'required|string|exists:courses,code',
         ]);
 
-        $course = Course::where('code', $request->code)->first();
+        $user = $request->user();
 
-        $exists = CourseUser::where('course_id', $course->id)
-            ->where('user_id', $request->user()->id)
-            ->exists();
+        $alreadyEnrolled = CourseUser::where('user_id', $user->id)->exists();
 
-        if ($exists) {
-            return back()->with('error', 'Anda sudah bergabung di kelas ini.');
+        if ($alreadyEnrolled) {
+            return back()->with('error', 'Anda sudah terdaftar di salah satu kelas. Siswa hanya dapat terdaftar di 1 kelas. Silakan minta pengajar atau admin untuk mengeluarkan Anda dari kelas saat ini jika ingin bergabung ke kelas lain.');
         }
+
+        $course = Course::where('code', $request->code)->first();
 
         CourseUser::create([
             'course_id' => $course->id,
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
         ]);
 
         return back()->with('success', 'Berhasil bergabung ke kelas!');
@@ -697,15 +697,6 @@ class CourseUserController extends Controller
 
     public function destroy($id)
     {
-        $user = Auth::user();
-        $pivot = CourseUser::where('course_id', $id)
-            ->where('user_id', $user->id)
-            ->first();
-
-        if ($pivot) {
-            $pivot->delete();
-            return redirect()->route('courses')->with('success', 'Berhasil keluar dari kelas.');
-        }
-        return back()->with('error', 'Anda tidak terdaftar di kelas ini.');
+        return back()->with('error', 'Anda tidak dapat keluar dari kelas sendiri. Silakan minta pengajar atau admin pelatihan untuk mengeluarkan Anda dari kelas.');
     }
 }
