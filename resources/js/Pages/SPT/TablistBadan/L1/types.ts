@@ -259,9 +259,20 @@ export function computeFiscalAmount(
         L1A1Item,
         "non_final" | "fiscal_positive" | "fiscal_negative"
     >,
+    category?: string,
 ) {
     const nonFinal = Number(item.non_final ?? 0);
     const pos = Number(item.fiscal_positive ?? 0);
     const neg = Number(item.fiscal_negative ?? 0);
+
+    const isBebanUsaha = category
+        ? category.toLowerCase().trim().includes("beban usaha")
+        : false;
+
+    if (isBebanUsaha) {
+        // Hanya di kategori beban usaha: koreksi positif mengurangi dan koreksi negatif menambah nilai fiskal
+        return nonFinal - pos + neg;
+    }
+
     return nonFinal + pos - neg;
 }

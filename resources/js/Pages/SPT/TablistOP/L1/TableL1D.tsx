@@ -119,6 +119,7 @@ export function TableL1D({
                                 <TableCell>
                                     <div className="flex gap-1">
                                         <Button
+                                            type="button"
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8"
@@ -127,6 +128,7 @@ export function TableL1D({
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                         <Button
+                                            type="button"
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8 text-red-500 hover:text-red-600"

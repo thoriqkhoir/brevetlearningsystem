@@ -524,6 +524,7 @@ export default function TabL3A4({
                                                 <TableCell className="text-center">
                                                     <div className="flex items-center justify-center gap-2">
                                                         <Button
+                                                            type="button"
                                                             variant="outline"
                                                             size="icon"
                                                             className="h-7 w-7"
@@ -534,6 +535,7 @@ export default function TabL3A4({
                                                             <Pencil className="w-3 h-3" />
                                                         </Button>
                                                         <Button
+                                                            type="button"
                                                             variant="ghost"
                                                             size="icon"
                                                             className="h-7 w-7"

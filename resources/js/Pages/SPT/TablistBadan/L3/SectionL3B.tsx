@@ -4,15 +4,16 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { FormL3BDialog } from "./FormL3BDialog";
 import { TableL3B } from "./TableL3B";
-import { L3BItem } from "./types";
+import { L3AItem, L3BItem } from "./types";
 import ConfirmDialog from "@/Components/layout/ConfirmDialog";
 
 interface SectionL3BProps {
     data: L3BItem[];
     sptBadanId: string;
+    l3aData?: L3AItem[];
 }
 
-export function SectionL3B({ data, sptBadanId }: SectionL3BProps) {
+export function SectionL3B({ data, sptBadanId, l3aData }: SectionL3BProps) {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editItem, setEditItem] = useState<L3BItem | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -83,6 +84,7 @@ export function SectionL3B({ data, sptBadanId }: SectionL3BProps) {
 
             <TableL3B
                 data={data}
+                l3aData={l3aData}
                 selectedIds={selectedIds}
                 onSelectChange={setSelectedIds}
                 onEdit={handleEdit}

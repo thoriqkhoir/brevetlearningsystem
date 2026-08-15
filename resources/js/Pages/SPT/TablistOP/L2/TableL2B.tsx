@@ -219,6 +219,7 @@ export function TableL2B({
                                 <TableCell>
                                     <div className="flex gap-1">
                                         <Button
+                                            type="button"
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8"
@@ -227,6 +228,7 @@ export function TableL2B({
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                         <Button
+                                            type="button"
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8 text-red-500 hover:text-red-600"

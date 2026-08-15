@@ -397,8 +397,7 @@ const sptOpIndukSchema = z
             });
         }
 
-        const isLebihBayar =
-            Number(data.e_11_a ?? 0) <= 0 || Number(data.f_12_b ?? 0) <= 0;
+        const isLebihBayar = Number(data.f_12_b ?? 0) < 0;
         if (isLebihBayar && !data.g_pph) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -960,8 +959,13 @@ const DetailSPTOP = ({
     const watchedB1B4 = form.watch("b_1b_4");
     const watchedB1C = form.watch("b_1c");
 
-    const isGpphEnabled =
-        (form.watch("e_11_a") ?? 0) <= 0 || (form.watch("f_12_b") ?? 0) <= 0;
+    const isAccordionGDisabled = (f12bValue?: number) => {
+        const val =
+            f12bValue !== undefined
+                ? f12bValue
+                : Number(form.watch("f_12_b") ?? 0);
+        return val >= 0;
+    };
 
     const isH13BEnabled = form.watch("h_13_a") === false;
 
@@ -1157,7 +1161,12 @@ const DetailSPTOP = ({
     useEffect(() => {
         const e_11_a = form.watch("e_11_a") || 0;
         const f_12_a = form.watch("f_12_a") || 0;
-        form.setValue("f_12_b", e_11_a - f_12_a);
+        const f12bVal = e_11_a - f_12_a;
+        form.setValue("f_12_b", f12bVal);
+
+        if (isAccordionGDisabled(f12bVal)) {
+            form.setValue("g_pph", undefined);
+        }
     }, [form.watch("e_11_a"), form.watch("f_12_a")]);
 
     // Keep H section answers consistent
@@ -1605,13 +1614,24 @@ const DetailSPTOP = ({
         const pphKurangBayar = Number(data.e_11_c ?? 0);
         const paymentTotal = Math.max(0, pphKurangBayar);
 
+        console.log("[Audit] onSubmit DetailSPTOP:", {
+            pphKurangBayar,
+            paymentTotal,
+            e_11_a: data.e_11_a,
+            e_11_b_value: data.e_11_b_value,
+            c_9: data.c_9,
+        });
+
         // Set total synchronously before opening dialog
         setTotal(paymentTotal);
         setPendingSubmit(sanitizeIndukPayload(data));
 
         if (pphKurangBayar > 0) {
+            console.log("[Audit] pphKurangBayar > 0. Opening payment modal.");
             setOpenModalPayment(true);
         } else {
+            console.log("[Audit] pphKurangBayar <= 0. Skipping payment modal, setting payment method to 'spt'.");
+            setPaymentMethod("spt");
             setOpenPasswordModal(true);
         }
     };
@@ -4533,7 +4553,7 @@ const DetailSPTOP = ({
                                                                                     field.value
                                                                                 }
                                                                                 disabled={
-                                                                                    !isGpphEnabled
+                                                                                    isAccordionGDisabled()
                                                                                 }
                                                                             >
                                                                                 <FormControl>
@@ -4578,6 +4598,7 @@ const DetailSPTOP = ({
                                                                                 true,
                                                                             );
                                                                         }}
+                                                                        disabled={isAccordionGDisabled()}
                                                                     >
                                                                         <FolderOpen className="h-4 w-4" />
                                                                     </Button>
@@ -4604,6 +4625,7 @@ const DetailSPTOP = ({
                                                                                         ""
                                                                                     }
                                                                                     readOnly
+                                                                                    disabled={isAccordionGDisabled()}
                                                                                     className="bg-gray-100"
                                                                                 />
                                                                             </FormControl>
@@ -4633,6 +4655,7 @@ const DetailSPTOP = ({
                                                                                         ""
                                                                                     }
                                                                                     readOnly
+                                                                                    disabled={isAccordionGDisabled()}
                                                                                     className="bg-gray-100"
                                                                                 />
                                                                             </FormControl>
@@ -4663,6 +4686,7 @@ const DetailSPTOP = ({
                                                                                         ""
                                                                                     }
                                                                                     readOnly
+                                                                                    disabled={isAccordionGDisabled()}
                                                                                     className="bg-gray-100"
                                                                                 />
                                                                             </FormControl>

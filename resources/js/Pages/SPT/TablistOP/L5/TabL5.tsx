@@ -308,6 +308,7 @@ export default function TabL5({
                                         <TableRow key={row.tax_year}>
                                             <TableCell>
                                                 <Button
+                                                    type="button"
                                                     variant="outline"
                                                     size="icon"
                                                     onClick={() =>
@@ -459,6 +460,7 @@ export default function TabL5({
                                         <TableRow key={item.id ?? idx}>
                                             <TableCell className="flex gap-2">
                                                 <Button
+                                                    type="button"
                                                     variant="outline"
                                                     size="icon"
                                                     onClick={() => {
@@ -469,6 +471,7 @@ export default function TabL5({
                                                     <Pencil className="w-4 h-4" />
                                                 </Button>
                                                 <Button
+                                                    type="button"
                                                     variant="outline"
                                                     size="icon"
                                                     onClick={() =>
@@ -629,6 +632,7 @@ export default function TabL5({
                                         <TableRow key={item.id ?? idx}>
                                             <TableCell className="flex gap-2">
                                                 <Button
+                                                    type="button"
                                                     variant="outline"
                                                     size="icon"
                                                     onClick={() => {
@@ -639,6 +643,7 @@ export default function TabL5({
                                                     <Pencil className="w-4 h-4" />
                                                 </Button>
                                                 <Button
+                                                    type="button"
                                                     variant="outline"
                                                     size="icon"
                                                     onClick={() =>

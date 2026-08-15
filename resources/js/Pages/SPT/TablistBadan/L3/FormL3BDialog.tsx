@@ -135,6 +135,11 @@ export function FormL3BDialog({
         setIncomeTaxDisplay,
     );
 
+    const handleNpwpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 16);
+        handleChange("npwp", digits || null);
+    };
+
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
         if (!formData.name) newErrors.name = "Nama wajib diisi";
@@ -226,10 +231,11 @@ export function FormL3BDialog({
                             NPWP<span className="text-red-500">*</span>
                         </Label>
                         <Input
+                            inputMode="numeric"
                             value={formData.npwp ?? ""}
-                            onChange={(e) =>
-                                handleChange("npwp", e.target.value || null)
-                            }
+                            onChange={handleNpwpChange}
+                            maxLength={16}
+                            placeholder="Masukkan NPWP"
                         />
                     </div>
 

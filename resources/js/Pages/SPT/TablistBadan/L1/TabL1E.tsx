@@ -551,6 +551,49 @@ const sumA2LiabilitasEkuitas = () => {
         fiscal_amount: 0,
     };
 
+    const computeHppCategory = (
+        getAccountRow: (accountId: number) => L1A1Item | undefined,
+    ): L1A1Item => {
+        const sum: L1A1Item = {
+            spt_badan_id: sptBadanId,
+            account_id: 0,
+            code: CODE,
+            amount: 0,
+            non_taxable: 0,
+            subject_to_final: 0,
+            non_final: 0,
+            fiscal_positive: 0,
+            fiscal_negative: 0,
+            fiscal_code: null,
+            fiscal_amount: 0,
+        };
+        const list = a1Accounts["Harga Pokok Penjualan (HPP)"] ?? [];
+        for (const acc of list) {
+            if (isSummaryRow(acc)) continue;
+            const accountId = Number(acc.id);
+            const row = getAccountRow(accountId);
+            if (!row) continue;
+
+            const name = acc.name.toLowerCase();
+            const code = Number(acc.code);
+
+            const isMinus =
+                code === 5009 ||
+                name.includes("dikurangi") ||
+                (name.includes("persediaan") && name.includes("akhir"));
+
+            const mult = isMinus ? -1 : 1;
+
+            sum.amount += mult * Number(row.amount ?? 0);
+            sum.non_taxable += mult * Number(row.non_taxable ?? 0);
+            sum.subject_to_final += mult * Number(row.subject_to_final ?? 0);
+            sum.non_final += mult * Number(row.non_final ?? 0);
+            sum.fiscal_positive += mult * Number(row.fiscal_positive ?? 0);
+            sum.fiscal_negative += mult * Number(row.fiscal_negative ?? 0);
+        }
+        return sum;
+    };
+
     // Compute summary rows dynamically
     const computedSummaryRow = (acc: MasterAccount): L1A1Item | null => {
         const name = acc.name.toLowerCase();
@@ -579,11 +622,9 @@ const sumA2LiabilitasEkuitas = () => {
         }
 
         if (name.includes("jumlah hpp") || name.includes("jumlah harga pokok penjualan")) {
-            const { sum: pembelian } = sumA1RowsByAccountNames(["pembelian"]);
-            const { sum: persediaanAwal } = sumA1RowsByAccountNames(["persediaan - awal"]);
-            const { sum: persediaanAkhir } = sumA1RowsByAccountNames(["persediaan akhir"]);
-
-            return subtractRows(addRows(pembelian, persediaanAwal), persediaanAkhir);
+            return computeHppCategory(
+                (id) => a1Draft.get(id) ?? a1ByAccountId.get(id),
+            );
         }
 
         
@@ -712,12 +753,8 @@ const sumA2LiabilitasEkuitas = () => {
             );
         }
         if (name.includes("jumlah hpp") || name.includes("jumlah harga pokok penjualan")) {
-            return subtractRows(
-                addRows(
-                    sumByNameFromDraft(["pembelian"]),
-                    sumByNameFromDraft(["persediaan - awal"]),
-                ),
-                sumByNameFromDraft(["persediaan akhir"]),
+            return computeHppCategory(
+                (id) => draft.get(id) ?? a1ByAccountId.get(id),
             );
         }
         if (name.includes("laba kotor")) {

@@ -10,7 +10,7 @@ import {
     TableRow,
 } from "@/Components/ui/table";
 import { Pencil, Trash2 } from "lucide-react";
-import { L3BItem, TAX_TYPE_OPTIONS } from "./types";
+import { L3AItem, L3BItem, TAX_TYPE_OPTIONS } from "./types";
 
 const rupiahFormatter = new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -26,6 +26,7 @@ const getTaxTypeLabel = (value: string | null) =>
 
 interface TableL3BProps {
     data: L3BItem[];
+    l3aData?: L3AItem[];
     selectedIds: string[];
     onSelectChange: (ids: string[]) => void;
     onEdit: (item: L3BItem) => void;
@@ -34,6 +35,7 @@ interface TableL3BProps {
 
 export function TableL3B({
     data,
+    l3aData = [],
     selectedIds,
     onSelectChange,
     onEdit,
@@ -44,7 +46,11 @@ export function TableL3B({
         (sum, item) => sum + (item.income_tax ?? 0),
         0,
     );
-    const totalKreditPajak = totalDpp + totalIncomeTax;
+    const totalL3ATaxCredit = l3aData.reduce(
+        (sum, item) => sum + (item.tax_credit ?? 0),
+        0,
+    );
+    const totalKreditPajak = totalL3ATaxCredit + totalIncomeTax;
 
     const allSelected = data.length > 0 && selectedIds.length === data.length;
     const someSelected =

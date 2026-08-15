@@ -1666,12 +1666,22 @@ const DetailSPTBadan = ({
 
         const pphKurangBayar = Number(data.f_17c ?? 0);
         const paymentTotal = Math.max(0, pphKurangBayar);
+
+        console.log("[Audit] onSubmit DetailSPTBadan:", {
+            pphKurangBayar,
+            paymentTotal,
+            f_17c: data.f_17c,
+        });
+
         setTotal(paymentTotal);
         setPendingSubmit(data);
 
         if (pphKurangBayar > 0) {
+            console.log("[Audit] pphKurangBayar > 0. Opening payment modal.");
             setOpenModalPayment(true);
         } else {
+            console.log("[Audit] pphKurangBayar <= 0. Skipping payment modal, setting payment method to 'spt'.");
+            setPaymentMethod("spt");
             setOpenPasswordModal(true);
         }
     };
@@ -6651,6 +6661,7 @@ const DetailSPTBadan = ({
                                                         sptBadan?.id ?? ""
                                                     }
                                                     data={l3b ?? []}
+                                                    l3aData={l3a ?? []}
                                                 />
                                             </div>
                                         </div>

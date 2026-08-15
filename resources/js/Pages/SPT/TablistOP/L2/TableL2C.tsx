@@ -461,6 +461,7 @@ export function TableL2C({
                                             }
                                         />
                                         <Button
+                                            type="button"
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8"
@@ -469,6 +470,7 @@ export function TableL2C({
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                         <Button
+                                            type="button"
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8 text-red-500 hover:text-red-600"

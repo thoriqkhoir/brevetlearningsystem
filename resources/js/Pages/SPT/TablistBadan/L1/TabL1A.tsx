@@ -239,7 +239,13 @@ export default function TabL1A({
             fiscal_code: current.fiscal_code ?? null,
             fiscal_amount: Number(current.fiscal_amount ?? 0),
         };
-        const fiscal_amount = computeFiscalAmount(normalized);
+        const accountMeta = a1VisibleAccounts.find(
+            (a) => Number(a.id) === Number(current.account_id),
+        );
+        const fiscal_amount = computeFiscalAmount(
+            normalized,
+            accountMeta?.category,
+        );
         setEditForm({ ...normalized, fiscal_amount });
         setOpenEdit(true);
     };
@@ -247,10 +253,17 @@ export default function TabL1A({
     const handleSaveDraft = () => {
         if (!editForm) return;
 
+        const editAccountMeta = a1VisibleAccounts.find(
+            (a) => Number(a.id) === Number(editForm.account_id),
+        );
+
         const updatedDraft = new Map(a1Draft);
         updatedDraft.set(editForm.account_id, {
             ...editForm,
-            fiscal_amount: computeFiscalAmount(editForm),
+            fiscal_amount: computeFiscalAmount(
+                editForm,
+                editAccountMeta?.category,
+            ),
         });
         setA1Draft(updatedDraft);
 
@@ -279,7 +292,7 @@ export default function TabL1A({
                 fiscal_positive: Number(row.fiscal_positive ?? 0),
                 fiscal_negative: Number(row.fiscal_negative ?? 0),
                 fiscal_code: row.fiscal_code ?? "",
-                fiscal_amount: computeFiscalAmount(row),
+                fiscal_amount: computeFiscalAmount(row, accountMeta?.category),
             });
         }
 
@@ -376,7 +389,7 @@ export default function TabL1A({
                 fiscal_positive: Number(row.fiscal_positive ?? 0),
                 fiscal_negative: Number(row.fiscal_negative ?? 0),
                 fiscal_code: row.fiscal_code ?? "",
-                fiscal_amount: computeFiscalAmount(row),
+                fiscal_amount: computeFiscalAmount(row, accountMeta?.category),
             });
         }
 
@@ -577,6 +590,64 @@ export default function TabL1A({
         fiscal_amount: 0,
     };
 
+    const computeHppCategory = (
+        getAccountRow: (accountId: number) => L1A1Item | undefined,
+    ): L1A1Item => {
+        const sum: L1A1Item = {
+            spt_badan_id: sptBadanId,
+            account_id: 0,
+            code: CODE,
+            amount: 0,
+            non_taxable: 0,
+            subject_to_final: 0,
+            non_final: 0,
+            fiscal_positive: 0,
+            fiscal_negative: 0,
+            fiscal_code: null,
+            fiscal_amount: 0,
+        };
+        const hppKey =
+            Object.keys(a1Accounts).find((k) =>
+                k.toLowerCase().includes("harga pokok"),
+            ) ?? "Harga Pokok Penjualan (HPP)";
+
+        const list = a1Accounts[hppKey] ?? [];
+        console.group("📊 Perhitungan Jumlah HPP (Harga Pokok Penjualan)");
+        for (const acc of list) {
+            if (isSummaryRow(acc)) continue;
+            const accountId = Number(acc.id);
+            const row = getAccountRow(accountId);
+            if (!row) continue;
+
+            const name = String((acc as any)?.name ?? "").toLowerCase();
+            const code = Number((acc as any)?.code ?? 0);
+
+            const isMinus =
+                code === 5009 ||
+                name.includes("dikurangi") ||
+                (name.includes("persediaan") && name.includes("akhir"));
+
+            const mult = isMinus ? -1 : 1;
+            const itemAmount = Number(row.amount ?? 0);
+
+            console.log(
+                `Akun [${(acc as any)?.code}] ${(acc as any)?.name}: ${itemAmount.toLocaleString("id-ID")} -> ${
+                    isMinus ? "DIKURANGI (-)" : "DITAMBAH (+)"
+                }`,
+            );
+
+            sum.amount += mult * itemAmount;
+            sum.non_taxable += mult * Number(row.non_taxable ?? 0);
+            sum.subject_to_final += mult * Number(row.subject_to_final ?? 0);
+            sum.non_final += mult * Number(row.non_final ?? 0);
+            sum.fiscal_positive += mult * Number(row.fiscal_positive ?? 0);
+            sum.fiscal_negative += mult * Number(row.fiscal_negative ?? 0);
+        }
+        console.log(`👉 HASIL AKHIR JUMLAH HPP: ${sum.amount.toLocaleString("id-ID")}`);
+        console.groupEnd();
+        return sum;
+    };
+
     // Compute summary rows dynamically
     const computedSummaryRow = (
         acc: MasterAccount,
@@ -625,17 +696,8 @@ export default function TabL1A({
             name.includes("jumlah hpp") ||
             name.includes("jumlah harga pokok penjualan")
         ) {
-            const { sum: pembelian } = sumA1RowsByAccountNames(["pembelian"]);
-            const { sum: persediaanAwal } = sumA1RowsByAccountNames([
-                "persediaan - awal",
-            ]);
-            const { sum: persediaanAkhir } = sumA1RowsByAccountNames([
-                "persediaan akhir",
-            ]);
-
-            return subtractRows(
-                addRows(pembelian, persediaanAwal),
-                persediaanAkhir,
+            return computeHppCategory(
+                (id) => a1Draft.get(id) ?? a1ByAccountId.get(id),
             );
         }
 
@@ -848,12 +910,8 @@ export default function TabL1A({
             name.includes("jumlah hpp") ||
             name.includes("jumlah harga pokok penjualan")
         ) {
-            return subtractRows(
-                addRows(
-                    sumByNameFromDraft(["pembelian"]),
-                    sumByNameFromDraft(["persediaan - awal"]),
-                ),
-                sumByNameFromDraft(["persediaan akhir"]),
+            return computeHppCategory(
+                (id) => draft.get(id) ?? a1ByAccountId.get(id),
             );
         }
         if (name.includes("laba kotor")) {
@@ -1147,6 +1205,7 @@ export default function TabL1A({
                                                                                 displayRow
                                                                                     ? computeFiscalAmount(
                                                                                           displayRow,
+                                                                                          acc.category ?? cat,
                                                                                       )
                                                                                     : 0,
                                                                             )}

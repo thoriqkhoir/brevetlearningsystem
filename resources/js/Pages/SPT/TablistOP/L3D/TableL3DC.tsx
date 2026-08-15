@@ -139,6 +139,7 @@ export function TableL3DC({
                                 <TableCell>
                                     <div className="flex gap-1 justify-center">
                                         <Button
+                                            type="button"
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8"
@@ -147,6 +148,7 @@ export function TableL3DC({
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                         <Button
+                                            type="button"
                                             size="icon"
                                             variant="ghost"
                                             className="h-8 w-8 text-red-500 hover:text-red-600"
