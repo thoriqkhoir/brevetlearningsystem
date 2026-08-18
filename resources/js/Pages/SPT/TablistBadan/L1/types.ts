@@ -259,18 +259,34 @@ export function computeFiscalAmount(
         L1A1Item,
         "non_final" | "fiscal_positive" | "fiscal_negative"
     >,
-    category?: string,
+    categoryOrAccount?: string | { category?: string; name?: string } | null,
+    accountName?: string | null,
 ) {
     const nonFinal = Number(item.non_final ?? 0);
     const pos = Number(item.fiscal_positive ?? 0);
     const neg = Number(item.fiscal_negative ?? 0);
 
-    const isBebanUsaha = category
-        ? category.toLowerCase().trim().includes("beban usaha")
-        : false;
+    let category = "";
+    let name = "";
 
-    if (isBebanUsaha) {
-        // Hanya di kategori beban usaha: koreksi positif mengurangi dan koreksi negatif menambah nilai fiskal
+    if (typeof categoryOrAccount === "object" && categoryOrAccount !== null) {
+        category = categoryOrAccount.category ?? "";
+        name = categoryOrAccount.name ?? "";
+    } else if (typeof categoryOrAccount === "string") {
+        category = categoryOrAccount;
+        name = accountName ?? "";
+    } else if (accountName) {
+        name = accountName;
+    }
+
+    const catLower = category.toLowerCase().trim();
+    const nameLower = name.toLowerCase().trim();
+
+    const isBebanUsaha = catLower.includes("beban usaha");
+    const isPembelian = nameLower.includes("pembelian");
+
+    if (isBebanUsaha || isPembelian) {
+        // Beban usaha & Akun Pembelian (di HPP / Biaya Pabrikasi / dll): koreksi positif mengurangi dan koreksi negatif menambah nilai fiskal
         return nonFinal - pos + neg;
     }
 

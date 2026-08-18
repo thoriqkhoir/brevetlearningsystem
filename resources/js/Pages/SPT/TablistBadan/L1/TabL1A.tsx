@@ -245,6 +245,7 @@ export default function TabL1A({
         const fiscal_amount = computeFiscalAmount(
             normalized,
             accountMeta?.category,
+            accountMeta?.name,
         );
         setEditForm({ ...normalized, fiscal_amount });
         setOpenEdit(true);
@@ -263,6 +264,7 @@ export default function TabL1A({
             fiscal_amount: computeFiscalAmount(
                 editForm,
                 editAccountMeta?.category,
+                editAccountMeta?.name,
             ),
         });
         setA1Draft(updatedDraft);
@@ -292,7 +294,11 @@ export default function TabL1A({
                 fiscal_positive: Number(row.fiscal_positive ?? 0),
                 fiscal_negative: Number(row.fiscal_negative ?? 0),
                 fiscal_code: row.fiscal_code ?? "",
-                fiscal_amount: computeFiscalAmount(row, accountMeta?.category),
+                fiscal_amount: computeFiscalAmount(
+                    row,
+                    accountMeta?.category,
+                    accountMeta?.name,
+                ),
             });
         }
 
@@ -389,7 +395,11 @@ export default function TabL1A({
                 fiscal_positive: Number(row.fiscal_positive ?? 0),
                 fiscal_negative: Number(row.fiscal_negative ?? 0),
                 fiscal_code: row.fiscal_code ?? "",
-                fiscal_amount: computeFiscalAmount(row, accountMeta?.category),
+                fiscal_amount: computeFiscalAmount(
+                    row,
+                    accountMeta?.category,
+                    accountMeta?.name,
+                ),
             });
         }
 
@@ -1206,6 +1216,7 @@ export default function TabL1A({
                                                                                     ? computeFiscalAmount(
                                                                                           displayRow,
                                                                                           acc.category ?? cat,
+                                                                                          acc.name,
                                                                                       )
                                                                                     : 0,
                                                                             )}

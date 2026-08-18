@@ -240,7 +240,11 @@ function LegacyTabL1L({
             fiscal_code: current.fiscal_code ?? null,
             fiscal_amount: Number(current.fiscal_amount ?? 0),
         };
-        const fiscal_amount = computeFiscalAmount(normalized);
+        const fiscal_amount = computeFiscalAmount(
+            normalized,
+            acc.category,
+            acc.name,
+        );
         setEditForm({ ...normalized, fiscal_amount });
         setOpenEdit(true);
     };
@@ -248,10 +252,18 @@ function LegacyTabL1L({
     const handleSaveDraft = () => {
         if (!editForm) return;
 
+        const editAccount = masterAccounts?.find(
+            (a) => Number(a.id) === Number(editForm.account_id),
+        );
+
         const updatedDraft = new Map(a1Draft);
         updatedDraft.set(editForm.account_id, {
             ...editForm,
-            fiscal_amount: computeFiscalAmount(editForm),
+            fiscal_amount: computeFiscalAmount(
+                editForm,
+                editAccount?.category,
+                editAccount?.name,
+            ),
         });
         setA1Draft(updatedDraft);
 
@@ -264,6 +276,9 @@ function LegacyTabL1L({
 
         const allRows: L1A1Item[] = [];
         for (const [accountId, row] of updatedDraft.entries()) {
+            const acc = masterAccounts?.find(
+                (a) => Number(a.id) === accountId,
+            );
             allRows.push({
                 ...row,
                 spt_badan_id: sptBadanId,
@@ -276,7 +291,11 @@ function LegacyTabL1L({
                 fiscal_positive: Number(row.fiscal_positive ?? 0),
                 fiscal_negative: Number(row.fiscal_negative ?? 0),
                 fiscal_code: row.fiscal_code ?? null,
-                fiscal_amount: computeFiscalAmount(row),
+                fiscal_amount: computeFiscalAmount(
+                    row,
+                    acc?.category,
+                    acc?.name,
+                ),
             });
         }
 
@@ -356,6 +375,9 @@ function LegacyTabL1L({
 
         const a1Rows: L1A1Item[] = [];
         for (const [accountId, row] of a1Draft.entries()) {
+            const acc = masterAccounts?.find(
+                (a) => Number(a.id) === accountId,
+            );
             a1Rows.push({
                 ...row,
                 spt_badan_id: sptBadanId,
@@ -368,7 +390,11 @@ function LegacyTabL1L({
                 fiscal_positive: Number(row.fiscal_positive ?? 0),
                 fiscal_negative: Number(row.fiscal_negative ?? 0),
                 fiscal_code: row.fiscal_code ?? null,
-                fiscal_amount: computeFiscalAmount(row),
+                fiscal_amount: computeFiscalAmount(
+                    row,
+                    acc?.category,
+                    acc?.name,
+                ),
             });
         }
 
@@ -977,6 +1003,8 @@ function LegacyTabL1L({
                                                                                 displayRow
                                                                                     ? computeFiscalAmount(
                                                                                           displayRow,
+                                                                                          acc.category ?? cat,
+                                                                                          acc.name,
                                                                                       )
                                                                                     : 0,
                                                                             )}

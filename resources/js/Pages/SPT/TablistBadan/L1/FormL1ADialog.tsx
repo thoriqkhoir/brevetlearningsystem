@@ -73,7 +73,7 @@ export default function FormL1ADialog({
                 [field]: parseDigits(value),
             } as L1A1Item;
             next.non_final = computeNonFinal(next);
-            next.fiscal_amount = computeFiscalAmount(next, account?.category);
+            next.fiscal_amount = computeFiscalAmount(next, account?.category, account?.name);
             return next;
         });
     };
@@ -97,6 +97,7 @@ export default function FormL1ADialog({
             const fiscal = computeFiscalAmount(
                 { ...normalized, non_final: nonFinal },
                 account?.category,
+                account?.name,
             );
 
             if (normalized.non_final === nonFinal && normalized.fiscal_amount === fiscal) {
@@ -112,6 +113,7 @@ export default function FormL1ADialog({
     }, [
         open,
         account?.category,
+        account?.name,
         editForm?.amount,
         editForm?.non_taxable,
         editForm?.subject_to_final,

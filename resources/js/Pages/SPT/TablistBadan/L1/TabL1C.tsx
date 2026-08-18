@@ -244,6 +244,7 @@ const sumA2LiabilitasEkuitas = () => {
         const fiscal_amount = computeFiscalAmount(
             normalized,
             currentAccount?.category,
+            currentAccount?.name,
         );
         setEditForm({ ...normalized, fiscal_amount });
         setOpenEdit(true);
@@ -262,6 +263,7 @@ const sumA2LiabilitasEkuitas = () => {
             fiscal_amount: computeFiscalAmount(
                 editForm,
                 editAccount?.category,
+                editAccount?.name,
             ),
         });
         setA1Draft(updatedDraft);
@@ -288,7 +290,7 @@ const sumA2LiabilitasEkuitas = () => {
                 fiscal_positive: Number(row.fiscal_positive ?? 0),
                 fiscal_negative: Number(row.fiscal_negative ?? 0),
                 fiscal_code: row.fiscal_code ?? null,
-                fiscal_amount: computeFiscalAmount(row, acc?.category),
+                fiscal_amount: computeFiscalAmount(row, acc?.category, acc?.name),
             });
         }
 
@@ -364,6 +366,7 @@ const sumA2LiabilitasEkuitas = () => {
 
         const a1Rows: L1A1Item[] = [];
         for (const [accountId, row] of a1Draft.entries()) {
+            const acc = masterAccounts?.find((a) => Number(a.id) === accountId);
             a1Rows.push({
                 ...row,
                 spt_badan_id: sptBadanId,
@@ -376,7 +379,7 @@ const sumA2LiabilitasEkuitas = () => {
                 fiscal_positive: Number(row.fiscal_positive ?? 0),
                 fiscal_negative: Number(row.fiscal_negative ?? 0),
                 fiscal_code: row.fiscal_code ?? null,
-                fiscal_amount: computeFiscalAmount(row),
+                fiscal_amount: computeFiscalAmount(row, acc?.category, acc?.name),
             });
         }
 
@@ -1011,6 +1014,7 @@ const sumA2LiabilitasEkuitas = () => {
                                                                                             ? computeFiscalAmount(
                                                                                                   displayRow,
                                                                                                   acc.category ?? cat,
+                                                                                                  acc.name,
                                                                                               )
                                                                                             : 0,
                                                                                     )}
