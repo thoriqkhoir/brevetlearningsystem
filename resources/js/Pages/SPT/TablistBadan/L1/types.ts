@@ -282,7 +282,11 @@ export function computeFiscalAmount(
     const catLower = category.toLowerCase().trim();
     const nameLower = name.toLowerCase().trim();
 
-    const isBebanUsaha = catLower.includes("beban usaha");
+    const isBebanUsaha =
+        catLower.includes("beban usaha") ||
+        nameLower.includes("beban usaha") ||
+        nameLower.includes("jumlah beban usaha") ||
+        catLower.includes("jumlah beban usaha");
     const isPembelian = nameLower.includes("pembelian");
 
     if (isBebanUsaha || isPembelian) {
