@@ -211,73 +211,36 @@ export default function DetailCourse({
                         </table>
                     </div>
 
-                    {/* <div className="rounded-xl bg-white border shadow p-6">
-                        <h2 className="text-lg font-bold mb-4 text-primary">
-                            Daftar Peserta
-                        </h2>
+                    <div className="rounded-xl bg-white border shadow p-6">
+                        <div className="flex md:flex-row flex-col gap-2 md:items-center justify-between mb-4">
+                            <h2 className="text-lg font-bold text-primary">
+                                Daftar Peserta ({participants.length})
+                            </h2>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
+                                    asChild
+                                >
+                                    <a
+                                        href={route(
+                                            "admin.showTeacherCoursePhotos",
+                                            [teacherId, course.id]
+                                        )}
+                                    >
+                                        <Download size={16} />
+                                        Unduh Foto (.zip)
+                                    </a>
+                                </Button>
+                            </div>
+                        </div>
+
                         {participants.length === 0 ? (
                             <div className="text-gray-500 text-center py-8">
                                 Belum ada peserta yang terdaftar.
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="min-w-full border text-sm">
-                                    <thead>
-                                        <tr className="bg-gray-100">
-                                            <th className="py-2 px-3 border">
-                                                No
-                                            </th>
-                                            <th className="py-2 px-3 border">
-                                                Nama
-                                            </th>
-                                            <th className="py-2 px-3 border">
-                                                Email
-                                            </th>
-                                            <th className="py-2 px-3 border">
-                                                Nilai
-                                            </th>
-                                            <th className="py-2 px-3 border">
-                                                Feedback
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {participants.map(
-                                            (p: any, i: number) => (
-                                                <tr
-                                                    key={p.id}
-                                                    className="hover:bg-gray-50"
-                                                >
-                                                    <td className="py-2 px-3 border text-center">
-                                                        {i + 1}
-                                                    </td>
-                                                    <td className="py-2 px-3 border">
-                                                        {p.user?.name || "-"}
-                                                    </td>
-                                                    <td className="py-2 px-3 border">
-                                                        {p.user?.email || "-"}
-                                                    </td>
-                                                    <td className="py-2 px-3 border text-center">
-                                                        {p.score ?? "-"}
-                                                    </td>
-                                                    <td className="py-2 px-3 border">
-                                                        {p.feedback ?? "-"}
-                                                    </td>
-                                                </tr>
-                                            )
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div> */}
-
-                    {participants.length === 0 ? (
-                        <div className="text-gray-500 text-center py-8">
-                            Belum ada peserta yang terdaftar.
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
                             <table className="min-w-full border text-sm">
                                 <thead>
                                     <tr className="bg-gray-100">
@@ -483,6 +446,7 @@ export default function DetailCourse({
                         </div>
                     )}
                 </div>
+            </div>
             </div>
         </AdminLayout>
     );

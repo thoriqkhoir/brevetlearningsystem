@@ -1954,6 +1954,21 @@ export default function DetailCourse({
                                         Ekspor Peserta (.xlsx)
                                     </a>
                                 </Button>
+                                <Button
+                                    variant="outline"
+                                    className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
+                                    asChild
+                                >
+                                    <a
+                                        href={route(
+                                            "teacher.courses.downloadPhotos",
+                                            course.id
+                                        )}
+                                    >
+                                        <Download size={16} />
+                                        Unduh Foto (.zip)
+                                    </a>
+                                </Button>
                                 <Dialog
                                     open={addParticipantOpen}
                                     onOpenChange={setAddParticipantOpen}

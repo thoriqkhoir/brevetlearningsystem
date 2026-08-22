@@ -839,6 +839,7 @@ Route::middleware(['auth', EnsureAdmin::class])->group(function () {
     Route::post('/admin/teachers/import', [TeacherController::class, 'import']);
     Route::delete('/admin/teachers/delete-multiple', [TeacherController::class, 'deleteMultiple'])->name('admin.deleteMultipleTeacher');
     Route::get('/admin/teachers/{id}/course/{courseId}', [TeacherController::class, 'showCourse'])->name('admin.showTeacherCourse');
+    Route::get('/admin/teachers/{id}/course/{courseId}/download-photos', [TeacherController::class, 'downloadCoursePhotos'])->name('admin.showTeacherCoursePhotos');
     Route::get('/admin/teachers/{teacherId}/courses/{courseId}/modules', [TeacherController::class, 'showCourseModules'])->name('admin.showTeacherCourseModules');
     Route::get('/admin/teachers/{id}/test/{testId}', [TeacherController::class, 'showTest'])->name('admin.showTeacherTest');
 
@@ -881,6 +882,7 @@ Route::middleware(['auth', EnsureTeacher::class])->group(function () {
     Route::post('/teacher/courses', [CourseController::class, 'store'])->name('teacher.storeCourse');
     Route::get('/teacher/courses/{id}', [CourseController::class, 'show'])->name('teacher.showCourse');
     Route::get('/teacher/courses/{id}/export-participants', [CourseController::class, 'exportParticipants'])->name('teacher.courses.exportParticipants');
+    Route::get('/teacher/courses/{id}/download-photos', [CourseController::class, 'downloadParticipantPhotos'])->name('teacher.courses.downloadPhotos');
     Route::get('/teacher/courses/{id}/participants/{participantId}', [CourseController::class, 'showParticipant'])->name('teacher.showParticipant');
     Route::get('/teacher/courses/{id}/edit', [CourseController::class, 'edit'])->name('teacher.editCourse');
     Route::put('/teacher/courses/{id}', [CourseController::class, 'update'])->name('teacher.updateCourse');
