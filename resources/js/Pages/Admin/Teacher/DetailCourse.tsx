@@ -402,10 +402,14 @@ export default function DetailCourse({
                                                 >
                                                     <Link
                                                         href={route(
-                                                            "admin.showTeacherTest",
+                                                            "admin.showTeacherCourseTest",
                                                             {
-                                                                id: course.teacher_id,
-                                                                testId: courseTest.id,
+                                                                teacherId:
+                                                                    course.teacher_id,
+                                                                courseId:
+                                                                    course.id,
+                                                                courseTestId:
+                                                                    courseTest.id,
                                                             },
                                                         )}
                                                     >

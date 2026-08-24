@@ -842,6 +842,8 @@ Route::middleware(['auth', EnsureAdmin::class])->group(function () {
     Route::get('/admin/teachers/{id}/course/{courseId}/download-photos', [TeacherController::class, 'downloadCoursePhotos'])->name('admin.showTeacherCoursePhotos');
     Route::get('/admin/teachers/{id}/course/{courseId}/export-participants', [TeacherController::class, 'exportCourseParticipants'])->name('admin.showTeacherCourseExportParticipants');
     Route::get('/admin/teachers/{teacherId}/courses/{courseId}/modules', [TeacherController::class, 'showCourseModules'])->name('admin.showTeacherCourseModules');
+    Route::get('/admin/teachers/{teacherId}/courses/{courseId}/tests/{courseTestId}', [TeacherController::class, 'showCourseTest'])->name('admin.showTeacherCourseTest');
+    Route::get('/admin/teachers/{teacherId}/courses/{courseId}/tests/{courseTestId}/export-participants', [TeacherController::class, 'exportCourseTestParticipants'])->name('admin.showTeacherCourseTestExportParticipants');
     Route::get('/admin/teachers/{id}/test/{testId}', [TeacherController::class, 'showTest'])->name('admin.showTeacherTest');
 
     Route::get('/admin/courses', [AdminCourseListController::class, 'index'])->name('admin.courses');

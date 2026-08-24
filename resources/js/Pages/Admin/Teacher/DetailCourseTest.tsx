@@ -1,0 +1,491 @@
+import AdminLayout from "@/Layouts/AdminLayout";
+import { Head, Link } from "@inertiajs/react";
+import { Button } from "@/Components/ui/button";
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from "@/Components/ui/breadcrumb";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
+import { Upload } from "lucide-react";
+
+function parseLocalDate(value?: string | null) {
+    if (!value) return null;
+    const match = String(value).match(
+        /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/,
+    );
+    if (!match) return null;
+    return new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5]),
+        Number(match[6] ?? 0),
+    );
+}
+
+function formatLocalDateTime(value?: string | null) {
+    const date = parseLocalDate(value);
+    if (!date) return value || "-";
+
+    const day = date.getDate();
+    const months = [
+        "Januari",
+        "Februari",
+        "Maret",
+        "April",
+        "Mei",
+        "Juni",
+        "Juli",
+        "Agustus",
+        "September",
+        "Oktober",
+        "November",
+        "Desember",
+    ];
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${day} ${month} ${year}, ${hours}.${minutes} WIB`;
+}
+
+export default function DetailCourseTest({
+    teacher,
+    course,
+    courseTest,
+    statistics,
+    participants = [],
+    attemptHistory = [],
+}: any) {
+    const getInitials = (name: string) => {
+        return (
+            name
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("")
+                .substring(0, 2)
+                .toUpperCase() || "??"
+        );
+    };
+
+    const attemptedParticipants = Number(
+        statistics?.attempted_participants ?? 0,
+    );
+    const totalParticipants = Number(statistics?.total_participants ?? 0);
+    const bestScore =
+        statistics?.best_score !== null &&
+        typeof statistics?.best_score !== "undefined"
+            ? Number(statistics.best_score)
+            : null;
+
+    const teacherId = teacher?.id ?? course?.teacher_id;
+
+    return (
+        <AdminLayout>
+            <Head
+                title={`Detail Ujian Kelas - ${courseTest?.title || "Ujian"}`}
+            />
+
+            <div className="py-8 mx-auto lg:px-4">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                    <Breadcrumb>
+                        <BreadcrumbList>
+                            <BreadcrumbItem>
+                                <Link href={route("admin.teachers")}>
+                                    Daftar Pengajar
+                                </Link>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <Link
+                                    href={route("admin.showTeacher", teacherId)}
+                                >
+                                    {teacher?.name || "Pengajar"}
+                                </Link>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <Link
+                                    href={route("admin.showTeacherCourse", {
+                                        id: teacherId,
+                                        courseId: course.id,
+                                    })}
+                                >
+                                    {course?.name || "Detail Kelas"}
+                                </Link>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage>
+                                    Detail Ujian -{" "}
+                                    {courseTest?.title || "Ujian"}
+                                </BreadcrumbPage>
+                            </BreadcrumbItem>
+                        </BreadcrumbList>
+                    </Breadcrumb>
+
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-semibold text-primary">
+                                Detail Ujian Kelas: {courseTest?.title}
+                            </h1>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Kelas:{" "}
+                                <span className="font-semibold">
+                                    {course?.name || "-"}
+                                </span>
+                            </p>
+                        </div>
+
+                        <Button variant="outline" asChild>
+                            <Link
+                                href={route("admin.showTeacherCourse", {
+                                    id: teacherId,
+                                    courseId: course.id,
+                                })}
+                            >
+                                Kembali ke Detail Kelas
+                            </Link>
+                        </Button>
+                    </div>
+
+                    <div className="rounded-xl border bg-white p-6 shadow space-y-4">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                            <div className="rounded-lg border bg-slate-50 p-3">
+                                <p className="text-xs uppercase tracking-wide text-gray-500">
+                                    Jumlah Peserta Kelas
+                                </p>
+                                <p className="text-2xl font-semibold text-gray-800">
+                                    {totalParticipants}
+                                </p>
+                            </div>
+                            <div className="rounded-lg border bg-emerald-50 p-3">
+                                <p className="text-xs uppercase tracking-wide text-emerald-700">
+                                    Sudah Mengerjakan
+                                </p>
+                                <p className="text-2xl font-semibold text-emerald-700">
+                                    {attemptedParticipants}
+                                </p>
+                            </div>
+                            <div className="rounded-lg border bg-blue-50 p-3">
+                                <p className="text-xs uppercase tracking-wide text-blue-700">
+                                    Nilai Terbaik
+                                </p>
+                                <p className="text-2xl font-semibold text-blue-700">
+                                    {bestScore !== null ? bestScore : "-"}
+                                </p>
+                                <p className="text-xs text-blue-700 mt-1">
+                                    {statistics?.best_score_user?.name ||
+                                        "Belum ada peserta yang submit"}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 col-span-2 text-sm">
+                            <div className="rounded-md border p-3">
+                                <p className="text-gray-500">Durasi</p>
+                                <p className="font-semibold text-gray-800">
+                                    {courseTest?.duration || 0} menit
+                                </p>
+                            </div>
+                            <div className="rounded-md border p-3">
+                                <p className="text-gray-500">Passing Score</p>
+                                <p className="font-semibold text-gray-800">
+                                    {courseTest?.passing_score || 0}
+                                </p>
+                            </div>
+                            <div className="rounded-md border p-3">
+                                <p className="text-gray-500">
+                                    Maksimal Pengerjaan
+                                </p>
+                                <p className="font-semibold text-gray-800">
+                                    {Number(courseTest?.max_attempts ?? 0) <= 0
+                                        ? "Tidak terbatas"
+                                        : courseTest?.max_attempts}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 text-sm">
+                            <div className="rounded-md border border-dashed p-3">
+                                <p className="text-gray-500">Mulai Ujian</p>
+                                <p className="font-semibold text-gray-800">
+                                    {formatLocalDateTime(courseTest?.start_date)}
+                                </p>
+                            </div>
+                            <div className="rounded-md border border-dashed p-3">
+                                <p className="text-gray-500">Selesai Ujian</p>
+                                <p className="font-semibold text-gray-800">
+                                    {formatLocalDateTime(courseTest?.end_date)}
+                                </p>
+                            </div>
+                        </div>
+
+                        {courseTest?.remedial_enabled && (
+                            <div className="rounded-md border border-rose-200 bg-rose-50/60 p-3 text-xs text-rose-800">
+                                <span className="font-semibold">
+                                    Remedial Aktif:
+                                </span>{" "}
+                                Selesai pada{" "}
+                                {formatLocalDateTime(
+                                    courseTest?.remedial_end_date,
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="rounded-xl border bg-white p-6 shadow">
+                        <Tabs defaultValue="participants">
+                            <TabsList>
+                                <TabsTrigger value="participants">
+                                    Peserta
+                                </TabsTrigger>
+                                <TabsTrigger value="history">
+                                    Riwayat Pengerjaan
+                                </TabsTrigger>
+                            </TabsList>
+
+                            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-6">
+                                <h2 className="text-lg font-semibold text-primary">
+                                    Peserta &amp; Riwayat Pengerjaan
+                                </h2>
+                                <Button variant="default" asChild>
+                                    <a
+                                        href={route(
+                                            "admin.showTeacherCourseTestExportParticipants",
+                                            {
+                                                teacherId: teacherId,
+                                                courseId: course.id,
+                                                courseTestId: courseTest.id,
+                                            },
+                                        )}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <Upload className="w-4 h-4 mr-2" />
+                                        Ekspor Peserta (.xlsx)
+                                    </a>
+                                </Button>
+                            </div>
+
+                            <TabsContent value="participants" className="mt-4">
+                                {participants.length > 0 ? (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="text-left text-gray-500 border-b">
+                                                    <th className="py-2">
+                                                        Nama
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Email
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Nilai Terbaik
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Status
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {participants.map(
+                                                    (participant: any) => (
+                                                        <tr
+                                                            key={participant.id}
+                                                            className="border-b last:border-b-0"
+                                                        >
+                                                            <td className="py-2 font-medium text-gray-800">
+                                                                <div className="flex items-center gap-3">
+                                                                    {participant
+                                                                        ?.user
+                                                                        ?.profile_url ? (
+                                                                        <img
+                                                                            src={
+                                                                                participant
+                                                                                    .user
+                                                                                    .profile_url
+                                                                            }
+                                                                            alt={`Foto profil ${participant.user.name}`}
+                                                                            className="h-8 w-8 rounded-xl object-cover shadow-sm ring-1 ring-teal-100"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xs font-bold text-white shadow-sm shrink-0">
+                                                                            {getInitials(
+                                                                                participant
+                                                                                    ?.user
+                                                                                    ?.name ||
+                                                                                    "??",
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                    <span>
+                                                                        {participant
+                                                                            ?.user
+                                                                            ?.name ||
+                                                                            "-"}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-2 text-gray-600">
+                                                                {participant
+                                                                    ?.user
+                                                                    ?.email ||
+                                                                    "-"}
+                                                            </td>
+                                                            <td className="py-2 text-gray-800 font-semibold">
+                                                                {participant?.best_score ??
+                                                                    "-"}
+                                                            </td>
+                                                            <td className="py-2">
+                                                                {participant?.best_score ===
+                                                                    null ||
+                                                                typeof participant?.best_score ===
+                                                                    "undefined" ? (
+                                                                    <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                                                                        Belum
+                                                                        Mengerjakan
+                                                                    </span>
+                                                                ) : participant?.passed ? (
+                                                                    <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                                                        Lulus
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                                                                        Tidak
+                                                                        Lulus
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">
+                                        Belum ada peserta kelas.
+                                    </p>
+                                )}
+                            </TabsContent>
+
+                            <TabsContent value="history" className="mt-4">
+                                {attemptHistory.length > 0 ? (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="text-left text-gray-500 border-b">
+                                                    <th className="py-2">
+                                                        Peserta
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Email
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Skor
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Status
+                                                    </th>
+                                                    <th className="py-2">
+                                                        Waktu Submit
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {attemptHistory.map(
+                                                    (attempt: any) => (
+                                                        <tr
+                                                            key={attempt.id}
+                                                            className="border-b last:border-b-0"
+                                                        >
+                                                            <td className="py-2 font-medium text-gray-800">
+                                                                <div className="flex items-center gap-3">
+                                                                    {attempt
+                                                                        ?.user
+                                                                        ?.profile_url ? (
+                                                                        <img
+                                                                            src={
+                                                                                attempt
+                                                                                    .user
+                                                                                    .profile_url
+                                                                            }
+                                                                            alt={`Foto profil ${attempt.user.name}`}
+                                                                            className="h-8 w-8 rounded-xl object-cover shadow-sm ring-1 ring-teal-100"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-700 text-xs font-bold text-white shadow-sm shrink-0">
+                                                                            {getInitials(
+                                                                                attempt
+                                                                                    ?.user
+                                                                                    ?.name ||
+                                                                                    "??",
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                    <span>
+                                                                        {attempt
+                                                                            ?.user
+                                                                            ?.name ||
+                                                                            "-"}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-2 text-gray-600">
+                                                                {attempt
+                                                                    ?.user
+                                                                    ?.email ||
+                                                                    "-"}
+                                                            </td>
+                                                            <td className="py-2 text-gray-800 font-semibold">
+                                                                {attempt.score ??
+                                                                    "-"}
+                                                            </td>
+                                                            <td className="py-2">
+                                                                {Number(
+                                                                    attempt.score ??
+                                                                        0,
+                                                                ) >=
+                                                                Number(
+                                                                    courseTest?.passing_score ??
+                                                                        0,
+                                                                ) ? (
+                                                                    <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                                                                        Lulus
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="inline-flex rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                                                                        Tidak
+                                                                        Lulus
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="py-2 text-gray-600">
+                                                                {formatLocalDateTime(
+                                                                    attempt.submitted_at,
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">
+                                        Belum ada riwayat pengerjaan.
+                                    </p>
+                                )}
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+                </div>
+            </div>
+        </AdminLayout>
+    );
+}

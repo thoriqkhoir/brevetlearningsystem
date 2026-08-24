@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Imports\TeacherImport;
 use App\Imports\UserImport;
+use App\Exports\CourseTestParticipantsExport;
 use App\Models\Bupot;
 use App\Models\Course;
+use App\Models\CourseTest;
+use App\Models\CourseTestAttempt;
 use App\Models\CourseUser;
 use App\Models\Event;
 use App\Models\Invoice;
@@ -328,6 +331,119 @@ class TeacherController extends Controller
             'modules' => $course->modules,
             'canManage' => Auth::user()->role === 'pengajar' && $course->teacher_id === Auth::id()
         ]);
+    }
+
+    public function showCourseTest($teacherId, $courseId, $courseTestId)
+    {
+        $teacher = User::findOrFail($teacherId);
+        $course = Course::where('id', $courseId)
+            ->where('teacher_id', $teacherId)
+            ->firstOrFail();
+
+        $courseTest = CourseTest::with('questionBank')
+            ->where('course_id', $courseId)
+            ->findOrFail($courseTestId);
+
+        $participants = $course->participants()
+            ->with('user:id,name,email,profile_url')
+            ->get(['id', 'course_id', 'user_id']);
+
+        $submittedAttempts = CourseTestAttempt::where('course_test_id', $courseTest->id)
+            ->whereNotNull('submitted_at')
+            ->get(['user_id', 'score', 'submitted_at']);
+
+        $attemptHistory = CourseTestAttempt::where('course_test_id', $courseTest->id)
+            ->whereNotNull('submitted_at')
+            ->with('user:id,name,email,profile_url')
+            ->orderBy('submitted_at', 'desc')
+            ->get();
+
+        $bestScoreByUser = $submittedAttempts
+            ->groupBy('user_id')
+            ->map(function ($attempts) {
+                return (int) $attempts->max('score');
+            });
+
+        $participantsData = $participants->map(function ($participant, $index) use ($bestScoreByUser, $courseTest) {
+            $bestScore = $bestScoreByUser->get($participant->user_id);
+            $hasSubmitted = !is_null($bestScore);
+            $passingScore = (int) ($courseTest->passing_score ?? 0);
+            $passed = $hasSubmitted ? ($bestScore >= $passingScore) : false;
+
+            return [
+                'no' => $index + 1,
+                'id' => $participant->id,
+                'user' => $participant->user,
+                'best_score' => $bestScore,
+                'has_submitted' => $hasSubmitted,
+                'passed' => $passed,
+            ];
+        })->values();
+
+        $overallBestAttempt = $submittedAttempts->reduce(function ($best, $current) {
+            if (!$best) {
+                return $current;
+            }
+
+            $bestScore = (int) $best->score;
+            $currentScore = (int) $current->score;
+
+            if ($currentScore > $bestScore) {
+                return $current;
+            }
+
+            if ($currentScore === $bestScore) {
+                $bestSubmittedAt = optional($best->submitted_at)->timestamp ?? 0;
+                $currentSubmittedAt = optional($current->submitted_at)->timestamp ?? 0;
+
+                if ($currentSubmittedAt > $bestSubmittedAt) {
+                    return $current;
+                }
+            }
+
+            return $best;
+        });
+
+        $overallBestParticipant = null;
+        if ($overallBestAttempt) {
+            $overallBestParticipant = $participants
+                ->firstWhere('user_id', $overallBestAttempt->user_id)
+                ?->user;
+        }
+
+        return Inertia::render('Admin/Teacher/DetailCourseTest', [
+            'teacher' => $teacher,
+            'course' => [
+                'id' => $course->id,
+                'name' => $course->name,
+                'teacher_id' => $course->teacher_id,
+            ],
+            'courseTest' => $courseTest,
+            'statistics' => [
+                'total_participants' => $participants->count(),
+                'attempted_participants' => $bestScoreByUser->count(),
+                'best_score' => $overallBestAttempt ? (int) $overallBestAttempt->score : null,
+                'best_score_user' => $overallBestParticipant ? [
+                    'id' => $overallBestParticipant->id,
+                    'name' => $overallBestParticipant->name,
+                ] : null,
+            ],
+            'participants' => $participantsData,
+            'attemptHistory' => $attemptHistory,
+        ]);
+    }
+
+    public function exportCourseTestParticipants($teacherId, $courseId, $courseTestId)
+    {
+        $course = Course::where('id', $courseId)
+            ->where('teacher_id', $teacherId)
+            ->firstOrFail();
+
+        $courseTest = CourseTest::where('course_id', $courseId)->findOrFail($courseTestId);
+
+        $fileName = 'peserta_ujian_kelas_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $courseTest->title ?? 'test') . '.xlsx';
+
+        return Excel::download(new CourseTestParticipantsExport($course, $courseTest), $fileName);
     }
 
     public function showTest($id, $testId)
