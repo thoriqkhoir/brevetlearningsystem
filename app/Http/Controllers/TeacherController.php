@@ -157,16 +157,52 @@ class TeacherController extends Controller
 
     public function showCourse($id, $courseId)
     {
-        $course = Course::with('user')->findOrFail($courseId);
+        $course = Course::with([
+            'user',
+            'courseSchedules' => function ($query) {
+                $query->orderBy('scheduled_at', 'asc');
+            },
+            'courseTests' => function ($query) {
+                $query->with(['questionBank'])->orderBy('created_at', 'desc');
+            },
+        ])->findOrFail($courseId);
         $course->modules_count = $course->modules()->count();
 
-        $participants = $course->participants()->with('user')->get();
+        $participants = $course->participants()
+            ->with(['user', 'courseResults'])
+            ->get()
+            ->map(function ($participant) {
+                $averageScore = null;
+                if ($participant->courseResults && $participant->courseResults->count() > 0) {
+                    $validScores = $participant->courseResults->whereNotNull('score')->pluck('score');
+
+                    if ($validScores->count() > 0) {
+                        $averageScore = round($validScores->avg(), 2);
+                    }
+                }
+
+                $participant->average_score = $averageScore;
+                return $participant;
+            });
 
         return Inertia::render('Admin/Teacher/DetailCourse', [
             'teacherId' => $id,
             'course' => $course,
             'participants' => $participants,
+            'courseSchedules' => $course->courseSchedules ?? [],
+            'courseTests' => $course->courseTests ?? [],
         ]);
+    }
+
+    public function exportCourseParticipants($teacherId, $courseId)
+    {
+        $course = Course::where('id', $courseId)
+            ->where('teacher_id', $teacherId)
+            ->firstOrFail();
+
+        $fileName = 'peserta_kelas_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $course->name ?? 'course') . '.xlsx';
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\CourseParticipantsExport($course), $fileName);
     }
 
     public function downloadCoursePhotos($teacherId, $courseId)

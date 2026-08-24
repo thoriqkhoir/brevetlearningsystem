@@ -840,6 +840,7 @@ Route::middleware(['auth', EnsureAdmin::class])->group(function () {
     Route::delete('/admin/teachers/delete-multiple', [TeacherController::class, 'deleteMultiple'])->name('admin.deleteMultipleTeacher');
     Route::get('/admin/teachers/{id}/course/{courseId}', [TeacherController::class, 'showCourse'])->name('admin.showTeacherCourse');
     Route::get('/admin/teachers/{id}/course/{courseId}/download-photos', [TeacherController::class, 'downloadCoursePhotos'])->name('admin.showTeacherCoursePhotos');
+    Route::get('/admin/teachers/{id}/course/{courseId}/export-participants', [TeacherController::class, 'exportCourseParticipants'])->name('admin.showTeacherCourseExportParticipants');
     Route::get('/admin/teachers/{teacherId}/courses/{courseId}/modules', [TeacherController::class, 'showCourseModules'])->name('admin.showTeacherCourseModules');
     Route::get('/admin/teachers/{id}/test/{testId}', [TeacherController::class, 'showTest'])->name('admin.showTeacherTest');
 

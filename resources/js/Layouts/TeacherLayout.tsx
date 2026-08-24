@@ -39,11 +39,22 @@ import {
 import teacherItems from "@/lib/teacher-items";
 
 const getPath = (fullUrl: string) => {
+    const pathWithoutQuery = fullUrl.split("?")[0].split("#")[0];
     try {
-        return new URL(fullUrl).pathname;
-    } catch {
-        return fullUrl;
-    }
+        if (
+            pathWithoutQuery.startsWith("http://") ||
+            pathWithoutQuery.startsWith("https://")
+        ) {
+            const pathname = new URL(pathWithoutQuery).pathname;
+            return pathname.endsWith("/") && pathname.length > 1
+                ? pathname.slice(0, -1)
+                : pathname;
+        }
+    } catch {}
+
+    return pathWithoutQuery.endsWith("/") && pathWithoutQuery.length > 1
+        ? pathWithoutQuery.slice(0, -1)
+        : pathWithoutQuery;
 };
 
 export default function TeacherLayout({ children }: PropsWithChildren) {
@@ -77,6 +88,12 @@ export default function TeacherLayout({ children }: PropsWithChildren) {
         const itemPath = getPath(itemUrl);
         if (itemPath === "/invoice" && currentPath !== "/invoice") {
             return false;
+        }
+        if (itemPath === "/teacher" || itemPath === "/teacher/dashboard") {
+            return (
+                currentPath === "/teacher" ||
+                currentPath === "/teacher/dashboard"
+            );
         }
         return (
             currentPath === itemPath || currentPath.startsWith(`${itemPath}/`)

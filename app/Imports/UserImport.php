@@ -17,6 +17,24 @@ class UserImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithValidat
 {
     use Importable;
 
+    private function formatPhoneNumber($phoneNumber): string
+    {
+        if ($phoneNumber === null) {
+            return '';
+        }
+
+        $phone = trim((string) $phoneNumber);
+        $phone = preg_replace('/[\s\-\(\)\.]+/', '', $phone);
+
+        if (str_starts_with($phone, '+62')) {
+            $phone = '0' . substr($phone, 3);
+        } elseif (str_starts_with($phone, '62')) {
+            $phone = '0' . substr($phone, 2);
+        }
+
+        return $phone;
+    }
+
     private function resolveCourseCode(array $row): ?string
     {
         $courseCode = $row['course_code'] ?? null;
@@ -36,13 +54,15 @@ class UserImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithValidat
             return null;
         }
 
+        $phoneNumber = $this->formatPhoneNumber($row['phone_number'] ?? '');
+
         $user = User::create([
             'name'          => $row['name'],
             'email'         => $row['email'],
-            'phone_number'  => strval($row['phone_number']),
+            'phone_number'  => $phoneNumber,
             'npwp'          => isset($row['npwp']) ? strval($row['npwp']) : null,
             'address'       => $row['address'],
-            'password'      => Hash::make(strval($row['phone_number']),),
+            'password'      => Hash::make($phoneNumber),
             'role'          => 'pengguna',
             // 'access_rights' => isset($row['access_rights'])
             //     ? json_encode(array_map('trim', explode(',', $row['access_rights'])))

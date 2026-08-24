@@ -16,7 +16,14 @@ import {
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, Link, router } from "@inertiajs/react";
 import { cn } from "@/lib/utils";
-import { BookOpen, CalendarIcon, RefreshCcw, Search } from "lucide-react";
+import {
+    BookOpen,
+    CalendarIcon,
+    ChevronLeft,
+    ChevronRight,
+    RefreshCcw,
+    Search,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type FilterState = {
@@ -616,17 +623,38 @@ export default function DaftarKelas({ courses, teachers, filters = {} }: any) {
                                 {courses.links.map(
                                     (link: any, index: number) => {
                                         const key = `${link.label}-${index}`;
+                                        const isPrevious =
+                                            index === 0 ||
+                                            String(link.label).includes("&laquo;") ||
+                                            String(link.label).toLowerCase().includes("previous") ||
+                                            String(link.label).toLowerCase().includes("sebelumnya");
+                                        const isNext =
+                                            index === courses.links.length - 1 ||
+                                            String(link.label).includes("&raquo;") ||
+                                            String(link.label).toLowerCase().includes("next") ||
+                                            String(link.label).toLowerCase().includes("berikutnya");
+
                                         const label = String(link.label)
-                                            .replace("&laquo;", "«")
-                                            .replace("&raquo;", "»");
+                                            .replace("&laquo;", "")
+                                            .replace("&raquo;", "")
+                                            .trim();
+
+                                        const content = isPrevious ? (
+                                            <ChevronLeft className="h-4 w-4" />
+                                        ) : isNext ? (
+                                            <ChevronRight className="h-4 w-4" />
+                                        ) : (
+                                            label
+                                        );
 
                                         if (!link.url) {
                                             return (
                                                 <span
                                                     key={key}
-                                                    className="px-3 py-1.5 rounded border text-sm text-gray-400"
+                                                    aria-disabled="true"
+                                                    className="inline-flex items-center justify-center min-w-[36px] h-9 px-3 py-1.5 rounded-md border text-sm text-gray-400 opacity-50 cursor-not-allowed select-none"
                                                 >
-                                                    {label}
+                                                    {content}
                                                 </span>
                                             );
                                         }
@@ -637,13 +665,13 @@ export default function DaftarKelas({ courses, teachers, filters = {} }: any) {
                                                 href={link.url}
                                                 preserveState
                                                 preserveScroll
-                                                className={`px-3 py-1.5 rounded border text-sm ${
+                                                className={`inline-flex items-center justify-center min-w-[36px] h-9 px-3 py-1.5 rounded-md border text-sm font-medium transition-colors ${
                                                     link.active
                                                         ? "bg-primary text-white border-primary"
-                                                        : "hover:bg-gray-100"
+                                                        : "hover:bg-gray-100 text-gray-700 bg-white"
                                                 }`}
                                             >
-                                                {label}
+                                                {content}
                                             </Link>
                                         );
                                     },
