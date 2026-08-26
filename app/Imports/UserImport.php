@@ -87,21 +87,30 @@ class UserImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithValidat
     public function rules(): array
     {
         return [
-            'phone_number' => [
-                'min:8',
+            'email' => [
+                'required',
+                'email',
+                'regex:/@/',
             ],
-            // 'access_rights' => [
-            //     'nullable',
-            //     function ($attribute, $value, $fail) {
-            //         $rights = array_map('trim', explode(',', $value));
-            //         $validRights = ['efaktur', 'ebupot'];
-            //         foreach ($rights as $right) {
-            //             if (!in_array($right, $validRights)) {
-            //                 $fail("The $attribute contains invalid value: $right.");
-            //             }
-            //         }
-            //     },
-            // ],
+            'phone_number' => [
+                'required',
+                'min:8',
+                'regex:/^[0-9+\s\-()]+$/',
+                'not_regex:/[a-zA-Z]/',
+            ],
+        ];
+    }
+
+    public function customValidationMessages(): array
+    {
+        return [
+            'email.required' => 'Kolom email wajib diisi.',
+            'email.email' => 'Kolom email wajib mengandung karakter "@" (format email tidak valid).',
+            'email.regex' => 'Kolom email wajib mengandung karakter "@" (format email tidak valid).',
+            'phone_number.required' => 'Kolom nomor HP wajib diisi.',
+            'phone_number.regex' => 'Kolom nomor HP hanya boleh berisi angka dan tidak boleh mengandung huruf.',
+            'phone_number.not_regex' => 'Kolom nomor HP hanya boleh berisi angka dan tidak boleh mengandung huruf.',
+            'phone_number.min' => 'Kolom nomor HP minimal 8 digit.',
         ];
     }
 }

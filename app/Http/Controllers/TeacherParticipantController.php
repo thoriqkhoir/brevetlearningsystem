@@ -6,9 +6,11 @@ use App\Imports\UserImport;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Validators\ValidationException;
 
 class TeacherParticipantController extends Controller
 {
@@ -112,8 +114,28 @@ class TeacherParticipantController extends Controller
         ]);
 
         try {
-            Excel::import(new UserImport(), $request->file('file'));
+            DB::transaction(function () use ($request) {
+                Excel::import(new UserImport(), $request->file('file'));
+            });
+
             return back()->with('success', 'Data peserta berhasil diimport.');
+        } catch (ValidationException $e) {
+            $failures = $e->failures();
+            $messages = [];
+            foreach ($failures as $failure) {
+                $row = $failure->row();
+                foreach ($failure->errors() as $error) {
+                    $messages[] = "Baris {$row}: {$error}";
+                }
+            }
+            $uniqueMessages = array_values(array_unique($messages));
+            $displayMessages = array_slice($uniqueMessages, 0, 5);
+            $errorMessage = implode(' | ', $displayMessages);
+            if (count($uniqueMessages) > 5) {
+                $errorMessage .= ' (dan ' . (count($uniqueMessages) - 5) . ' kesalahan lainnya)';
+            }
+
+            return back()->with('error', 'Import gagal. ' . $errorMessage);
         } catch (\Exception $e) {
             return back()->with('error', 'Import gagal: ' . $e->getMessage());
         }

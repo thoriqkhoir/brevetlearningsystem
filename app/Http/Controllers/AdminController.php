@@ -7,8 +7,10 @@ use App\Models\Spt;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Validators\ValidationException;
 use App\Imports\UserImport;
 use App\Models\Bupot;
 use App\Models\Event;
@@ -214,12 +216,32 @@ class AdminController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,csv',
+            'file' => 'required|mimes:xlsx,csv,xls',
         ]);
 
         try {
-            Excel::import(new UserImport, $request->file('file'));
+            DB::transaction(function () use ($request) {
+                Excel::import(new UserImport, $request->file('file'));
+            });
+
             return redirect()->back()->with('success', 'Data user berhasil diimport!');
+        } catch (ValidationException $e) {
+            $failures = $e->failures();
+            $messages = [];
+            foreach ($failures as $failure) {
+                $row = $failure->row();
+                foreach ($failure->errors() as $error) {
+                    $messages[] = "Baris {$row}: {$error}";
+                }
+            }
+            $uniqueMessages = array_values(array_unique($messages));
+            $displayMessages = array_slice($uniqueMessages, 0, 5);
+            $errorMessage = implode(' | ', $displayMessages);
+            if (count($uniqueMessages) > 5) {
+                $errorMessage .= ' (dan ' . (count($uniqueMessages) - 5) . ' kesalahan lainnya)';
+            }
+
+            return redirect()->back()->with('error', 'Import gagal. ' . $errorMessage);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal! ' . $e->getMessage());
         }
