@@ -3,6 +3,14 @@ import { columns } from "@/Components/layout/User/columns";
 import { DataTableUser } from "@/Components/layout/User/data-table";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import { Label } from "@/Components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/Components/ui/select";
 import Modal from "@/Components/ui/modal";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
@@ -10,7 +18,7 @@ import { Download, FileDown, RefreshCcw, Trash, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-export default function DaftarPengguna({ users }: any) {
+export default function DaftarPengguna({ users, platforms = [] }: any) {
     const { flash }: any = usePage().props;
     const [initialUsers, setInitialUsers] = useState(
         users.map((user: any) => ({
@@ -26,8 +34,10 @@ export default function DaftarPengguna({ users }: any) {
 
     const { data, setData, post, errors, reset } = useForm<{
         file: File | null;
+        platform_id: string;
     }>({
         file: null,
+        platform_id: "",
     });
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,6 +151,31 @@ export default function DaftarPengguna({ users }: any) {
                                     className="flex flex-col gap-3"
                                     encType="multipart/form-data"
                                 >
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-semibold text-gray-700">
+                                            Pilih Platform (Opsional)
+                                        </Label>
+                                        <Select
+                                            value={data.platform_id || "none"}
+                                            onValueChange={(value) =>
+                                                setData("platform_id", value === "none" ? "" : value)
+                                            }
+                                        >
+                                            <SelectTrigger className="w-full bg-white">
+                                                <SelectValue placeholder="Pilih Platform" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">
+                                                    Tanpa Platform (Kosong / Organik)
+                                                </SelectItem>
+                                                {platforms?.map((p: any) => (
+                                                    <SelectItem key={p.id} value={p.id}>
+                                                        {p.name} ({p.code})
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <Input
                                         type="file"
                                         className="hover:cursor-pointer"
@@ -173,11 +208,11 @@ export default function DaftarPengguna({ users }: any) {
                             className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border-blue-200"
                         >
                             <a
-                            href="/templates/format_peserta_bls.xlsx"
+                            href="/templates/format_peserta_tls.xlsx"
                             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700"
                             >
                             <Download className="h-4 w-4" />
-                            Download Format Import Pengguna BLS
+                            Download Format Import Pengguna TLS
                             </a>
 
                         </Button>

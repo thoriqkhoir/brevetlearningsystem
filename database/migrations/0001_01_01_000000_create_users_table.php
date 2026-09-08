@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignId('event_id')->constrained('events')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignUuid('platform_id')->nullable()->constrained('platforms')->nullOnDelete();
             $table->string('name');
             $table->string('email')->unique();
             $table->string('phone_number');

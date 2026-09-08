@@ -112,6 +112,7 @@ use App\Http\Controllers\NIKRegistrationController;
 use App\Http\Controllers\SPController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\TeacherParticipantController;
+use App\Http\Controllers\PlatformController;
 use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\QuestionBankQuestionController;
 use App\Http\Controllers\QuestionController;
@@ -848,6 +849,14 @@ Route::middleware(['auth', EnsureAdmin::class])->group(function () {
 
     Route::get('/admin/courses', [AdminCourseListController::class, 'index'])->name('admin.courses');
     Route::get('/admin/tests', [AdminTestListController::class, 'index'])->name('admin.tests');
+
+    Route::get('/admin/platforms', [PlatformController::class, 'index'])->name('admin.platforms');
+    Route::post('/admin/platforms', [PlatformController::class, 'store'])->name('admin.platforms.store');
+    Route::put('/admin/platforms/{id}', [PlatformController::class, 'update'])->name('admin.platforms.update');
+    Route::post('/admin/platforms/{id}/toggle-status', [PlatformController::class, 'toggleStatus'])->name('admin.platforms.toggle');
+    Route::post('/admin/platforms/{id}/generate-token', [PlatformController::class, 'generateToken'])->name('admin.platforms.generateToken');
+    Route::post('/admin/platforms/{id}/revoke-tokens', [PlatformController::class, 'revokeTokens'])->name('admin.platforms.revokeTokens');
+    Route::get('/admin/platforms/active-list', [PlatformController::class, 'activeList'])->name('admin.platforms.activeList');
 });
 
 Route::middleware(['auth', EnsureTeacher::class])->group(function () {
@@ -879,6 +888,7 @@ Route::middleware(['auth', EnsureTeacher::class])->group(function () {
     Route::post('/teacher/participants/import', [TeacherParticipantController::class, 'import'])->name('teacher.importParticipants');
     Route::delete('/teacher/participants/delete-multiple', [TeacherParticipantController::class, 'deleteMultiple'])->name('teacher.deleteMultipleParticipants');
     Route::get('/teacher/participants/template', [TeacherParticipantController::class, 'downloadTemplate'])->name('teacher.downloadParticipantTemplate');
+    Route::get('/teacher/platforms/active-list', [PlatformController::class, 'activeList'])->name('teacher.platforms.activeList');
 
     Route::get('/teacher/courses', [CourseController::class, 'index'])->name('teacher.courses');
     Route::get('/teacher/courses/create', [CourseController::class, 'create'])->name('teacher.createCourse');

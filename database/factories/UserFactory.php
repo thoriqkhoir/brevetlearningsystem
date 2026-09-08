@@ -26,7 +26,12 @@ class UserFactory extends Factory
     {
         $faker = FakerFactory::create('id_ID');
         $phoneNumber = $faker->unique()->numerify('08##########');
+
         return [
+            'event_id' => \App\Models\Event::firstOrCreate(
+                ['id' => 1],
+                ['code' => 'PUB001', 'name' => 'Public']
+            )->id,
             'name' => $faker->name(),
             'email' => $faker->unique()->safeEmail(),
             'email_verified_at' => now(),

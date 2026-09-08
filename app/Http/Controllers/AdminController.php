@@ -15,6 +15,7 @@ use App\Imports\UserImport;
 use App\Models\Bupot;
 use App\Models\Event;
 use App\Models\Course;
+use App\Models\Platform;
 
 class AdminController extends Controller
 {
@@ -63,19 +64,26 @@ class AdminController extends Controller
 
     public function users()
     {
-        $users = User::with('event')
+        $users = User::with(['event', 'platform'])
             ->where('role', 'pengguna')
             ->orderBy('created_at', 'desc')
             ->get();
 
+        $platforms = Platform::active()->orderBy('name')->get(['id', 'name', 'code']);
+
         return Inertia::render('Admin/DaftarPengguna', [
             'users' => $users,
+            'platforms' => $platforms,
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Admin/FormCreateUser');
+        $platforms = Platform::active()->orderBy('name')->get(['id', 'name', 'code']);
+
+        return Inertia::render('Admin/FormCreateUser', [
+            'platforms' => $platforms,
+        ]);
     }
 
     public function store(Request $request)
@@ -83,6 +91,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'id' => 'required|uuid',
             'event_id' => 'nullable|integer',
+            'platform_id' => 'nullable|uuid|exists:platforms,id',
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'phone_number' => 'required|string|min:8|max:255',
@@ -101,6 +110,7 @@ class AdminController extends Controller
             $user = new User();
             $user->id = $validated['id'];
             $user->event_id = $validated['event_id'] ?? 1;
+            $user->platform_id = $validated['platform_id'] ?? null;
             $user->name = $validated['name'];
             $user->email = $validated['email'];
             $user->phone_number = $validated['phone_number'];
@@ -124,7 +134,7 @@ class AdminController extends Controller
 
     public function show($id)
     {
-        $user = User::with('event')->findOrFail($id);
+        $user = User::with(['event', 'platform'])->findOrFail($id);
 
         $user->is_password_reset = Hash::check($user->phone_number, $user->password);
 
@@ -154,9 +164,11 @@ class AdminController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
+        $platforms = Platform::active()->orderBy('name')->get(['id', 'name', 'code']);
 
         return Inertia::render('Admin/FormEditUser', [
             'user' => $user,
+            'platforms' => $platforms,
         ]);
     }
 
@@ -164,6 +176,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'event_id' => 'nullable|integer',
+            'platform_id' => 'nullable|uuid|exists:platforms,id',
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
             'phone_number' => 'required|string|max:255',
@@ -177,6 +190,7 @@ class AdminController extends Controller
         try {
             $user = User::findOrFail($id);
             $user->event_id = $validated['event_id'] ?? 1;
+            $user->platform_id = $validated['platform_id'] ?? null;
             $user->name = $validated['name'];
             $user->email = $validated['email'];
             $user->phone_number = $validated['phone_number'];
@@ -217,11 +231,12 @@ class AdminController extends Controller
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,csv,xls',
+            'platform_id' => 'nullable|uuid|exists:platforms,id',
         ]);
 
         try {
             DB::transaction(function () use ($request) {
-                Excel::import(new UserImport, $request->file('file'));
+                Excel::import(new UserImport($request->input('platform_id')), $request->file('file'));
             });
 
             return redirect()->back()->with('success', 'Data user berhasil diimport!');

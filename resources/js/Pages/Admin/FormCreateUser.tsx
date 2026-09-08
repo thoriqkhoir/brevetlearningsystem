@@ -22,6 +22,13 @@ import {
     BreadcrumbSeparator,
 } from "@/Components/ui/breadcrumb";
 import { Input } from "@/Components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/Components/ui/select";
 import AdminLayout from "@/Layouts/AdminLayout";
 import InputMask from "react-input-mask";
 import { Checkbox } from "@/Components/ui/checkbox";
@@ -44,6 +51,7 @@ import { useState } from "react";
 const formSchema = z.object({
     id: z.string().uuid(),
     event_id: z.number().int(),
+    platform_id: z.string().uuid().nullable().optional(),
     name: z.string().min(1, "Nama harus diisi"),
     email: z.string().email("Email tidak valid"),
     phone_number: z.string().min(1, "Nomor telepon harus diisi"),
@@ -57,7 +65,7 @@ const formSchema = z.object({
     access_rights: z.array(z.enum(["efaktur", "ebupot"])).nullable(),
 });
 
-export default function FormCreateUser() {
+export default function FormCreateUser({ platforms = [] }: any) {
     const defaultId = uuidv4();
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -65,6 +73,7 @@ export default function FormCreateUser() {
         defaultValues: {
             id: defaultId,
             event_id: 1,
+            platform_id: null,
             name: "",
             email: "",
             phone_number: "",
@@ -139,6 +148,45 @@ export default function FormCreateUser() {
                                 </div>
                                 <div className="p-8 rounded-xl bg-white border mb-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8">
+                                        <FormField
+                                            control={form.control}
+                                            name="platform_id"
+                                            render={({ field }) => {
+                                                return (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            Platform (Opsional)
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Select
+                                                                value={field.value || "none"}
+                                                                onValueChange={(value) =>
+                                                                    field.onChange(value === "none" ? null : value)
+                                                                }
+                                                            >
+                                                                <SelectTrigger className="w-full bg-background">
+                                                                    <SelectValue placeholder="Pilih Platform" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="none">
+                                                                        Tanpa Platform (Kosong / Organik)
+                                                                    </SelectItem>
+                                                                    {platforms?.map((p: any) => (
+                                                                        <SelectItem key={p.id} value={p.id}>
+                                                                            {p.name} ({p.code})
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormControl>
+                                                        <FormDescription>
+                                                            Pilih platform jika pengguna ini terafiliasi dengan platform mitra.
+                                                        </FormDescription>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                );
+                                            }}
+                                        />
                                         <FormField
                                             control={form.control}
                                             name="name"

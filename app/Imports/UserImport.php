@@ -17,6 +17,13 @@ class UserImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithValidat
 {
     use Importable;
 
+    protected ?string $platformId;
+
+    public function __construct(?string $platformId = null)
+    {
+        $this->platformId = $platformId;
+    }
+
     private function formatPhoneNumber($phoneNumber): string
     {
         if ($phoneNumber === null) {
@@ -50,28 +57,41 @@ class UserImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithValidat
 
     public function model(array $row)
     {
-        if (User::where('email', $row['email'])->exists()) {
-            return null;
+        $existingUser = User::where('email', $row['email'])->first();
+
+        if ($existingUser) {
+            // Gate 3: Conflict Policy
+            // If user has a different platform assigned, skip to avoid unauthorized transfer
+            if ($this->platformId && $existingUser->platform_id && $existingUser->platform_id !== $this->platformId) {
+                return null;
+            }
+
+            // If user has platform_id = NULL and import provides a platform_id, claim platform
+            if ($this->platformId && is_null($existingUser->platform_id)) {
+                $existingUser->update([
+                    'platform_id' => $this->platformId,
+                ]);
+            }
+
+            $user = $existingUser;
+        } else {
+            $phoneNumber = $this->formatPhoneNumber($row['phone_number'] ?? '');
+
+            $user = User::create([
+                'name'          => $row['name'],
+                'email'         => $row['email'],
+                'phone_number'  => $phoneNumber,
+                'npwp'          => isset($row['npwp']) ? strval($row['npwp']) : null,
+                'address'       => $row['address'] ?? null,
+                'password'      => Hash::make($phoneNumber),
+                'role'          => 'pengguna',
+                'platform_id'   => $this->platformId,
+                'event_id'      => 1,
+            ]);
         }
 
-        $phoneNumber = $this->formatPhoneNumber($row['phone_number'] ?? '');
-
-        $user = User::create([
-            'name'          => $row['name'],
-            'email'         => $row['email'],
-            'phone_number'  => $phoneNumber,
-            'npwp'          => isset($row['npwp']) ? strval($row['npwp']) : null,
-            'address'       => $row['address'],
-            'password'      => Hash::make($phoneNumber),
-            'role'          => 'pengguna',
-            // 'access_rights' => isset($row['access_rights'])
-            //     ? json_encode(array_map('trim', explode(',', $row['access_rights'])))
-            //     : null,
-            'event_id'      => 1,
-        ]);
-
         $courseCode = $this->resolveCourseCode($row);
-        if ($courseCode) {
+        if ($courseCode && $user) {
             $course = Course::whereRaw('LOWER(code) = ?', [Str::lower($courseCode)])->first();
             if ($course) {
                 CourseUser::firstOrCreate([

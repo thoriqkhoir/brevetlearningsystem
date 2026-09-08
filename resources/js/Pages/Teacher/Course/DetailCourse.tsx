@@ -169,16 +169,6 @@ export default function DetailCourse({
         return format(localDate, "d MMMM yyyy, HH:mm", { locale: id });
     };
 
-    const getMinRemedialDate = () => {
-        if (!course?.end_date) return null;
-        const datePart = course.end_date.split(" ")[0];
-        const [year, month, day] = datePart.split("-").map(Number);
-        const minDate = new Date(year, month - 1, day);
-        minDate.setDate(minDate.getDate() + 1);
-        minDate.setHours(0, 0, 0, 0);
-        return minDate;
-    };
-
     const parseDateTimeParts = (value?: string | null) => {
         if (!value) {
             return {
@@ -230,6 +220,16 @@ export default function DetailCourse({
         combined.setHours(hour, minute, 0, 0);
 
         return format(combined, "yyyy-MM-dd HH:mm:ss");
+    };
+
+    const getMinRemedialDate = () => {
+        if (!course?.end_date) return null;
+        const datePart = course.end_date.split(" ")[0];
+        const [year, month, day] = datePart.split("-").map(Number);
+        const minDate = new Date(year, month - 1, day);
+        minDate.setDate(minDate.getDate() + 1);
+        minDate.setHours(0, 0, 0, 0);
+        return minDate;
     };
 
     const parseLocalDateTimeText = (value: string) => {
@@ -316,10 +316,6 @@ export default function DetailCourse({
                 {
                     preserveScroll: true,
                     onSuccess,
-                    onError: (errors: any) => {
-                        const firstError = Object.values(errors)[0];
-                        if (firstError) toast.error(firstError as string);
-                    },
                 },
             );
             return;
@@ -331,10 +327,6 @@ export default function DetailCourse({
             {
                 preserveScroll: true,
                 onSuccess,
-                onError: (errors: any) => {
-                    const firstError = Object.values(errors)[0];
-                    if (firstError) toast.error(firstError as string);
-                },
             },
         );
     };
@@ -586,10 +578,7 @@ export default function DetailCourse({
                 {
                     preserveScroll: true,
                     onSuccess,
-                    onError: (errors: any) => {
-                        const firstError = Object.values(errors)[0];
-                        if (firstError) toast.error(firstError as string);
-                    },
+                    onError,
                 },
             );
             return;
@@ -598,10 +587,7 @@ export default function DetailCourse({
         router.post(route("teacher.courseTests.store", course.id), payload, {
             preserveScroll: true,
             onSuccess,
-            onError: (errors: any) => {
-                const firstError = Object.values(errors)[0];
-                if (firstError) toast.error(firstError as string);
-            },
+            onError,
         });
     };
 
@@ -713,10 +699,6 @@ export default function DetailCourse({
                     setSearchQuery("");
                     setSearchResults([]);
                 },
-                onError: (errors: any) => {
-                    const firstError = Object.values(errors)[0];
-                    if (firstError) toast.error(firstError as string);
-                },
             },
         );
     };
@@ -728,7 +710,11 @@ export default function DetailCourse({
         return () => clearTimeout(timeoutId);
     }, [searchQuery]);
 
-    const participantsData: ParticipantColumns[] = participants.map(
+    const participantsList = Array.isArray(participants)
+        ? participants
+        : (participants?.data ?? []);
+
+    const participantsData: ParticipantColumns[] = participantsList.map(
         (p: any) => ({
             id: p.id,
             user: p.user,
@@ -1160,7 +1146,7 @@ export default function DetailCourse({
                                                         )}
                                                     >
                                                         <Eye size={14} />
-                                                        Detail
+                                                        Lihat Peserta & Nilai
                                                     </Link>
                                                 </Button>
                                                 <Button
@@ -1830,39 +1816,35 @@ export default function DetailCourse({
                                     />
                                     Tampilkan nilai ke peserta
                                 </label>
-
                                 <label className="md:col-span-2 flex items-center gap-2 text-sm">
                                     <Checkbox
-                                        checked={
-                                            courseTestForm.show_correct_answers
-                                        }
+                                        checked={courseTestForm.show_correct_answers}
                                         onCheckedChange={(checked) =>
                                             setCourseTestForm((prev) => ({
                                                 ...prev,
-                                                show_correct_answers:
-                                                    checked === true,
+                                                show_correct_answers: checked === true,
                                             }))
                                         }
                                     />
-                                    Tampilkan jawaban benar salah ke peserta
+                                    Tampilkan jawaban yang benar
                                 </label>
-                                 <label className="md:col-span-2 flex items-center gap-2 text-sm mt-3 border-t border-slate-100 pt-3 cursor-pointer">
-                                     <Checkbox
-                                         checked={courseTestForm.remedial_enabled}
-                                         onCheckedChange={(checked) =>
-                                             setCourseTestForm((prev) => ({
-                                                 ...prev,
-                                                 remedial_enabled: checked === true,
-                                             }))
-                                         }
-                                     />
-                                     <span className="font-semibold text-rose-700">Aktifkan Remedial untuk ujian ini</span>
-                                 </label>
-                                 {courseTestForm.remedial_enabled && (
-                                     <div className="md:col-span-2 space-y-3 bg-rose-50/50 border border-rose-100 rounded-xl p-3.5">
-                                         <p className="text-xs text-rose-700 leading-relaxed font-medium">
-                                             Info: Remedial akan dibuka secara otomatis 1 hari setelah kelas berakhir (mulai tanggal {getMinRemedialDate() ? format(getMinRemedialDate()!, "d MMMM yyyy", { locale: id }) : "-"} pukul 00.00 WIB). Nilai kelulusan remedial mengikuti passing score yang diatur pada ujian ini dengan durasi dan kumpulan soal yang sama. Siswa memiliki kesempatan mengerjakan tanpa batas hingga nilainya mencapai passing score atau lebih.
-                                         </p>
+                                <label className="md:col-span-2 flex items-center gap-2 text-sm mt-2 border-t pt-3">
+                                    <Checkbox
+                                        checked={courseTestForm.remedial_enabled}
+                                        onCheckedChange={(checked) =>
+                                            setCourseTestForm((prev) => ({
+                                                ...prev,
+                                                remedial_enabled: checked === true,
+                                            }))
+                                        }
+                                    />
+                                    <span className="font-semibold text-rose-700">Aktifkan Remedial untuk ujian ini</span>
+                                </label>
+                                {courseTestForm.remedial_enabled && (
+                                    <div className="md:col-span-2 space-y-3 bg-rose-50/50 border border-rose-100 rounded-lg p-3">
+                                        <p className="text-xs text-rose-800 leading-relaxed font-medium">
+                                            Info: Remedial akan dibuka secara otomatis 1 hari setelah kelas berakhir (mulai tanggal {getMinRemedialDate() ? format(getMinRemedialDate()!, "d MMMM yyyy", { locale: id }) : "-"} pukul 00.00 WIB). Nilai kelulusan remedial mengikuti passing score yang diatur pada ujian ini dengan durasi dan kumpulan soal yang sama. Siswa memiliki kesempatan mengerjakan tanpa batas hingga nilainya mencapai passing score atau lebih.
+                                        </p>
                                         <div className="space-y-1">
                                             <p className="text-xs font-semibold text-rose-900">
                                                 Waktu Selesai Remedial
@@ -1932,11 +1914,32 @@ export default function DetailCourse({
                     </Dialog>
 
                     <div className="rounded-xl bg-white border shadow p-6">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-bold text-primary">
-                                Daftar Peserta ({participants.length})
-                            </h2>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                                <h2 className="text-lg font-bold text-primary">
+                                    Peserta Terdaftar ({participants.length})
+                                </h2>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    Untuk melihat detail pengerjaan & nilai peserta, silakan pilih ujian pada daftar ujian di atas.
+                                </p>
+                            </div>
+                            
                             <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    className="text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
+                                    asChild
+                                >
+                                    <a
+                                        href={route(
+                                            "teacher.courses.downloadPhotos",
+                                            course.id
+                                        )}
+                                    >
+                                        <Download size={16} />
+                                        Unduh Foto (.zip)
+                                    </a>
+                                </Button>
                                 <Button
                                     variant="outline"
                                     className="text-green-700 bg-green-50 border-green-200 hover:bg-green-100"
@@ -1954,21 +1957,6 @@ export default function DetailCourse({
                                         Ekspor Peserta (.xlsx)
                                     </a>
                                 </Button>
-                                <Button
-                                    variant="outline"
-                                    className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
-                                    asChild
-                                >
-                                    <a
-                                        href={route(
-                                            "teacher.courses.downloadPhotos",
-                                            course.id
-                                        )}
-                                    >
-                                        <Download size={16} />
-                                        Unduh Foto (.zip)
-                                    </a>
-                                </Button>
                                 <Dialog
                                     open={addParticipantOpen}
                                     onOpenChange={setAddParticipantOpen}
@@ -1982,81 +1970,81 @@ export default function DetailCourse({
                                             Tambah Peserta
                                         </Button>
                                     </DialogTrigger>
-                                <DialogContent className="max-w-md">
-                                    <DialogHeader>
-                                        <DialogTitle>
-                                            Tambah Peserta
-                                        </DialogTitle>
-                                        <DialogDescription>
-                                            Cari dan tambahkan peserta ke kelas
-                                            ini.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                        <div className="relative">
-                                            <Search
-                                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                                                size={16}
-                                            />
-                                            <Input
-                                                placeholder="Cari nama atau email peserta..."
-                                                className="pl-10"
-                                                value={searchQuery}
-                                                onChange={(e) =>
-                                                    setSearchQuery(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </div>
+                                    <DialogContent className="max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle>
+                                                Tambah Peserta
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Cari dan tambahkan peserta ke kelas
+                                                ini.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="relative">
+                                                <Search
+                                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                                    size={16}
+                                                />
+                                                <Input
+                                                    placeholder="Cari nama atau email peserta..."
+                                                    className="pl-10"
+                                                    value={searchQuery}
+                                                    onChange={(e) =>
+                                                        setSearchQuery(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
 
-                                        {/* Search Results */}
-                                        <div className="max-h-64 overflow-y-auto">
-                                            {isSearching && (
-                                                <div className="text-center py-4 text-gray-500">
-                                                    Mencari...
-                                                </div>
-                                            )}
-
-                                            {!isSearching &&
-                                                searchQuery.length >= 2 &&
-                                                searchResults.length === 0 && (
+                                            {/* Search Results */}
+                                            <div className="max-h-64 overflow-y-auto">
+                                                {isSearching && (
                                                     <div className="text-center py-4 text-gray-500">
-                                                        Tidak ada peserta
-                                                        ditemukan
+                                                        Mencari...
                                                     </div>
                                                 )}
 
-                                            {searchResults.map((user) => (
-                                                <div
-                                                    key={user.id}
-                                                    className="flex items-center justify-between p-3 border rounded hover:bg-gray-50"
-                                                >
-                                                    <div>
-                                                        <div className="font-medium">
-                                                            {user.name}
+                                                {!isSearching &&
+                                                    searchQuery.length >= 2 &&
+                                                    searchResults.length === 0 && (
+                                                        <div className="text-center py-4 text-gray-500">
+                                                            Tidak ada peserta
+                                                            ditemukan
                                                         </div>
-                                                        <div className="text-sm text-gray-500">
-                                                            {user.email}
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={() =>
-                                                            handleAddParticipant(
-                                                                user.id,
-                                                            )
-                                                        }
-                                                        className="bg-green-600 hover:bg-green-700"
+                                                    )}
+
+                                                {searchResults.map((user) => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="flex items-center justify-between p-3 border rounded hover:bg-gray-50"
                                                     >
-                                                        Tambah
-                                                    </Button>
-                                                </div>
-                                            ))}
+                                                        <div>
+                                                            <div className="font-medium">
+                                                                {user.name}
+                                                            </div>
+                                                            <div className="text-sm text-gray-500">
+                                                                {user.email}
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                handleAddParticipant(
+                                                                    user.id,
+                                                                )
+                                                            }
+                                                            className="bg-green-600 hover:bg-green-700"
+                                                        >
+                                                            Tambah
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
+                                    </DialogContent>
+                                </Dialog>
                             </div>
                         </div>
 

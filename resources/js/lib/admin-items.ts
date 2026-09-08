@@ -37,6 +37,11 @@ const adminItems = () => {
                 //     url: route("admin.tests"),
                 //     icon: NotebookPen,
                 // },
+                 {
+                    title: "Platform",
+                    url: route("admin.platforms"),
+                    icon: CalendarFold,
+                },
             ],
         },
     ];

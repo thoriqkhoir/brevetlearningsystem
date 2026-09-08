@@ -20,13 +20,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'event_id',
+        'platform_id',
         'name',
         'email',
         'password',
         'phone_number',
         'npwp',
         'address',
-        'profile_url',
         'institution',
         'max_class',
         'max_test',
@@ -65,6 +65,11 @@ class User extends Authenticatable
     public function getIsAdminAttribute()
     {
         return $this->role === 'admin';
+    }
+
+    public function platform()
+    {
+        return $this->belongsTo(Platform::class, 'platform_id');
     }
 
     public function event()

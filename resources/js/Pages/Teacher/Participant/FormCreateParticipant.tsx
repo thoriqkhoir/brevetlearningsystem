@@ -19,6 +19,13 @@ import {
     BreadcrumbSeparator,
 } from "@/Components/ui/breadcrumb";
 import { Input } from "@/Components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/Components/ui/select";
 import { Check, ChevronsUpDown, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -41,6 +48,7 @@ import { useState } from "react";
 
 const formSchema = z.object({
     event_id: z.number().int(),
+    platform_id: z.string().uuid().nullable().optional(),
     name: z.string().min(1, "Nama harus diisi"),
     email: z.string().email("Email tidak valid"),
     phone_number: z.string().min(8, "Nomor telepon minimal 8 digit"),
@@ -48,13 +56,14 @@ const formSchema = z.object({
     address: z.string().min(1, "Alamat harus diisi"),
 });
 
-export default function FormCreateParticipant({ events = [] }: any) {
+export default function FormCreateParticipant({ events = [], platforms = [] }: any) {
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             event_id: events?.[0]?.id ?? 0,
+            platform_id: null,
             name: "",
             email: "",
             phone_number: "",
@@ -80,8 +89,8 @@ export default function FormCreateParticipant({ events = [] }: any) {
         <TeacherLayout>
             <Head title="Tambah Peserta" />
 
-            <div className="teacher-page-shell">
-                <div className="teacher-page-stack">
+            <div className="py-8 mx-auto lg:px-4">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
@@ -96,11 +105,11 @@ export default function FormCreateParticipant({ events = [] }: any) {
                         </BreadcrumbList>
                     </Breadcrumb>
 
-                    <h1 className="teacher-page-title">
+                    <h1 className="text-2xl font-semibold text-primary">
                         Tambah Peserta
                     </h1>
 
-                    <div className="teacher-panel">
+                    <div className="p-5 lg:p-8 rounded-xl bg-sidebar border">
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)}>
                                 <div className="flex items-center gap-2 mb-2">
@@ -111,6 +120,41 @@ export default function FormCreateParticipant({ events = [] }: any) {
                                 </div>
                                 <div className="p-8 rounded-xl bg-white border mb-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8">
+                                        <FormField
+                                            control={form.control}
+                                            name="platform_id"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Platform (Opsional)</FormLabel>
+                                                    <FormControl>
+                                                        <Select
+                                                            value={field.value || "none"}
+                                                            onValueChange={(value) =>
+                                                                field.onChange(value === "none" ? null : value)
+                                                            }
+                                                        >
+                                                            <SelectTrigger className="w-full bg-background">
+                                                                <SelectValue placeholder="Pilih Platform" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="none">
+                                                                    Tanpa Platform (Kosong / Organik)
+                                                                </SelectItem>
+                                                                {platforms?.map((p: any) => (
+                                                                    <SelectItem key={p.id} value={p.id}>
+                                                                        {p.name} ({p.code})
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        Pilih platform jika peserta ini terafiliasi dengan platform mitra.
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                         <FormField
                                             control={form.control}
                                             name="name"

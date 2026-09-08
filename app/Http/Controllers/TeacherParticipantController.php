@@ -3,37 +3,70 @@
 namespace App\Http\Controllers;
 
 use App\Imports\UserImport;
-use App\Models\Event;
+use App\Models\Course;
+use App\Models\CourseUser;
+use App\Models\Platform;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Validators\ValidationException;
 
 class TeacherParticipantController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $participants = User::with('event')
-            ->where('role', 'pengguna')
-            ->orderByDesc('created_at')
-            ->get();
+        $teacherId = Auth::id();
 
-        $events = Event::select('id', 'name')->orderBy('name')->get();
+        // Get courses owned by teacher
+        $courseIds = Course::where('teacher_id', $teacherId)->pluck('id');
+        $participantUserIds = CourseUser::whereIn('course_id', $courseIds)->pluck('user_id')->unique();
+
+        $query = User::query()
+            ->with(['platform', 'event'])
+            ->where('role', 'pengguna');
+
+        // Optional filter to show only participants in teacher's courses, or all platform participants
+        if ($request->boolean('only_my_courses', false)) {
+            $query->whereIn('id', $participantUserIds);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->string('search')->trim()->value();
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone_number', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('platform_id')) {
+            $query->where('platform_id', $request->string('platform_id')->value());
+        }
+
+        $participants = $query->orderByDesc('created_at')->get();
+        $platforms = Platform::active()->orderBy('name')->get(['id', 'name', 'code']);
+        $events = \App\Models\Event::select('id', 'name')->get();
 
         return Inertia::render('Teacher/Participant/Participant', [
             'participants' => $participants,
             'events' => $events,
+            'platforms' => $platforms,
+            'filters' => $request->only(['search', 'platform_id', 'only_my_courses']),
         ]);
     }
 
     public function create()
     {
-        $events = Event::select('id', 'name')->orderBy('name')->get();
+        $platforms = Platform::active()->orderBy('name')->get(['id', 'name', 'code']);
+        $events = \App\Models\Event::select('id', 'name')->get();
 
         return Inertia::render('Teacher/Participant/FormCreateParticipant', [
+            'platforms' => $platforms,
             'events' => $events,
         ]);
     }
@@ -41,84 +74,114 @@ class TeacherParticipantController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'event_id' => 'required|exists:events,id',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
+            'email' => 'required|string|email|max:255|unique:users,email',
             'phone_number' => 'required|string|min:8|max:255',
-            'npwp' => ['required', 'regex:/^\d{16}$/'],
-            'address' => 'required|string|max:255',
+            'password' => 'nullable|string|min:8',
+            'platform_id' => 'nullable|uuid|exists:platforms,id',
+            'npwp' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
         ]);
 
-        User::create([
-            'event_id' => (int) $validated['event_id'],
+        $phoneNumber = $validated['phone_number'];
+        $user = User::create([
+            'id' => (string) Str::uuid(),
+            'event_id' => 1,
+            'platform_id' => $validated['platform_id'] ?? null,
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone_number' => $validated['phone_number'],
-            'npwp' => $validated['npwp'],
-            'address' => $validated['address'],
+            'phone_number' => $phoneNumber,
             'role' => 'pengguna',
-            'password' => Hash::make($validated['phone_number']),
+            'password' => Hash::make($validated['password'] ?? $phoneNumber),
+            'npwp' => $validated['npwp'] ?? null,
+            'address' => $validated['address'] ?? null,
         ]);
 
         return redirect()->route('teacher.participants')->with('success', 'Peserta berhasil ditambahkan.');
     }
 
-    public function edit(string $id)
+    public function edit($id)
     {
-        $participant = User::where('role', 'pengguna')->findOrFail($id);
-        $events = Event::select('id', 'name')->orderBy('name')->get();
+        $user = User::where('role', 'pengguna')->findOrFail($id);
+        $platforms = Platform::active()->orderBy('name')->get(['id', 'name', 'code']);
+        $events = \App\Models\Event::select('id', 'name')->get();
 
         return Inertia::render('Teacher/Participant/FormEditParticipant', [
-            'participant' => $participant,
+            'participant' => $user,
+            'platforms' => $platforms,
             'events' => $events,
         ]);
     }
 
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        $participant = User::where('role', 'pengguna')->findOrFail($id);
+        $user = User::where('role', 'pengguna')->findOrFail($id);
 
         $validated = $request->validate([
-            'event_id' => 'required|exists:events,id',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $participant->id,
-            'phone_number' => 'required|string|min:8|max:255',
-            'npwp' => ['required', 'regex:/^\d{16}$/'],
-            'address' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
+            'phone_number' => 'required|string|max:255',
+            'platform_id' => 'nullable|uuid|exists:platforms,id',
+            'npwp' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
         ]);
 
-        $participant->update([
-            'event_id' => (int) $validated['event_id'],
+        $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone_number' => $validated['phone_number'],
-            'npwp' => $validated['npwp'],
-            'address' => $validated['address'],
+            'platform_id' => $validated['platform_id'] ?? null,
+            'npwp' => $validated['npwp'] ?? null,
+            'address' => $validated['address'] ?? null,
         ]);
 
         return redirect()->route('teacher.participants')->with('success', 'Data peserta berhasil diperbarui.');
     }
 
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        $participant = User::where('role', 'pengguna')->findOrFail($id);
-        $participant->delete();
+        $user = User::where('role', 'pengguna')->findOrFail($id);
+        $user->delete();
 
         return redirect()->route('teacher.participants')->with('success', 'Peserta berhasil dihapus.');
+    }
+
+    public function deleteMultiple(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'uuid|exists:users,id',
+        ]);
+
+        User::where('role', 'pengguna')->whereIn('id', $request->ids)->delete();
+
+        return redirect()->route('teacher.participants')->with('success', 'Peserta terpilih berhasil dihapus.');
+    }
+
+    public function downloadTemplate()
+    {
+        $filePath = public_path('templates/format_peserta_bls.xlsx');
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('error', 'File template tidak ditemukan.');
+        }
+
+        return response()->download($filePath, 'format_peserta_bls.xlsx');
     }
 
     public function import(Request $request)
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,csv,xls',
+            'platform_id' => 'nullable|uuid|exists:platforms,id',
         ]);
 
         try {
             DB::transaction(function () use ($request) {
-                Excel::import(new UserImport(), $request->file('file'));
+                Excel::import(new UserImport($request->input('platform_id')), $request->file('file'));
             });
 
-            return back()->with('success', 'Data peserta berhasil diimport.');
+            return redirect()->back()->with('success', 'Data peserta berhasil diimport!');
         } catch (ValidationException $e) {
             $failures = $e->failures();
             $messages = [];
@@ -135,34 +198,9 @@ class TeacherParticipantController extends Controller
                 $errorMessage .= ' (dan ' . (count($uniqueMessages) - 5) . ' kesalahan lainnya)';
             }
 
-            return back()->with('error', 'Import gagal. ' . $errorMessage);
+            return redirect()->back()->with('error', 'Import gagal. ' . $errorMessage);
         } catch (\Exception $e) {
-            return back()->with('error', 'Import gagal: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal! ' . $e->getMessage());
         }
-    }
-
-    public function downloadTemplate()
-    {
-        $filePath = public_path('templates/format_peserta_bls.xlsx');
-
-        if (!file_exists($filePath)) {
-            return back()->with('error', 'File template tidak ditemukan.');
-        }
-
-        return response()->download($filePath, 'format_peserta_bls.xlsx');
-    }
-
-    public function deleteMultiple(Request $request)
-    {
-        $validated = $request->validate([
-            'ids' => 'required|array|min:1',
-            'ids.*' => 'uuid|exists:users,id',
-        ]);
-
-        User::where('role', 'pengguna')
-            ->whereIn('id', $validated['ids'])
-            ->delete();
-
-        return redirect()->route('teacher.participants')->with('success', 'Peserta terpilih berhasil dihapus.');
     }
 }
