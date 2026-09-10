@@ -1258,6 +1258,54 @@ const DetailSPTBadan = ({
 
         return Math.max(0, fallbackTotal);
     }, [l1a1, masterAccounts, selectedL1Code, selectedL1Layout]);
+    const labaFiskalL1 = useMemo(() => {
+        if (!selectedL1Code) return 0;
+        const normalizedCode = selectedL1Code.toLowerCase();
+
+        const account4800 = (masterAccounts ?? []).find(
+            (acc) =>
+                acc.code === "4800" ||
+                (acc.name.toLowerCase().includes("laba") &&
+                    acc.name.toLowerCase().includes("sebelum pajak")),
+        );
+        const account4800Id = account4800 ? Number(account4800.id) : null;
+
+        const sectorRows = (l1a1 ?? []).filter(
+            (row) => (row?.code ?? "").toString().toLowerCase() === normalizedCode,
+        );
+
+        const row4800 = sectorRows.find((row) => {
+            const accId = Number(row?.account_id);
+            const accCode = String(row?.account_code ?? "");
+            return (
+                (account4800Id && accId === account4800Id) ||
+                accCode === "4800"
+            );
+        });
+
+        if (row4800) {
+            const fiscalAmount = Number(row4800.fiscal_amount ?? 0);
+            if (fiscalAmount !== 0) return fiscalAmount;
+            const amount = Number(row4800.amount ?? 0);
+            if (amount !== 0) return amount;
+        }
+
+        const d4 = Number(form.watch("d_4") || sptBadan?.d_4 || 0);
+        if (d4 !== 0) return d4;
+
+        const d9 = Number(form.watch("d_9") || sptBadan?.d_9 || 0);
+        if (d9 !== 0) return d9;
+
+        return 0;
+    }, [
+        l1a1,
+        masterAccounts,
+        selectedL1Code,
+        form.watch("d_4"),
+        form.watch("d_9"),
+        sptBadan?.d_4,
+        sptBadan?.d_9,
+    ]);
     const isL3Enabled = form.watch("e_13") === true;
     const isL4Enabled =
         form.watch("c_2") === true || form.watch("c_3") === true;
@@ -6897,6 +6945,7 @@ const DetailSPTBadan = ({
                                             }}
                                             spt={{ year: Number(spt.year) }}
                                             l8={l8 ?? null}
+                                            labaFiskal={labaFiskalL1}
                                         />
                                     </TabsContent>
                                 ) : null}

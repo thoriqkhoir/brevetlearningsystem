@@ -25,6 +25,9 @@ class SptBadanL8Controller extends Controller
 
         $grossRevenue = max(0, (int) ($validated['amount_1'] ?? 0));
         $taxableIncome = max(0, (int) ($sptBadan->d_9 ?? 0));
+        if ($taxableIncome === 0 && (int) ($sptBadan->d_4 ?? 0) > 0) {
+            $taxableIncome = max(0, (int) $sptBadan->d_4);
+        }
 
         $configuredTaxRate = (float) ($sptBadan->d_11_percentage ?? 0);
         $normalTaxRate = $configuredTaxRate > 0
@@ -35,14 +38,15 @@ class SptBadanL8Controller extends Controller
             $grossRevenue > 0 &&
             $grossRevenue <= self::FACILITY_ELIGIBLE_GROSS_REVENUE_LIMIT;
 
-        $facilityRatio = $isFacilityEligible
-            ? min(1, self::FACILITY_GROSS_REVENUE_LIMIT / $grossRevenue)
-            : 0;
-
-        $amount2a = min(
-            $taxableIncome,
-            max(0, (int) round($taxableIncome * $facilityRatio))
-        );
+        $amount2a = 0;
+        if ($isFacilityEligible && $taxableIncome > 0) {
+            if ($grossRevenue <= self::FACILITY_GROSS_REVENUE_LIMIT) {
+                $amount2a = $taxableIncome;
+            } else {
+                $facilityRatio = self::FACILITY_GROSS_REVENUE_LIMIT / $grossRevenue;
+                $amount2a = min($taxableIncome, (int) round($taxableIncome * $facilityRatio));
+            }
+        }
         $amount2b = max(0, $taxableIncome - $amount2a);
 
         $amount3a = (int) round($amount2a * (($normalTaxRate / 2) / 100));

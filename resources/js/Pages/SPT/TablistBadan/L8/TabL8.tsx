@@ -53,6 +53,7 @@ export default function TabL8({
     sptBadan,
     spt,
     l8,
+    labaFiskal,
 }: {
     sptBadan: {
         id: string;
@@ -62,6 +63,7 @@ export default function TabL8({
     };
     spt: { year: number };
     l8: Partial<L8Record> | null;
+    labaFiskal?: number;
 }) {
     const [state, setState] = useState<EditableState>(defaultState);
     const [amount1Display, setAmount1Display] = useState("0");
@@ -80,11 +82,16 @@ export default function TabL8({
 
     // Pasal 31E split:
     // - Peredaran bruto fasilitas maksimal 4,8 miliar
-    // - PKP dibagi proporsional terhadap peredaran bruto
+    // - PKP dibagi proporsional terhadap peredaran bruto (atau laba fiskal akun 4800)
     // - Tarif fasilitas = 50% x tarif normal
     const computed = useMemo(() => {
         const grossRevenue = Math.max(0, state.amount_1);
-        const taxableIncome = Math.max(0, Number(sptBadan.d_9 ?? 0));
+       const fiscalProfit = Math.max(
+            0,
+            Number(labaFiskal ?? 0) > 0
+                ? Number(labaFiskal)
+                : Number(sptBadan.d_9 ?? 0),
+        );
         const configuredTaxRate = Number(sptBadan.d_11_percentage ?? 0);
         const normalTaxRate =
             configuredTaxRate > 0
@@ -95,16 +102,23 @@ export default function TabL8({
             grossRevenue > 0 &&
             grossRevenue <= FACILITY_ELIGIBLE_GROSS_REVENUE_LIMIT;
 
-        // 2.a = ((4.800.000.000 / Jumlah Peredaran Bruto) x PKP)
-        // dengan batas maksimum proporsi 100% PKP.
-        const facilityRatio = isFacilityEligible
-            ? Math.min(1, FACILITY_GROSS_REVENUE_LIMIT / grossRevenue)
-            : 0;
-        const amount_2a = Math.min(
-            taxableIncome,
-            Math.max(0, Math.round(taxableIncome * facilityRatio)),
-        );
-        const amount_2b = Math.max(0, taxableIncome - amount_2a);
+         // 2.a = ((4.800.000.000 / Jumlah Peredaran Bruto) x Laba Fiskal)
+        // dengan batas maksimum proporsi 100% Laba Fiskal (jika Peredaran Bruto <= 4.8M).
+        let amount_2a = 0;
+        if (isFacilityEligible && fiscalProfit > 0) {
+            if (grossRevenue <= FACILITY_GROSS_REVENUE_LIMIT) {
+                amount_2a = fiscalProfit;
+            } else {
+                const facilityRatio =
+                    FACILITY_GROSS_REVENUE_LIMIT / grossRevenue;
+                amount_2a = Math.min(
+                    fiscalProfit,
+                    Math.round(fiscalProfit * facilityRatio),
+                );
+            }
+        }
+        const amount_2b = Math.max(0, fiscalProfit - amount_2a);
+        
 
         const facilityTaxRate = normalTaxRate / 2 / 100;
         const nonFacilityTaxRate = normalTaxRate / 100;
@@ -120,7 +134,7 @@ export default function TabL8({
             amount_3b,
             amount_4,
         };
-    }, [state.amount_1, sptBadan.d_9, sptBadan.d_11_percentage]);
+   }, [state.amount_1, labaFiskal, sptBadan.d_9, sptBadan.d_11_percentage]);
 
     const handleAmount1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
         const numeric = parseNumber(e.target.value);
