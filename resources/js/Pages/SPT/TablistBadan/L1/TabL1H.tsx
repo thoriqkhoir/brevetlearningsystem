@@ -297,35 +297,30 @@ const sumA2LiabilitasEkuitas = () => {
             });
         }
 
-        // Hitung laba rugi dari updatedDraft (bukan a1Draft yang lama)
-        const labaRugiAccount = masterAccounts?.find(
-            (a) =>
-                a.name.toLowerCase().includes("laba") &&
-                a.name.toLowerCase().includes("sebelum pajak"),
-        );
-
-        if (labaRugiAccount) {
-            const labaRugiAccountId = Number(labaRugiAccount.id);
-
-            // Gunakan computedSummaryRowFromDraft
-            const labaRugiRow = computedSummaryRowFromDraft(
-                { name: "Laba (Rugi) Sebelum Pajak" } as MasterAccount,
+        // Hitung semua summary rows dari updatedDraft
+        for (const summaryAcc of masterAccounts ?? []) {
+            if (!isSummaryRow(summaryAcc)) continue;
+            const summaryAccountId = Number(summaryAcc.id);
+            const summaryRow = computedSummaryRowFromDraft(
+                summaryAcc,
                 updatedDraft,
+                summaryAcc.category,
             );
-
-            if (labaRugiRow) {
+            if (summaryRow) {
                 const newRow: L1A1Item = {
-                    ...labaRugiRow,
+                    ...summaryRow,
                     spt_badan_id: sptBadanId,
-                    account_id: labaRugiAccountId,
+                    account_id: summaryAccountId,
                     code: CODE,
-                    fiscal_amount: computeFiscalAmount(labaRugiRow),
+                    fiscal_amount: computeFiscalAmount(
+                        summaryRow,
+                        summaryAcc.category,
+                        summaryAcc.name,
+                    ),
                 };
-
                 const existingIdx = allRows.findIndex(
-                    (r) => r.account_id === labaRugiAccountId,
+                    (r) => r.account_id === summaryAccountId,
                 );
-
                 if (existingIdx !== -1) {
                     allRows[existingIdx] = { ...allRows[existingIdx], ...newRow };
                 } else {
@@ -340,7 +335,8 @@ const sumA2LiabilitasEkuitas = () => {
             {
                 preserveScroll: true,
                 onSuccess: () => setOpenEdit(false),
-                onError: (errors) => toast.error(Object.values(errors).join(", ")),
+                onError: (errors) =>
+                    toast.error(Object.values(errors).join(", ")),
                 onFinish: () => setIsSaving(false),
             },
         );
@@ -392,33 +388,30 @@ const sumA2LiabilitasEkuitas = () => {
             });
         }
 
-        // Gunakan computedSummaryRowFromDraft dengan a1Draft saat ini
-        const labaRugiAccount = masterAccounts?.find(
-            (a) =>
-                a.name.toLowerCase().includes("laba") &&
-                a.name.toLowerCase().includes("sebelum pajak"),
-        );
-
-        if (labaRugiAccount) {
-            const labaRugiAccountId = Number(labaRugiAccount.id);
-            const labaRugiRow = computedSummaryRowFromDraft(
-                { name: "Laba (Rugi) Sebelum Pajak" } as MasterAccount,
+        // Hitung semua summary rows dari a1Draft saat ini
+        for (const summaryAcc of masterAccounts ?? []) {
+            if (!isSummaryRow(summaryAcc)) continue;
+            const summaryAccountId = Number(summaryAcc.id);
+            const summaryRow = computedSummaryRowFromDraft(
+                summaryAcc,
                 a1Draft,
+                summaryAcc.category,
             );
-
-            if (labaRugiRow) {
+            if (summaryRow) {
                 const newRow: L1A1Item = {
-                    ...labaRugiRow,
+                    ...summaryRow,
                     spt_badan_id: sptBadanId,
-                    account_id: labaRugiAccountId,
+                    account_id: summaryAccountId,
                     code: CODE,
-                    fiscal_amount: computeFiscalAmount(labaRugiRow),
+                    fiscal_amount: computeFiscalAmount(
+                        summaryRow,
+                        summaryAcc.category,
+                        summaryAcc.name,
+                    ),
                 };
-
                 const existingIdx = a1Rows.findIndex(
-                    (r) => r.account_id === labaRugiAccountId,
+                    (r) => r.account_id === summaryAccountId,
                 );
-
                 if (existingIdx !== -1) {
                     a1Rows[existingIdx] = { ...a1Rows[existingIdx], ...newRow };
                 } else {
@@ -491,6 +484,24 @@ const sumA2LiabilitasEkuitas = () => {
 
     // Check if row is a summary row (bold, no edit button)
     const isSummaryRow = (acc: MasterAccount) => {
+        const code = String(acc.code ?? "").trim();
+        if (
+            code === "1000" ||
+            code === "1100" ||
+            code === "4000" ||
+            code === "4100" ||
+            code === "4200" ||
+            code === "4300" ||
+            code === "5000" ||
+            code === "5400" ||
+            code === "4500" ||
+            code === "4600" ||
+            code === "5500" ||
+            code === "4700" ||
+            code === "4800"
+        ) {
+            return true;
+        }
         const summaryNames = [
             "Penjualan Bruto",
             "Penjualan Bersih",
@@ -498,11 +509,16 @@ const sumA2LiabilitasEkuitas = () => {
             "Jumlah Harga Pokok Penjualan",
             "Laba Kotor",
             "Jumlah Beban Usaha",
+            "Laba (Rugi) Usaha",
+            "Jumlah Pendapatan Non Usaha",
+            "Jumlah Beban Non Usaha",
+            "Pendapatan (Beban) Non Usaha - Bersih",
+            "Laba (Rugi) Non Usaha",
             "Laba (Rugi) Sebelum Pajak",
         ];
         return summaryNames.some(
             (n) =>
-                acc.name.includes(n) ||
+                acc.name.toLowerCase().includes(n.toLowerCase()) ||
                 acc.category.includes("Jumlah") ||
                 acc.category.includes("Laba"),
         );
@@ -560,7 +576,7 @@ const sumA2LiabilitasEkuitas = () => {
         subject_to_final: a.subject_to_final + b.subject_to_final,
         non_final: a.non_final + b.non_final,
         fiscal_positive: a.fiscal_positive + b.fiscal_positive,
-        fiscal_negative: a.fiscal_negative + b.fiscal_negative,
+        fiscal_negative: a.fiscal_negative - b.fiscal_negative,
     });
 
     const emptyRow: L1A1Item = {
@@ -578,7 +594,11 @@ const sumA2LiabilitasEkuitas = () => {
     };
 
     // Compute summary rows dynamically
-    const computedSummaryRow = (acc: MasterAccount): L1A1Item | null => {
+    // Compute summary rows dynamically
+    const computedSummaryRow = (
+        acc: MasterAccount,
+        categoryHint?: string,
+    ): L1A1Item | null => {
         const name = acc.name.toLowerCase();
 
         // Penjualan Bruto = Penjualan Domestik + Penjualan Ekspor
@@ -612,10 +632,8 @@ const sumA2LiabilitasEkuitas = () => {
             return subtractRows(addRows(pembelian, persediaanAwal), persediaanAkhir);
         }
 
-        
-    
         // Laba Kotor = Penjualan Bersih - Jumlah HPP
-        if (name.includes("laba kotor")) {
+        if (name.includes("laba kotor") || acc.code === "4300") {
             const penjualanBersih =
                 computedSummaryRow({
                     name: "Penjualan Bersih",
@@ -627,20 +645,151 @@ const sumA2LiabilitasEkuitas = () => {
         }
 
         // Jumlah Beban Usaha
-        if (name.includes("jumlah beban usaha")) {
+        if (name.includes("jumlah beban usaha") || acc.code === "5400") {
             return sumA1RowsByCategory("Beban Usaha");
         }
 
-        // Laba (Rugi) Sebelum Pajak = Laba Kotor - Jumlah Beban Usaha
-        if (name.includes("laba") && name.includes("sebelum pajak")) {
+        // Laba (Rugi) Usaha (Akun 4500) = Akun 4300 - Akun 5400 (Laba Kotor - Jumlah Beban Usaha)
+        if (
+            acc.code === "4500" ||
+            (name.includes("laba") && name.includes("usaha") && !name.includes("non") && !name.includes("kotor"))
+        ) {
             const labaKotor =
-                computedSummaryRow({ name: "Laba Kotor" } as MasterAccount) ??
-                emptyRow;
+                computedSummaryRow({
+                    code: "4300",
+                    name: "Laba Kotor",
+                } as MasterAccount) ?? emptyRow;
             const jumlahBebanUsaha =
                 computedSummaryRow({
+                    code: "5400",
                     name: "Jumlah Beban Usaha",
                 } as MasterAccount) ?? emptyRow;
             return subtractRows(labaKotor, jumlahBebanUsaha);
+        }
+
+        // Jumlah Pendapatan Non Usaha (Akun 4600)
+        if (
+            acc.code === "4600" ||
+            (name.includes("jumlah") &&
+                !name.includes("beban") &&
+                (name.includes("pendapatan non") ||
+                    name.includes("pendapatan luar") ||
+                    name.includes("pendapatan di luar") ||
+                    name.includes("luar usaha") ||
+                    name.includes("non-operasional") ||
+                    name.includes("non usaha")))
+        ) {
+            const catKey =
+                categoryHint ??
+                Object.keys(a1Accounts).find((k) =>
+                    a1Accounts[k]?.some(
+                        (a) => a.code === "4600" || a.id === acc.id,
+                    ),
+                ) ??
+                Object.keys(a1Accounts).find((k) => {
+                    const lk = k.toLowerCase();
+                    return (
+                        !lk.includes("beban") &&
+                        (lk.includes("pendapatan non") ||
+                            lk.includes("luar usaha") ||
+                            lk.includes("non-operasional") ||
+                            lk.includes("non usaha"))
+                    );
+                }) ??
+                "Pendapatan Non Usaha";
+            return sumA1RowsByCategory(catKey);
+        }
+
+        // Jumlah Beban Non Usaha (Akun 5500)
+        if (
+            acc.code === "5500" ||
+            (name.includes("jumlah") &&
+                !name.includes("pendapatan") &&
+                (name.includes("beban non") ||
+                    name.includes("beban luar") ||
+                    name.includes("beban di luar") ||
+                    name.includes("beban lainnya") ||
+                    name.includes("beban non-operasional") ||
+                    name.includes("beban-operasional")))
+        ) {
+            const catKey =
+                categoryHint ??
+                Object.keys(a1Accounts).find((k) =>
+                    a1Accounts[k]?.some(
+                        (a) => a.code === "5500" || a.id === acc.id,
+                    ),
+                ) ??
+                Object.keys(a1Accounts).find((k) => {
+                    const lk = k.toLowerCase();
+                    return (
+                        lk.includes("beban non") ||
+                        lk.includes("beban luar") ||
+                        lk.includes("beban di luar") ||
+                        lk.includes("beban lainnya") ||
+                        lk.includes("non-operasional")
+                    );
+                }) ??
+                "Beban Non Usaha";
+
+            const list = a1Accounts[catKey] ?? [];
+            const idx = list.findIndex(
+                (a) => a.code === "5500" || a.id === acc.id,
+            );
+            const targets = idx !== -1 ? list.slice(0, idx) : list;
+
+            const sum: L1A1Item = { ...emptyRow };
+            for (const item of targets) {
+                if (isSummaryRow(item)) continue;
+                const accountId = Number(item.id);
+                const row =
+                    a1Draft.get(accountId) ?? a1ByAccountId.get(accountId);
+                if (!row) continue;
+                sum.amount += Number(row.amount ?? 0);
+                sum.non_taxable += Number(row.non_taxable ?? 0);
+                sum.subject_to_final += Number(row.subject_to_final ?? 0);
+                sum.non_final += Number(row.non_final ?? 0);
+                sum.fiscal_positive += Number(row.fiscal_positive ?? 0);
+                sum.fiscal_negative += Number(row.fiscal_negative ?? 0);
+            }
+            return sum;
+        }
+
+        // Pendapatan (Beban) Non Usaha - Bersih (Akun 4700) = Akun 4600 - Akun 5500
+        if (
+            acc.code === "4700" ||
+            (name.includes("non usaha") && name.includes("bersih")) ||
+            (name.includes("luar usaha") && name.includes("bersih")) ||
+            (name.includes("laba") && (name.includes("non usaha") || name.includes("luar usaha") || (name.includes("non") && !name.includes("kotor"))))
+        ) {
+            const jumlahPendapatanNonUsaha =
+                computedSummaryRow({
+                    name: "Jumlah Pendapatan Non Usaha",
+                    code: "4600",
+                } as MasterAccount) ?? emptyRow;
+            const jumlahBebanNonUsaha =
+                computedSummaryRow({
+                    name: "Jumlah Beban Non Usaha",
+                    code: "5500",
+                } as MasterAccount) ?? emptyRow;
+            return subtractRows(jumlahPendapatanNonUsaha, jumlahBebanNonUsaha);
+        }
+
+        // Laba (Rugi) Sebelum Pajak (Akun 4800) = Laba Usaha (4500) + Pendapatan Non Usaha Bersih (4700)
+        if (
+            acc.code === "4800" ||
+            (name.includes("laba") && name.includes("sebelum pajak"))
+        ) {
+            const labaUsaha =
+                computedSummaryRow({
+                    name: "Laba (Rugi) Usaha",
+                    code: "4500",
+                } as MasterAccount) ?? emptyRow;
+            const nonUsahaBersih =
+                computedSummaryRow({
+                    name: "Laba (Rugi) Non Usaha",
+                    code: "4700",
+                } as MasterAccount) ?? emptyRow;
+            return addRows(labaUsaha, nonUsahaBersih);
         }
 
         return null;
@@ -685,6 +834,7 @@ const sumA2LiabilitasEkuitas = () => {
     const computedSummaryRowFromDraft = (
         acc: MasterAccount,
         draft: Map<number, L1A1Item>,
+        categoryHint?: string,
     ): L1A1Item | null => {
         const name = acc.name.toLowerCase();
 
@@ -746,14 +896,149 @@ const sumA2LiabilitasEkuitas = () => {
                 sumByNameFromDraft(["persediaan akhir"]),
             );
         }
-        if (name.includes("laba kotor")) {
+        if (name.includes("laba kotor") || acc.code === "4300") {
             return subtractRows(recurse("Penjualan Bersih"), recurse("Jumlah HPP"));
         }
-        if (name.includes("jumlah beban usaha")) {
+        if (name.includes("jumlah beban usaha") || acc.code === "5400") {
             return sumByCategoryFromDraft("Beban Usaha");
         }
-        if (name.includes("laba") && name.includes("sebelum pajak")) {
+        if (
+            acc.code === "4500" ||
+            (name.includes("laba") && name.includes("usaha") && !name.includes("non") && !name.includes("kotor"))
+        ) {
             return subtractRows(recurse("Laba Kotor"), recurse("Jumlah Beban Usaha"));
+        }
+        // Jumlah Pendapatan Non Usaha (Akun 4600)
+        if (
+            acc.code === "4600" ||
+            (name.includes("jumlah") &&
+                !name.includes("beban") &&
+                (name.includes("pendapatan non") ||
+                    name.includes("pendapatan luar") ||
+                    name.includes("pendapatan di luar") ||
+                    name.includes("luar usaha") ||
+                    name.includes("non-operasional") ||
+                    name.includes("non usaha")))
+        ) {
+            const catKey =
+                categoryHint ??
+                Object.keys(a1Accounts).find((k) =>
+                    a1Accounts[k]?.some(
+                        (a) => a.code === "4600" || a.id === acc.id,
+                    ),
+                ) ??
+                Object.keys(a1Accounts).find((k) => {
+                    const lk = k.toLowerCase();
+                    return (
+                        !lk.includes("beban") &&
+                        (lk.includes("pendapatan non") ||
+                            lk.includes("luar usaha") ||
+                            lk.includes("non-operasional") ||
+                            lk.includes("non usaha"))
+                    );
+                }) ??
+                "Pendapatan Non Usaha";
+            return sumByCategoryFromDraft(catKey);
+        }
+
+        // Jumlah Beban Non Usaha (Akun 5500)
+        if (
+            acc.code === "5500" ||
+            (name.includes("jumlah") &&
+                !name.includes("pendapatan") &&
+                (name.includes("beban non") ||
+                    name.includes("beban luar") ||
+                    name.includes("beban di luar") ||
+                    name.includes("beban lainnya") ||
+                    name.includes("beban non-operasional") ||
+                    name.includes("beban-operasional")))
+        ) {
+            const catKey =
+                categoryHint ??
+                Object.keys(a1Accounts).find((k) =>
+                    a1Accounts[k]?.some(
+                        (a) => a.code === "5500" || a.id === acc.id,
+                    ),
+                ) ??
+                Object.keys(a1Accounts).find((k) => {
+                    const lk = k.toLowerCase();
+                    return (
+                        lk.includes("beban non") ||
+                        lk.includes("beban luar") ||
+                        lk.includes("beban di luar") ||
+                        lk.includes("beban lainnya") ||
+                        lk.includes("non-operasional")
+                    );
+                }) ??
+                "Beban Non Usaha";
+
+            const list = a1Accounts[catKey] ?? [];
+            const idx = list.findIndex(
+                (a) => a.code === "5500" || a.id === acc.id,
+            );
+            const targets = idx !== -1 ? list.slice(0, idx) : list;
+
+            const sum: L1A1Item = { ...emptyRow };
+            for (const item of targets) {
+                if (isSummaryRow(item)) continue;
+                const accountId = Number(item.id);
+                const row =
+                    draft.get(accountId) ?? a1ByAccountId.get(accountId);
+                if (!row) continue;
+                sum.amount          += Number(row.amount ?? 0);
+                sum.non_taxable     += Number(row.non_taxable ?? 0);
+                sum.subject_to_final+= Number(row.subject_to_final ?? 0);
+                sum.non_final       += Number(row.non_final ?? 0);
+                sum.fiscal_positive += Number(row.fiscal_positive ?? 0);
+                sum.fiscal_negative += Number(row.fiscal_negative ?? 0);
+            }
+            return sum;
+        }
+        if (
+            acc.code === "4700" ||
+            (name.includes("non usaha") && name.includes("bersih")) ||
+            (name.includes("luar usaha") && name.includes("bersih")) ||
+            (name.includes("laba") && (name.includes("non usaha") || name.includes("luar usaha") || (name.includes("non") && !name.includes("kotor"))))
+        ) {
+            const jumlahPendapatanNonUsaha =
+                computedSummaryRowFromDraft(
+                    {
+                        name: "Jumlah Pendapatan Non Usaha",
+                        code: "4600",
+                    } as MasterAccount,
+                    draft,
+                ) ?? emptyRow;
+            const jumlahBebanNonUsaha =
+                computedSummaryRowFromDraft(
+                    {
+                        name: "Jumlah Beban Non Usaha",
+                        code: "5500",
+                    } as MasterAccount,
+                    draft,
+                ) ?? emptyRow;
+            return subtractRows(jumlahPendapatanNonUsaha, jumlahBebanNonUsaha);
+        }
+        if (
+            acc.code === "4800" ||
+            (name.includes("laba") && name.includes("sebelum pajak"))
+        ) {
+            const labaUsaha =
+                computedSummaryRowFromDraft(
+                    {
+                        name: "Laba (Rugi) Usaha",
+                        code: "4500",
+                    } as MasterAccount,
+                    draft,
+                ) ?? emptyRow;
+            const nonUsahaBersih =
+                computedSummaryRowFromDraft(
+                    {
+                        name: "Laba (Rugi) Non Usaha",
+                        code: "4700",
+                    } as MasterAccount,
+                    draft,
+                ) ?? emptyRow;
+            return addRows(labaUsaha, nonUsahaBersih);
         }
 
         return null;
@@ -895,6 +1180,7 @@ const sumA2LiabilitasEkuitas = () => {
                                                                             isSummary
                                                                                 ? (computedSummaryRow(
                                                                                       acc,
+                                                                                      cat,
                                                                                   ) ??
                                                                                   row)
                                                                                 : row;

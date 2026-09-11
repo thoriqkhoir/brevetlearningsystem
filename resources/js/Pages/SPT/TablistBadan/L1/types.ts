@@ -282,15 +282,17 @@ export function computeFiscalAmount(
     const catLower = category.toLowerCase().trim();
     const nameLower = name.toLowerCase().trim();
 
-    const isBebanUsaha =
-        catLower.includes("beban usaha") ||
-        nameLower.includes("beban usaha") ||
-        nameLower.includes("jumlah beban usaha") ||
-        catLower.includes("jumlah beban usaha");
+    const isBeban =
+        catLower.includes("beban") ||
+        nameLower.includes("beban") ||
+        catLower.includes("biaya") ||
+        nameLower.includes("biaya") ||
+        catLower.includes("hpp") ||
+        nameLower.includes("hpp");
     const isPembelian = nameLower.includes("pembelian");
 
-    if (isBebanUsaha || isPembelian) {
-        // Beban usaha & Akun Pembelian (di HPP / Biaya Pabrikasi / dll): koreksi positif mengurangi dan koreksi negatif menambah nilai fiskal
+    if (isBeban || isPembelian) {
+        // Beban & Akun Pembelian (di HPP / Biaya Pabrikasi / Beban Usaha / Beban Non Usaha / dll): koreksi positif mengurangi dan koreksi negatif menambah nilai fiskal
         return nonFinal - pos + neg;
     }
 

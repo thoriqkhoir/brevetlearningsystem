@@ -86,7 +86,7 @@ import { type L5AItem, type L5BItem } from "./TablistBadan/L5";
 import { TabL6 } from "./TablistBadan/L6";
 import { SectionL7 } from "./TablistBadan/L7";
 import { type L7Item } from "./TablistBadan/L7";
-import { TabL8 } from "./TablistBadan/L8";
+import { TabL8, calculateL8 } from "./TablistBadan/L8";
 import { SectionL9 } from "./TablistBadan/L9";
 import { type L9Item } from "./TablistBadan/L9";
 import { SectionL10A, TabL10B, SectionL10C, TabL10D } from "./TablistBadan/L10";
@@ -1124,6 +1124,35 @@ const DetailSPTBadan = ({
         sptBadan?.g_20_value,
     ]);
 
+    // Sinkronisasi E.13 (kredit pajak) dari Lampiran 3 (hanya kredit pajak/PPh yang dipotong/dipungut, tanpa DPP)
+    useEffect(() => {
+        if (l3a !== undefined || l3b !== undefined) {
+            const totalL3A = (l3a ?? []).reduce(
+                (sum, item) => sum + Number(item.tax_credit ?? 0),
+                0,
+            );
+            const totalL3B = (l3b ?? []).reduce(
+                (sum, item) => sum + Number(item.income_tax ?? 0),
+                0,
+            );
+            const totalKredit = totalL3A + totalL3B;
+            const hasCredits = totalKredit > 0;
+
+            if ((l3a && l3a.length > 0) || (l3b && l3b.length > 0)) {
+                form.setValue("e_13", hasCredits, {
+                    shouldDirty: false,
+                    shouldTouch: false,
+                    shouldValidate: false,
+                });
+                form.setValue("e_13_value", totalKredit, {
+                    shouldDirty: false,
+                    shouldTouch: false,
+                    shouldValidate: false,
+                });
+            }
+        }
+    }, [form, l3a, l3b]);
+
     const sektorUsaha = (form.watch("b_1a") ?? "")
         .toString()
         .trim()
@@ -1313,6 +1342,34 @@ const DetailSPTBadan = ({
     const isL6Enabled = form.watch("g_20") === false;
     const isL7Enabled = form.watch("d_8") === true;
     const isL8Enabled = form.watch("d_11") === "3";
+
+    const [l8Amount1, setL8Amount1] = useState<number>(() =>
+        Number(l8?.amount_1 ?? 0),
+    );
+
+    useEffect(() => {
+        if (l8?.amount_1 !== undefined && l8?.amount_1 !== null) {
+            setL8Amount1(Number(l8.amount_1));
+        }
+    }, [l8?.amount_1]);
+
+    const l8FiscalProfit = Math.max(
+        0,
+        Number(labaFiskalL1 ?? 0) > 0
+            ? Number(labaFiskalL1)
+            : Number(form.watch("d_9") ?? sptBadan?.d_9 ?? 0),
+    );
+    const l8TaxRate = Number(
+        form.watch("d_11_percentage") || sptBadan?.d_11_percentage || 22,
+    );
+
+    const l8Computed = useMemo(() => {
+        return calculateL8({
+            grossRevenue: l8Amount1,
+            fiscalProfit: l8FiscalProfit,
+            normalTaxRate: l8TaxRate > 0 ? l8TaxRate : 22,
+        });
+    }, [l8Amount1, l8FiscalProfit, l8TaxRate]);
     const isL9Enabled = form.watch("h_21_e") === true;
     const isL10ABCEnabled = form.watch("h_21_a") === true;
     const isL10DEnabled = form.watch("h_21_b") === true;
@@ -1587,22 +1644,8 @@ const DetailSPTBadan = ({
                 d12Next = Math.round(effectivePKP * 0.22);
             }
         } else if (d_11 === "3") {
-            if (
-                effectivePKP >= 4_800_000_000 &&
-                effectivePKP <= 50_000_000_000 &&
-                d_4 > 0 &&
-                penjualanBrutoL1 > 0
-            ) {
-                const tarifPertamaDasar =
-                    (4_800_000_000 / penjualanBrutoL1) * d_4;
-                const tarifPertama = Math.max(
-                    0,
-                    Math.min(d_4, tarifPertamaDasar),
-                );
-                const tarifKedua = Math.max(0, d_4 - tarifPertama);
-
-                d12Next = Math.round(tarifPertama * 0.11 + tarifKedua * 0.22);
-            }
+            // Opsi 2 (Pasal 31E ayat 1 UU PPh) mengambil nilai PPh Terutang dari Tab L8 (amount_4)
+            d12Next = Math.max(0, l8Computed.amount_4);
         }
 
         const currentD11Percentage = Number(form.getValues("d_11_percentage") || 0);
@@ -1628,6 +1671,7 @@ const DetailSPTBadan = ({
         form.watch("d_10_value"),
         form.watch("d_11"),
         penjualanBrutoL1,
+        l8Computed.amount_4,
     ]);
 
     // Auto-calculate F section (Kurang/Lebih Bayar)
@@ -6935,7 +6979,7 @@ const DetailSPTBadan = ({
                                             sptBadan={{
                                                 id: sptBadan?.id ?? "",
                                                 npwp: activeBusinessEntity?.npwp,
-                                                d_9: sptBadan?.d_9 ?? 0,
+                                                d_9: form.watch("d_9") ?? sptBadan?.d_9 ?? 0,
                                                 d_11_percentage:
                                                     form.watch(
                                                         "d_11_percentage",
@@ -6946,6 +6990,7 @@ const DetailSPTBadan = ({
                                             spt={{ year: Number(spt.year) }}
                                             l8={l8 ?? null}
                                             labaFiskal={labaFiskalL1}
+                                            onAmount1Change={(amt) => setL8Amount1(amt)}
                                         />
                                     </TabsContent>
                                 ) : null}

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SptBadan;
+use App\Models\SptBadanL3A;
 use App\Models\SptBadanL3B;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -28,7 +29,7 @@ class SptBadanL3BController extends Controller
         $validated['income_tax'] = $validated['income_tax'] ?? 0;
 
         SptBadanL3B::create($validated);
-        $this->syncE13Value((string) $validated['spt_badan_id']);
+        self::syncE13Value((string) $validated['spt_badan_id']);
 
         return back()->with('success', 'Data berhasil disimpan.');
     }
@@ -51,7 +52,7 @@ class SptBadanL3BController extends Controller
         $validated['income_tax'] = $validated['income_tax'] ?? 0;
 
         $record->update($validated);
-        $this->syncE13Value((string) $record->spt_badan_id);
+        self::syncE13Value((string) $record->spt_badan_id);
 
         return back()->with('success', 'Data berhasil diperbarui.');
     }
@@ -72,20 +73,20 @@ class SptBadanL3BController extends Controller
         SptBadanL3B::whereIn('id', $validated['ids'])->delete();
 
         foreach ($sptBadanIds as $sptBadanId) {
-            $this->syncE13Value((string) $sptBadanId);
+            self::syncE13Value((string) $sptBadanId);
         }
 
         return back()->with('success', 'Data berhasil dihapus.');
     }
 
-    private function syncE13Value(string $sptBadanId): void
+    public static function syncE13Value(string $sptBadanId): void
     {
-        $totalDpp = (int) SptBadanL3B::where('spt_badan_id', $sptBadanId)
-            ->sum('dpp');
+        $totalL3A = (int) SptBadanL3A::where('spt_badan_id', $sptBadanId)
+            ->sum('tax_credit');
         $totalIncomeTax = (int) SptBadanL3B::where('spt_badan_id', $sptBadanId)
             ->sum('income_tax');
 
-        $totalKreditPajak = $totalDpp + $totalIncomeTax;
+        $totalKreditPajak = $totalL3A + $totalIncomeTax;
 
         SptBadan::where('id', $sptBadanId)->update([
             'e_13' => $totalKreditPajak > 0,

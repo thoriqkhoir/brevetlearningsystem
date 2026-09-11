@@ -31,6 +31,7 @@ class SptBadanL3AController extends Controller
         $validated['tax_credit']         = $validated['tax_credit'] ?? 0;
 
         SptBadanL3A::create($validated);
+        SptBadanL3BController::syncE13Value((string) $validated['spt_badan_id']);
 
         return back()->with('success', 'Data berhasil disimpan.');
     }
@@ -57,6 +58,7 @@ class SptBadanL3AController extends Controller
         $validated['tax_credit']         = $validated['tax_credit'] ?? 0;
 
         $record->update($validated);
+        SptBadanL3BController::syncE13Value((string) $record->spt_badan_id);
 
         return back()->with('success', 'Data berhasil diperbarui.');
     }
@@ -68,7 +70,17 @@ class SptBadanL3AController extends Controller
             'ids.*' => 'uuid|exists:spt_badan_l_3_a,id',
         ]);
 
+        $sptBadanIds = SptBadanL3A::whereIn('id', $validated['ids'])
+            ->pluck('spt_badan_id')
+            ->filter()
+            ->unique()
+            ->values();
+
         SptBadanL3A::whereIn('id', $validated['ids'])->delete();
+
+        foreach ($sptBadanIds as $sptBadanId) {
+            SptBadanL3BController::syncE13Value((string) $sptBadanId);
+        }
 
         return back()->with('success', 'Data berhasil dihapus.');
     }
