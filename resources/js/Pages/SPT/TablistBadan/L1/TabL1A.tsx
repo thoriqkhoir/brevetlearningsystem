@@ -318,11 +318,13 @@ export default function TabL1A({
                     account_id: summaryAccountId,
                     account_code: String(summaryAcc.code ?? ""),
                     code: CODE,
-                    fiscal_amount: computeFiscalAmount(
-                        summaryRow,
-                        summaryAcc.category,
-                        summaryAcc.name,
-                    ),
+                    fiscal_amount: isAccount4500(summaryAcc)
+                        ? (summaryRow.fiscal_amount ?? 0)
+                        : computeFiscalAmount(
+                              summaryRow,
+                              summaryAcc.category,
+                              summaryAcc.name,
+                          ),
                 };
                 const existingIdx = allRows.findIndex(
                     (r) => r.account_id === summaryAccountId,
@@ -399,31 +401,33 @@ export default function TabL1A({
             });
         }
 
-        // Gunakan computedSummaryRowFromDraft dengan a1Draft saat ini
-        const labaRugiAccount = a1VisibleAccounts.find(
-            (a) =>
-                a.name.toLowerCase().includes("laba") &&
-                a.name.toLowerCase().includes("sebelum pajak"),
-        );
-
-        if (labaRugiAccount) {
-            const labaRugiAccountId = Number(labaRugiAccount.id);
-            const labaRugiRow = computedSummaryRowFromDraft(
-                { name: "Laba (Rugi) Sebelum Pajak" } as MasterAccount,
+        for (const summaryAcc of a1VisibleAccounts) {
+            if (!isSummaryRow(summaryAcc)) continue;
+            const summaryAccountId = Number(summaryAcc.id);
+            const summaryRow = computedSummaryRowFromDraft(
+                summaryAcc,
                 a1Draft,
+                summaryAcc.category,
             );
 
-            if (labaRugiRow) {
+            if (summaryRow) {
                 const newRow: L1A1Item = {
-                    ...labaRugiRow,
+                    ...summaryRow,
                     spt_badan_id: sptBadanId,
-                    account_id: labaRugiAccountId,
+                    account_id: summaryAccountId,
+                    account_code: String(summaryAcc.code ?? ""),
                     code: CODE,
-                    fiscal_amount: computeFiscalAmount(labaRugiRow),
+                    fiscal_amount: isAccount4500(summaryAcc)
+                        ? (summaryRow.fiscal_amount ?? 0)
+                        : computeFiscalAmount(
+                              summaryRow,
+                              summaryAcc.category,
+                              summaryAcc.name,
+                          ),
                 };
 
                 const existingIdx = a1Rows.findIndex(
-                    (r) => r.account_id === labaRugiAccountId,
+                    (r) => r.account_id === summaryAccountId,
                 );
 
                 if (existingIdx !== -1) {
@@ -541,6 +545,18 @@ export default function TabL1A({
                     category.includes("Jumlah") ||
                     category.includes("Laba"),
             )
+        );
+    };
+
+    const isAccount4500 = (acc: MasterAccount | { code?: string; name?: string }) => {
+        const code = String((acc as any)?.code ?? "");
+        const name = String((acc as any)?.name ?? "").toLowerCase();
+        return (
+            code === "4500" ||
+            (name.includes("laba") &&
+                name.includes("usaha") &&
+                !name.includes("non") &&
+                !name.includes("kotor"))
         );
     };
 
@@ -737,7 +753,7 @@ export default function TabL1A({
         }
 
         // Jumlah Beban Usaha
-        if (name.includes("jumlah beban usaha")) {
+        if (name.includes("jumlah beban usaha") || acc.code === "5400") {
             return sumCategoryByKey(
                 findCategoryKey(["beban usaha"]) ?? categoryHint,
             );
@@ -860,25 +876,52 @@ export default function TabL1A({
         }
 
         // Laba (Rugi) Usaha (Akun 4500) = Akun 4300 - Akun 5400 (Laba Kotor - Jumlah Beban Usaha)
-        if (
-            acc.code === "4500" ||
-            (name.includes("laba") && name.includes("usaha") && !name.includes("non") && !name.includes("kotor"))
-        ) {
+        if (isAccount4500(acc)) {
+            const acc4300 = a1VisibleAccounts.find(
+                (a) =>
+                    String(a.code) === "4300" ||
+                    a.name.toLowerCase().includes("laba kotor"),
+            );
+            const acc5400 = a1VisibleAccounts.find(
+                (a) =>
+                    String(a.code) === "5400" ||
+                    a.name.toLowerCase().includes("jumlah beban usaha"),
+            );
+
             const labaKotor =
-                computedSummaryRow({
-                    code: "4300",
-                    name: "Laba Kotor",
-                } as MasterAccount) ?? emptyRow;
+                computedSummaryRow(
+                    acc4300 ?? ({
+                        code: "4300",
+                        name: "Laba Kotor",
+                    } as MasterAccount),
+                    acc4300?.category,
+                ) ?? emptyRow;
             const jumlahBebanUsaha =
                 computedSummaryRow(
-                    {
+                    acc5400 ?? ({
                         code: "5400",
                         name: "Jumlah Beban Usaha",
-                    } as MasterAccount,
-                    findCategoryKey(["beban usaha"]),
+                    } as MasterAccount),
+                    acc5400?.category ?? findCategoryKey(["beban usaha"]),
                 ) ?? emptyRow;
 
-            return subtractRows(labaKotor, jumlahBebanUsaha);
+            const base = subtractRows(labaKotor, jumlahBebanUsaha);
+
+            const fiscal4300 = computeFiscalAmount(
+                labaKotor,
+                acc4300?.category ?? "Harga Pokok Penjualan (HPP)",
+                acc4300?.name ?? "Laba Kotor",
+            );
+            const fiscal5400 = computeFiscalAmount(
+                jumlahBebanUsaha,
+                acc5400?.category ?? "Beban Usaha",
+                acc5400?.name ?? "Jumlah Beban Usaha",
+            );
+
+            return {
+                ...base,
+                fiscal_amount: fiscal4300 - fiscal5400,
+            };
         }
 
         return null;
@@ -1146,14 +1189,37 @@ export default function TabL1A({
             return addRows(labaRugiUsaha, labaRugiNonUsaha);
         }
 
-        if (
-            acc.code === "4500" ||
-            (name.includes("laba") && name.includes("usaha") && !name.includes("non") && !name.includes("kotor"))
-        ) {
-            return subtractRows(
-                recurse("Laba Kotor"),
-                recurse("Jumlah Beban Usaha"),
+        if (isAccount4500(acc)) {
+            const acc4300 = a1VisibleAccounts.find(
+                (a) =>
+                    String(a.code) === "4300" ||
+                    a.name.toLowerCase().includes("laba kotor"),
             );
+            const acc5400 = a1VisibleAccounts.find(
+                (a) =>
+                    String(a.code) === "5400" ||
+                    a.name.toLowerCase().includes("jumlah beban usaha"),
+            );
+
+            const labaKotor = recurse("Laba Kotor");
+            const jumlahBebanUsaha = recurse("Jumlah Beban Usaha");
+            const base = subtractRows(labaKotor, jumlahBebanUsaha);
+
+            const fiscal4300 = computeFiscalAmount(
+                labaKotor,
+                acc4300?.category ?? "Harga Pokok Penjualan (HPP)",
+                acc4300?.name ?? "Laba Kotor",
+            );
+            const fiscal5400 = computeFiscalAmount(
+                jumlahBebanUsaha,
+                acc5400?.category ?? "Beban Usaha",
+                acc5400?.name ?? "Jumlah Beban Usaha",
+            );
+
+            return {
+                ...base,
+                fiscal_amount: fiscal4300 - fiscal5400,
+            };
         }
 
         return null;
@@ -1380,11 +1446,13 @@ export default function TabL1A({
                                                                         <TableCell className="text-right">
                                                                             {formatMoney(
                                                                                 displayRow
-                                                                                    ? computeFiscalAmount(
-                                                                                          displayRow,
-                                                                                          acc.category ?? cat,
-                                                                                          acc.name,
-                                                                                      )
+                                                                                    ? isAccount4500(acc)
+                                                                                        ? (displayRow.fiscal_amount ?? 0)
+                                                                                        : computeFiscalAmount(
+                                                                                              displayRow,
+                                                                                              acc.category ?? cat,
+                                                                                              acc.name,
+                                                                                          )
                                                                                     : 0,
                                                                             )}
                                                                         </TableCell>
