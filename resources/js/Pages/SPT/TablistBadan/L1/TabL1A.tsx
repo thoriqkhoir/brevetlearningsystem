@@ -318,7 +318,7 @@ export default function TabL1A({
                     account_id: summaryAccountId,
                     account_code: String(summaryAcc.code ?? ""),
                     code: CODE,
-                    fiscal_amount: isAccount4500(summaryAcc)
+                    fiscal_amount: isAccount4500(summaryAcc) || isAccount4800(summaryAcc)
                         ? (summaryRow.fiscal_amount ?? 0)
                         : computeFiscalAmount(
                               summaryRow,
@@ -417,7 +417,7 @@ export default function TabL1A({
                     account_id: summaryAccountId,
                     account_code: String(summaryAcc.code ?? ""),
                     code: CODE,
-                    fiscal_amount: isAccount4500(summaryAcc)
+                    fiscal_amount: isAccount4500(summaryAcc) || isAccount4800(summaryAcc)
                         ? (summaryRow.fiscal_amount ?? 0)
                         : computeFiscalAmount(
                               summaryRow,
@@ -557,6 +557,15 @@ export default function TabL1A({
                 name.includes("usaha") &&
                 !name.includes("non") &&
                 !name.includes("kotor"))
+        );
+    };
+
+    const isAccount4800 = (acc: MasterAccount | { code?: string; name?: string }) => {
+        const code = String((acc as any)?.code ?? "");
+        const name = String((acc as any)?.name ?? "").toLowerCase();
+        return (
+            code === "4800" ||
+            (name.includes("laba") && name.includes("sebelum pajak"))
         );
     };
 
@@ -857,22 +866,53 @@ export default function TabL1A({
         }
 
         // Laba (Rugi) Sebelum Pajak (Akun 4800) = Laba (Rugi) Usaha (4500) + Laba (Rugi) Non Usaha (4700)
-        if (
-            acc.code === "4800" ||
-            (name.includes("laba") && name.includes("sebelum pajak"))
-        ) {
-            const labaRugiUsaha =
-                computedSummaryRow({
-                    name: "Laba (Rugi) Usaha",
-                    code: "4500",
-                } as MasterAccount) ?? emptyRow;
-            const labaRugiNonUsaha =
-                computedSummaryRow({
-                    name: "Laba (Rugi) Non Usaha",
-                    code: "4700",
-                } as MasterAccount) ?? emptyRow;
+        if (isAccount4800(acc)) {
+            const acc4500 = a1VisibleAccounts.find(
+                (a) =>
+                    String(a.code) === "4500" ||
+                    (a.name.toLowerCase().includes("laba") &&
+                        a.name.toLowerCase().includes("usaha") &&
+                        !a.name.toLowerCase().includes("non") &&
+                        !a.name.toLowerCase().includes("kotor")),
+            );
+            const acc4700 = a1VisibleAccounts.find(
+                (a) =>
+                    String(a.code) === "4700" ||
+                    (a.name.toLowerCase().includes("laba") &&
+                        (a.name.toLowerCase().includes("non usaha") ||
+                            a.name.toLowerCase().includes("luar usaha"))),
+            );
 
-            return addRows(labaRugiUsaha, labaRugiNonUsaha);
+            const labaRugiUsaha =
+                computedSummaryRow(
+                    acc4500 ?? ({
+                        name: "Laba (Rugi) Usaha",
+                        code: "4500",
+                    } as MasterAccount),
+                    acc4500?.category,
+                ) ?? emptyRow;
+            const labaRugiNonUsaha =
+                computedSummaryRow(
+                    acc4700 ?? ({
+                        name: "Laba (Rugi) Non Usaha",
+                        code: "4700",
+                    } as MasterAccount),
+                    acc4700?.category,
+                ) ?? emptyRow;
+
+            const base = addRows(labaRugiUsaha, labaRugiNonUsaha);
+
+            const fiscal4500 = Number(labaRugiUsaha.fiscal_amount ?? 0);
+            const fiscal4700 = computeFiscalAmount(
+                labaRugiNonUsaha,
+                acc4700?.category ?? "Beban Non Usaha",
+                acc4700?.name ?? "Laba (Rugi) Non Usaha",
+            );
+
+            return {
+                ...base,
+                fiscal_amount: fiscal4500 + fiscal4700,
+            };
         }
 
         // Laba (Rugi) Usaha (Akun 4500) = Akun 4300 - Akun 5400 (Laba Kotor - Jumlah Beban Usaha)
@@ -1165,28 +1205,55 @@ export default function TabL1A({
         }
 
         // Laba (Rugi) Sebelum Pajak (Akun 4800) = Laba (Rugi) Usaha (4500) + Laba (Rugi) Non Usaha (4700)
-        if (
-            acc.code === "4800" ||
-            (name.includes("laba") && name.includes("sebelum pajak"))
-        ) {
+        if (isAccount4800(acc)) {
+            const acc4500 = a1VisibleAccounts.find(
+                (a) =>
+                    String(a.code) === "4500" ||
+                    (a.name.toLowerCase().includes("laba") &&
+                        a.name.toLowerCase().includes("usaha") &&
+                        !a.name.toLowerCase().includes("non") &&
+                        !a.name.toLowerCase().includes("kotor")),
+            );
+            const acc4700 = a1VisibleAccounts.find(
+                (a) =>
+                    String(a.code) === "4700" ||
+                    (a.name.toLowerCase().includes("laba") &&
+                        (a.name.toLowerCase().includes("non usaha") ||
+                            a.name.toLowerCase().includes("luar usaha"))),
+            );
+
             const labaRugiUsaha =
                 computedSummaryRowFromDraft(
-                    {
+                    acc4500 ?? ({
                         name: "Laba (Rugi) Usaha",
                         code: "4500",
-                    } as MasterAccount,
+                    } as MasterAccount),
                     draft,
+                    acc4500?.category,
                 ) ?? emptyRow;
             const labaRugiNonUsaha =
                 computedSummaryRowFromDraft(
-                    {
+                    acc4700 ?? ({
                         name: "Laba (Rugi) Non Usaha",
                         code: "4700",
-                    } as MasterAccount,
+                    } as MasterAccount),
                     draft,
+                    acc4700?.category,
                 ) ?? emptyRow;
 
-            return addRows(labaRugiUsaha, labaRugiNonUsaha);
+            const base = addRows(labaRugiUsaha, labaRugiNonUsaha);
+
+            const fiscal4500 = Number(labaRugiUsaha.fiscal_amount ?? 0);
+            const fiscal4700 = computeFiscalAmount(
+                labaRugiNonUsaha,
+                acc4700?.category ?? "Beban Non Usaha",
+                acc4700?.name ?? "Laba (Rugi) Non Usaha",
+            );
+
+            return {
+                ...base,
+                fiscal_amount: fiscal4500 + fiscal4700,
+            };
         }
 
         if (isAccount4500(acc)) {
@@ -1446,7 +1513,7 @@ export default function TabL1A({
                                                                         <TableCell className="text-right">
                                                                             {formatMoney(
                                                                                 displayRow
-                                                                                    ? isAccount4500(acc)
+                                                                                    ? isAccount4500(acc) || isAccount4800(acc)
                                                                                         ? (displayRow.fiscal_amount ?? 0)
                                                                                         : computeFiscalAmount(
                                                                                               displayRow,
