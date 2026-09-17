@@ -98,19 +98,95 @@ export default function TabL1A({
         return (l1aLayout?.a2?.left ?? []) as MasterAccount[];
     }, [l1aLayout]);
 
-    const sumA2Left = () => {
+    const isAccount1500 = (acc: MasterAccount | { code?: string; name?: string }) => {
+        const code = String((acc as any)?.code ?? "");
+        const name = String((acc as any)?.name ?? "").toLowerCase();
+        return code === "1500" || name.includes("jumlah aset lancar");
+    };
+
+    const isAccount1699 = (acc: MasterAccount | { code?: string; name?: string }) => {
+        const code = String((acc as any)?.code ?? "");
+        const name = String((acc as any)?.name ?? "").toLowerCase();
+        return (
+            code === "1699" ||
+            (name.includes("jumlah aset") && name.includes("tidak lancar"))
+        );
+    };
+
+    const isAccount1700 = (acc: MasterAccount | { code?: string; name?: string; category?: string }) => {
+        const code = String((acc as any)?.code ?? "");
+        const name = String((acc as any)?.name ?? "").toLowerCase();
+        const category = String((acc as any)?.category ?? "");
+        return (
+            !isAccount1500(acc) &&
+            !isAccount1699(acc) &&
+            (code === "1700" ||
+                category === "Jumlah Aset" ||
+                (name.includes("jumlah aset") && !name.includes("lancar") && !name.includes("operasional")))
+        );
+    };
+
+    const sumA2AsetLancar = () => {
         let total = 0;
         for (const acc of a2Left) {
+            if (isAccount1500(acc)) {
+                break;
+            }
+            if (isAccount1699(acc) || isAccount1700(acc)) {
+                continue;
+            }
             const accountId = Number(acc.id);
             const row = a2Draft.get(accountId) ?? a2ByAccountId.get(accountId);
             const amount = Number(row?.amount ?? 0);
-            if (acc.name.toLowerCase().includes("dikurangi")) {
+            const nameLower = String(acc.name ?? "").toLowerCase();
+            if (nameLower.includes("dikurangi") || nameLower.includes("cadangan")) {
                 total -= amount;
             } else {
                 total += amount;
             }
         }
         return total;
+    };
+
+    const sumA2AsetTidakLancar = () => {
+        let total = 0;
+        let past1500 = false;
+        for (const acc of a2Left) {
+            if (isAccount1500(acc)) {
+                past1500 = true;
+                continue;
+            }
+            if (isAccount1699(acc)) {
+                break;
+            }
+            if (isAccount1700(acc)) {
+                continue;
+            }
+            const codeNum = Number(acc.code);
+            const isTidakLancar =
+                String(acc.category ?? "").toLowerCase().includes("tidak lancar") ||
+                past1500 ||
+                (codeNum >= 1501 && codeNum < 1699);
+
+            if (!isTidakLancar) {
+                continue;
+            }
+
+            const accountId = Number(acc.id);
+            const row = a2Draft.get(accountId) ?? a2ByAccountId.get(accountId);
+            const amount = Number(row?.amount ?? 0);
+            const nameLower = String(acc.name ?? "").toLowerCase();
+            if (nameLower.includes("dikurangi") || nameLower.includes("cadangan")) {
+                total -= amount;
+            } else {
+                total += amount;
+            }
+        }
+        return total;
+    };
+
+    const sumA2Left = () => {
+        return sumA2AsetLancar() + sumA2AsetTidakLancar();
     };
 
     const sumA2ByCategory = (category: string) => {
@@ -371,6 +447,95 @@ export default function TabL1A({
         });
     };
 
+    const buildA2Rows = () => {
+        const a2Rows: L1A2Item[] = [];
+        for (const [accountId, row] of a2Draft.entries()) {
+            const accountMeta = [...a2Left, ...a2Right].find(
+                (item) => Number(item.id) === accountId,
+            );
+            a2Rows.push({
+                ...row,
+                spt_badan_id: sptBadanId,
+                account_id: accountId,
+                account_code: String(accountMeta?.code ?? ""),
+                code: CODE,
+            });
+        }
+
+        // Pastikan akun pentotal A2 Left (1500, 1699, 1700) tersimpan nilainya
+        for (const acc of a2Left) {
+            const accountId = Number(acc.id);
+            if (!Number.isFinite(accountId) || accountId <= 0) continue;
+            let computedAmount: number | null = null;
+            if (isAccount1500(acc)) {
+                computedAmount = sumA2AsetLancar();
+            } else if (isAccount1699(acc)) {
+                computedAmount = sumA2AsetTidakLancar();
+            } else if (isAccount1700(acc) || acc.category === "Jumlah Aset") {
+                computedAmount = sumA2Left();
+            }
+
+            if (computedAmount !== null) {
+                const existingIdx = a2Rows.findIndex((r) => r.account_id === accountId);
+                const item: L1A2Item = {
+                    spt_badan_id: sptBadanId,
+                    account_id: accountId,
+                    account_code: String(acc.code ?? ""),
+                    code: CODE,
+                    amount: computedAmount,
+                };
+                if (existingIdx !== -1) {
+                    a2Rows[existingIdx] = { ...a2Rows[existingIdx], amount: computedAmount };
+                } else {
+                    a2Rows.push(item);
+                }
+            }
+        }
+
+        // Pastikan akun pentotal A2 Right (2999, 3299, 3300) tersimpan nilainya
+        for (const acc of a2Right) {
+            const accountId = Number(acc.id);
+            if (!Number.isFinite(accountId) || accountId <= 0) continue;
+            const nameLower = String(acc.name ?? "").toLowerCase();
+            const isJumlahLiabEkuitas =
+                nameLower.includes("jumlah liabilitas") &&
+                nameLower.includes("ekuitas");
+            const isJumlahLiabilitas =
+                !isJumlahLiabEkuitas &&
+                nameLower.includes("jumlah liabilitas");
+            const isJumlahEkuitas =
+                !isJumlahLiabEkuitas &&
+                nameLower.includes("jumlah ekuitas");
+
+            let computedAmount: number | null = null;
+            if (isJumlahLiabEkuitas) {
+                computedAmount = sumA2LiabilitasEkuitas();
+            } else if (isJumlahLiabilitas) {
+                computedAmount = sumA2ByCategory("Liabilitas");
+            } else if (isJumlahEkuitas) {
+                computedAmount = sumA2ByCategory("Ekuitas");
+            }
+
+            if (computedAmount !== null) {
+                const existingIdx = a2Rows.findIndex((r) => r.account_id === accountId);
+                const item: L1A2Item = {
+                    spt_badan_id: sptBadanId,
+                    account_id: accountId,
+                    account_code: String(acc.code ?? ""),
+                    code: CODE,
+                    amount: computedAmount,
+                };
+                if (existingIdx !== -1) {
+                    a2Rows[existingIdx] = { ...a2Rows[existingIdx], amount: computedAmount };
+                } else {
+                    a2Rows.push(item);
+                }
+            }
+        }
+
+        return a2Rows;
+    };
+
     const handleSync = () => {
         if (!sptBadanId) return;
         setIsSaving(true);
@@ -438,19 +603,7 @@ export default function TabL1A({
             }
         }
 
-        const a2Rows: L1A2Item[] = [];
-        for (const [accountId, row] of a2Draft.entries()) {
-            const accountMeta = [...a2Left, ...a2Right].find(
-                (item) => Number(item.id) === accountId,
-            );
-            a2Rows.push({
-                ...row,
-                spt_badan_id: sptBadanId,
-                account_id: accountId,
-                account_code: String(accountMeta?.code ?? ""),
-                code: CODE,
-            });
-        }
+        const a2Rows = buildA2Rows();
 
         router.post(
             route(a1SyncRoute),
@@ -481,19 +634,7 @@ export default function TabL1A({
         if (!sptBadanId) return;
         setIsSaving(true);
 
-        const a2Rows: L1A2Item[] = [];
-        for (const [accountId, row] of a2Draft.entries()) {
-            const accountMeta = [...a2Left, ...a2Right].find(
-                (item) => Number(item.id) === accountId,
-            );
-            a2Rows.push({
-                ...row,
-                spt_badan_id: sptBadanId,
-                account_id: accountId,
-                account_code: String(accountMeta?.code ?? ""),
-                code: CODE,
-            });
-        }
+        const a2Rows = buildA2Rows();
 
         router.post(
             route(a2SyncRoute),
@@ -1581,9 +1722,18 @@ export default function TabL1A({
                                                                     currentCategory;
                                                                 currentCategory =
                                                                     acc.category;
-                                                                const isTotal =
+                                                                const isAsetLancarTotal =
+                                                                    isAccount1500(acc);
+                                                                const isAsetTidakLancarTotal =
+                                                                    isAccount1699(acc);
+                                                                const isGrandTotal =
+                                                                    isAccount1700(acc) ||
                                                                     acc.category ===
-                                                                    "Jumlah Aset";
+                                                                        "Jumlah Aset";
+                                                                const isTotal =
+                                                                    isAsetLancarTotal ||
+                                                                    isAsetTidakLancarTotal ||
+                                                                    isGrandTotal;
 
                                                                 return (
                                                                     <Fragment
@@ -1625,13 +1775,21 @@ export default function TabL1A({
                                                                             <TableCell className="w-[140px]">
                                                                                 <Input
                                                                                     value={
-                                                                                        isTotal
+                                                                                        isAsetLancarTotal
                                                                                             ? formatMoney(
-                                                                                                  sumA2Left(),
+                                                                                                  sumA2AsetLancar(),
                                                                                               )
-                                                                                            : formatMoney(
-                                                                                                  amount,
-                                                                                              )
+                                                                                            : isAsetTidakLancarTotal
+                                                                                              ? formatMoney(
+                                                                                                    sumA2AsetTidakLancar(),
+                                                                                                )
+                                                                                              : isGrandTotal
+                                                                                                ? formatMoney(
+                                                                                                      sumA2Left(),
+                                                                                                  )
+                                                                                                : formatMoney(
+                                                                                                      amount,
+                                                                                                  )
                                                                                     }
                                                                                     onChange={(
                                                                                         e,

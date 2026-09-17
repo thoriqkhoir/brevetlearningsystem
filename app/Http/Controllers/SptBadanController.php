@@ -349,6 +349,7 @@ class SptBadanController extends Controller
                     '1405',
                     '1422',
                     '1499',
+                    '1500',
                     '1501',
                     '1520',
                     '1523',
@@ -366,6 +367,7 @@ class SptBadanController extends Controller
                     '1651',
                     '1658',
                     '1698',
+                    '1699',
                     '1700',
                 ],
                 'right' => [
@@ -528,6 +530,7 @@ class SptBadanController extends Controller
                     '1422',
                     '1423',
                     '1499',
+                    '1500',
                     '1501',
                     '1520',
                     '1523',
@@ -548,6 +551,7 @@ class SptBadanController extends Controller
                     '1651',
                     '1658',
                     '1698',
+                    '1699',
                     '1700',
                 ],
                 'right' => [
@@ -843,6 +847,7 @@ class SptBadanController extends Controller
                     '1422',
                     '1423',
                     '1499',
+                    '1500',
                     '1501',
                     '1521',
                     '1522',
@@ -854,6 +859,7 @@ class SptBadanController extends Controller
                     '1651',
                     '1658',
                     '1698',
+                    '1699',
                     '1700',
                 ],
                 'right' => [
