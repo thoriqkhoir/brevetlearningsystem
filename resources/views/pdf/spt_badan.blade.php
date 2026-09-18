@@ -535,10 +535,10 @@
         $bulanAkhir = $periodMap[$spt->end_period]   ?? 12;
         $statusSpt  = ($spt->correction_number === 0) ? 'NORMAL' : 'PEMBETULAN';
 
-        $bookkeepingType = strtolower((string) ($sptOp->type_of_bookkeeping ?? ''));
-        $metodeLabel = match ($bookkeepingType) {
-            'pembukuan stelsel akrual' => 'PEMBUKUAN STELSEL AKRUAL',
-            'pembukuan stelsel kas' => 'PEMBUKUAN STELSEL KAS',
+        $bookkeepingType = strtolower((string) ($sptBadan->type_of_bookkeeping ?? ''));
+        $metodeLabel = match (true) {
+            str_contains($bookkeepingType, 'akrual') => 'PEMBUKUAN STELSEL AKRUAL',
+            str_contains($bookkeepingType, 'kas') => 'PEMBUKUAN STELSEL KAS',
             default => 'PENCATATAN',
         };
 
