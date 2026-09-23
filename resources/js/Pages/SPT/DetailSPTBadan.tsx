@@ -1928,7 +1928,13 @@ const DetailSPTBadan = ({
         };
 
         router.post(route("spt.storeBadan"), submitData, {
-            onSuccess: () => {
+            onSuccess: (page) => {
+                if (
+                    (page.props as any)?.flash?.error ||
+                    Object.keys((page.props as any)?.errors ?? {}).length > 0
+                ) {
+                    return;
+                }
                 toast.success("SPT Badan berhasil dikirim");
                 setOpenPasswordModal(false);
             },

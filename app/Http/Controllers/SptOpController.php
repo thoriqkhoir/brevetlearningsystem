@@ -192,7 +192,7 @@ class SptOpController extends Controller
         $password = $request->input('password');
         if (!Hash::check($password, $user->password)) {
             $sptId = $request->input('spt_id');
-            return redirect()->route('spt.detailOp', ['id' => $sptId])->with('error', 'Password salah!');
+            return redirect()->route('spt.detailOp', ['id' => $sptId])->withErrors(['password' => 'Password salah!']);
         }
 
         try {
@@ -211,12 +211,17 @@ class SptOpController extends Controller
             $sptOpData = $this->extractSptOpData($request);
             $sptOpData['spt_id'] = $sptId;
 
+            \Illuminate\Support\Facades\Log::info('[Audit] SptOpController@store details', [
+                'spt_id' => $sptId,
+                'payment_method' => $request->input('payment_method'),
+                'e_11_c' => $sptOpData['e_11_c'] ?? null,
+                'total_payment' => $request->input('total_payment'),
+            ]);
+
             $sptOp = SptOp::updateOrCreate(
                 ['spt_id' => $sptId],
                 $sptOpData
             );
-
-
 
             // Handle lampiran data
             $this->saveLampiranData($request, $sptOp->id);
@@ -238,6 +243,13 @@ class SptOpController extends Controller
             } else if ($paymentMethod === 'billing') {
                 $spt->status = 'waiting';
             }
+
+            \Illuminate\Support\Facades\Log::info('[Audit] SptOpController@store status updated', [
+                'spt_id' => $sptId,
+                'status_before_save' => $spt->status,
+                'payment_method' => $paymentMethod,
+                'tax_value' => $taxValue,
+            ]);
 
             $spt->tax_value = $taxValue;
 

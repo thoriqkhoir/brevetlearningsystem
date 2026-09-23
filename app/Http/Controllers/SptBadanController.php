@@ -725,9 +725,6 @@ class SptBadanController extends Controller
                     // '2109',
                     // '2110',
                     '2111',
-                    // '2112',
-                    // '2113',
-                    // '2114',
                     '2191',
                     '2186',
                     '2187',
@@ -2536,7 +2533,7 @@ class SptBadanController extends Controller
         $password = $request->input('password');
         if (!Hash::check($password, $user->password)) {
             $sptId = $request->input('spt_id');
-            return redirect()->route('spt.detailBadan', ['id' => $sptId])->with('error', 'Password salah!');
+            return redirect()->route('spt.detailBadan', ['id' => $sptId])->withErrors(['password' => 'Password salah!']);
         }
 
         try {
@@ -2560,6 +2557,14 @@ class SptBadanController extends Controller
             $sptBadanData = $this->extractSptBadanData($request);
             $sptBadanData['spt_id'] = $sptId;
             $sptBadanData['business_entity_id'] = $activeBusinessEntity->id;
+
+            \Illuminate\Support\Facades\Log::info('[Audit] SptBadanController@store details', [
+                'spt_id' => $sptId,
+                'business_entity_id' => $activeBusinessEntity->id,
+                'payment_method' => $request->input('payment_method'),
+                'f_17c' => $sptBadanData['f_17c'] ?? null,
+                'total_payment' => $request->input('total_payment'),
+            ]);
 
             $sptBadan = SptBadan::updateOrCreate(
                 [
@@ -2586,6 +2591,13 @@ class SptBadanController extends Controller
             } elseif ($paymentMethod === 'billing') {
                 $spt->status = 'waiting';
             }
+
+            \Illuminate\Support\Facades\Log::info('[Audit] SptBadanController@store status updated', [
+                'spt_id' => $sptId,
+                'status_before_save' => $spt->status,
+                'payment_method' => $paymentMethod,
+                'tax_value' => $taxValue,
+            ]);
 
             $spt->tax_value = $taxValue;
 

@@ -1737,7 +1737,13 @@ const DetailSPTOP = ({
         };
 
         router.post(route("spt.storeOp"), submitData, {
-            onSuccess: () => {
+            onSuccess: (page) => {
+                if (
+                    (page.props as any)?.flash?.error ||
+                    Object.keys((page.props as any)?.errors ?? {}).length > 0
+                ) {
+                    return;
+                }
                 toast.success("SPT OP berhasil dikirim");
                 setOpenPasswordModal(false);
             },
