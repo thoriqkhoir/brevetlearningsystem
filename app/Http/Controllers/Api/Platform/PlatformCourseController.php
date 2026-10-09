@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseTest;
 use App\Models\CourseUser;
+use App\Models\CourseTestAttempt;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -279,6 +280,117 @@ class PlatformCourseController extends Controller
                 'last_page' => $tests->lastPage(),
                 'per_page' => $tests->perPage(),
                 'total' => $tests->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get aggregated grades (best scores) for all students in a course across all tests.
+     * Lightweight bulk endpoint designed for platform certificates and transcript sync.
+     *
+     * @param Request $request
+     * @param string $id Course ID
+     * @return JsonResponse
+     */
+    public function grades(Request $request, string $id): JsonResponse
+    {
+        $platform = $request->user();
+
+        $course = Course::where("id", $id)
+            ->whereHas("participants.user", function ($q) use ($platform) {
+                $q->where("platform_id", $platform->id)
+                  ->where("role", "pengguna");
+            })
+            ->first();
+
+        if (!$course) {
+            return response()->json([
+                "success" => false,
+                "message" => "Course not found or has no students from this platform.",
+            ], 404);
+        }
+
+        // Get all tests in this course ordered by created_at
+        $tests = CourseTest::where("course_id", $id)
+            ->orderBy("created_at", "asc")
+            ->get(["id", "title", "passing_score", "max_attempts"]);
+
+        $testIds = $tests->pluck("id");
+
+        // Get all platform students enrolled in this course
+        $enrollments = CourseUser::with(["user:id,name,email,phone_number"])
+            ->where("course_id", $id)
+            ->whereHas("user", function ($q) use ($platform) {
+                $q->where("platform_id", $platform->id)
+                  ->where("role", "pengguna");
+            })
+            ->get();
+
+        $userIds = $enrollments->pluck("user.id")->filter()->unique()->values();
+
+        // Single query: get best score, pass status, and attempt count for every (user, test) pair
+        $bestScores = CourseTestAttempt::whereIn("user_id", $userIds)
+            ->whereIn("course_test_id", $testIds)
+            ->whereNotNull("submitted_at")
+            ->selectRaw("user_id, course_test_id, MAX(score) as best_score, MAX(passed) as any_passed, COUNT(id) as attempt_count")
+            ->groupBy("user_id", "course_test_id")
+            ->get();
+
+        $scoresByUser = [];
+        foreach ($bestScores as $item) {
+            $scoresByUser[$item->user_id][$item->course_test_id] = [
+                "score"         => (int) $item->best_score,
+                "passed"        => (bool) $item->any_passed,
+                "attempt_count" => (int) $item->attempt_count,
+            ];
+        }
+
+        $studentData = $enrollments->map(function ($enrollment) use ($tests, $scoresByUser) {
+            $user = $enrollment->user;
+            if (!$user) return null;
+
+            $testScores = [];
+            foreach ($tests as $test) {
+                $scoreInfo = $scoresByUser[$user->id][$test->id] ?? null;
+                $testScores[$test->id] = [
+                    "test_id"       => $test->id,
+                    "test_title"    => $test->title,
+                    "passing_score" => (int) ($test->passing_score ?? 70),
+                    "score"         => $scoreInfo !== null ? $scoreInfo["score"] : null,
+                    "passed"        => $scoreInfo !== null ? $scoreInfo["passed"] : null,
+                    "attempt_count" => $scoreInfo !== null ? $scoreInfo["attempt_count"] : 0,
+                ];
+            }
+
+            return [
+                "student" => [
+                    "id"           => $user->id,
+                    "name"         => $user->name,
+                    "email"        => $user->email,
+                    "phone_number" => $user->phone_number,
+                ],
+                "enrolled_at" => $enrollment->created_at ? $enrollment->created_at->toIso8601String() : null,
+                "scores"      => $testScores,
+            ];
+        })->filter()->values();
+
+        return response()->json([
+            "success" => true,
+            "course" => [
+                "id"   => $course->id,
+                "name" => $course->name,
+                "code" => $course->code,
+            ],
+            "tests" => $tests->map(fn($t) => [
+                "id"            => $t->id,
+                "title"         => $t->title,
+                "passing_score" => (int) ($t->passing_score ?? 70),
+                "max_attempts"  => (int) ($t->max_attempts ?? 0),
+            ])->values(),
+            "data" => $studentData,
+            "meta" => [
+                "total_students" => $studentData->count(),
+                "total_tests"    => $tests->count(),
             ],
         ]);
     }

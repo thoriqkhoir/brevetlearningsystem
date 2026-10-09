@@ -51,7 +51,7 @@ class PlatformExamResultController extends Controller
             $query->whereDate('submitted_at', '<=', $request->string('date_to')->value());
         }
 
-        $perPage = min(max((int) $request->input('per_page', 20), 1), 100);
+        $perPage = min(max((int) $request->input('per_page', 20), 1), 500);
         $attempts = $query->orderByDesc('submitted_at')->paginate($perPage);
 
         $results = collect($attempts->items())->map(function ($item) {

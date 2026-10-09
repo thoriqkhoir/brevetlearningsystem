@@ -15,5 +15,6 @@ Route::prefix('v1/platform')->middleware(['auth:sanctum', EnsureActivePlatform::
     Route::get('/courses/{id}', [PlatformCourseController::class, 'show'])->name('api.platform.courses.show');
     Route::get('/courses/{id}/students', [PlatformCourseController::class, 'students'])->name('api.platform.courses.students');
     Route::get('/courses/{id}/tests', [PlatformCourseController::class, 'tests'])->name('api.platform.courses.tests');
+    Route::get('/courses/{id}/grades', [PlatformCourseController::class, 'grades'])->name('api.platform.courses.grades');
     Route::get('/exam-results', [PlatformExamResultController::class, 'index'])->name('api.platform.exam_results');
 });
