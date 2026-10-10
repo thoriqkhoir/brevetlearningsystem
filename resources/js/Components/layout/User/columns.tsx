@@ -44,10 +44,12 @@ export type UserColumns = {
     updated_at: string;
 };
 
-type UserColumnActionMode = "detail" | "edit";
+type UserColumnActionMode = "detail" | "edit" | "both";
 
 type CreateUserColumnsOptions = {
-    actionRoute: string;
+    actionRoute?: string;
+    detailRoute?: string;
+    editRoute?: string;
     deleteRoute: string;
     entityLabel: string;
     actionMode?: UserColumnActionMode;
@@ -93,11 +95,20 @@ export const createUserColumns = (
         cell: ({ row }) => {
             const [openDeleteModal, setOpenDeleteModal] = useState(false);
             const actionMode = options.actionMode ?? "detail";
-            const ActionIcon = actionMode === "edit" ? Pencil : Folder;
-            const actionTooltip =
-                actionMode === "edit"
-                    ? `Edit ${options.entityLabel}`
-                    : `Detail ${options.entityLabel}`;
+            const detailRouteName =
+                options.detailRoute ??
+                (actionMode === "detail" || actionMode === "both"
+                    ? options.actionRoute
+                    : undefined);
+            const editRouteName =
+                options.editRoute ??
+                (actionMode === "edit" ? options.actionRoute : undefined);
+            const showDetail =
+                (actionMode === "detail" || actionMode === "both") &&
+                !!detailRouteName;
+            const showEdit =
+                (actionMode === "edit" || actionMode === "both") &&
+                !!editRouteName;
 
             const handleDelete = () => {
                 router.delete(route(options.deleteRoute, row.original.id), {
@@ -112,29 +123,55 @@ export const createUserColumns = (
 
             return (
                 <TooltipProvider>
-                    <div className="flex flex-wrap w-16 justify-center">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="px-2 text-blue-600 hover:text-blue-700"
-                                    onClick={() => {
-                                        router.visit(
-                                            route(
-                                                options.actionRoute,
-                                                row.original.id,
-                                            ),
-                                        );
-                                    }}
-                                >
-                                    <ActionIcon />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{actionTooltip}</p>
-                            </TooltipContent>
-                        </Tooltip>
+                    <div className="flex flex-wrap w-20 justify-center gap-1">
+                        {showDetail && detailRouteName && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="px-2 text-blue-600 hover:text-blue-700"
+                                        onClick={() => {
+                                            router.visit(
+                                                route(
+                                                    detailRouteName,
+                                                    row.original.id,
+                                                ),
+                                            );
+                                        }}
+                                    >
+                                        <Folder />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Detail {options.entityLabel}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+                        {showEdit && editRouteName && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="px-2 text-amber-600 hover:text-amber-700"
+                                        onClick={() => {
+                                            router.visit(
+                                                route(
+                                                    editRouteName,
+                                                    row.original.id,
+                                                ),
+                                            );
+                                        }}
+                                    >
+                                        <Pencil />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Edit {options.entityLabel}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button

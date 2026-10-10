@@ -81,4 +81,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(BusinessEntity::class);
     }
+
+    public function courseUsers()
+    {
+        return $this->hasMany(CourseUser::class);
+    }
+
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'course_users', 'user_id', 'course_id')
+            ->withPivot('id', 'feedback', 'created_at')
+            ->withTimestamps();
+    }
 }

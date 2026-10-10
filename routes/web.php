@@ -882,6 +882,8 @@ Route::middleware(['auth', EnsureTeacher::class])->group(function () {
     Route::get('/teacher/participants', [TeacherParticipantController::class, 'index'])->name('teacher.participants');
     Route::get('/teacher/participants/create', [TeacherParticipantController::class, 'create'])->name('teacher.createParticipant');
     Route::post('/teacher/participants', [TeacherParticipantController::class, 'store'])->name('teacher.storeParticipant');
+    Route::get('/teacher/participants/{id}', [TeacherParticipantController::class, 'show'])->name('teacher.showParticipantProfile');
+    Route::post('/teacher/participants/{id}/reset-password', [TeacherParticipantController::class, 'resetPassword'])->name('teacher.resetPassword');
     Route::get('/teacher/participants/{id}/edit', [TeacherParticipantController::class, 'edit'])->name('teacher.editParticipant');
     Route::put('/teacher/participants/{id}', [TeacherParticipantController::class, 'update'])->name('teacher.updateParticipant');
     Route::delete('/teacher/participants/{id}', [TeacherParticipantController::class, 'destroy'])->name('teacher.destroyParticipant');

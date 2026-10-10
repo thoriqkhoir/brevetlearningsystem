@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Imports\UserImport;
 use App\Models\Course;
 use App\Models\CourseUser;
+use App\Models\Invoice;
+use App\Models\Bupot;
+use App\Models\Spt;
 use App\Models\Platform;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -98,6 +101,75 @@ class TeacherParticipantController extends Controller
         ]);
 
         return redirect()->route('teacher.participants')->with('success', 'Peserta berhasil ditambahkan.');
+    }
+
+    public function show($id)
+    {
+        $user = User::with(['event', 'platform'])->where('role', 'pengguna')->findOrFail($id);
+
+        $user->is_password_reset = Hash::check($user->phone_number, $user->password);
+
+        $fakturKeluaranCount = Invoice::where('user_id', $id)->where('type', 'keluaran')->count();
+        $fakturMasukanCount = Invoice::where('user_id', $id)->where('type', 'masukan')->count();
+
+        $bupotCount = Bupot::where('user_id', $id)->count();
+
+        $sptCount = Spt::where('user_id', $id)->count();
+
+        $fakturs = Invoice::where('user_id', $id)->get();
+        $bupots = Bupot::with('object')->where('user_id', $id)->get();
+        $spts = Spt::where('user_id', $id)->get();
+
+        $courses = CourseUser::with(['course.user', 'courseResults'])
+            ->where('user_id', $id)
+            ->get()
+            ->map(function ($cu) {
+                $validScores = $cu->courseResults->whereNotNull('score')->pluck('score');
+                $averageScore = $validScores->count() > 0 ? round($validScores->avg(), 2) : null;
+
+                return [
+                    'id' => $cu->course?->id,
+                    'course_user_id' => $cu->id,
+                    'name' => $cu->course?->name,
+                    'code' => $cu->course?->code,
+                    'description' => $cu->course?->description,
+                    'teacher_id' => $cu->course?->teacher_id,
+                    'teacher' => $cu->course?->user ? [
+                        'id' => $cu->course->user->id,
+                        'name' => $cu->course->user->name,
+                        'email' => $cu->course->user->email,
+                    ] : null,
+                    'start_date' => $cu->course?->start_date,
+                    'end_date' => $cu->course?->end_date,
+                    'joined_at' => $cu->created_at,
+                    'average_score' => $averageScore,
+                ];
+            });
+
+        return Inertia::render('Admin/DetailPengguna', [
+            'user' => $user,
+            'courses' => $courses,
+            'fakturKeluaranCount' => $fakturKeluaranCount,
+            'fakturMasukanCount' => $fakturMasukanCount,
+            'bupotCount' => $bupotCount,
+            'sptCount' => $sptCount,
+            'fakturs' => $fakturs,
+            'bupots' => $bupots,
+            'spts' => $spts,
+        ]);
+    }
+
+    public function resetPassword($id)
+    {
+        try {
+            $user = User::where('role', 'pengguna')->findOrFail($id);
+            $user->password = Hash::make($user->phone_number);
+            $user->save();
+
+            return redirect()->route('teacher.showParticipantProfile', $user->id)->with('success', 'Kata sandi berhasil direset ke nomor telepon.');
+        } catch (\Exception $e) {
+            return redirect()->route('teacher.showParticipantProfile', $user->id)->with('error', 'Gagal mereset kata sandi.');
+        }
     }
 
     public function edit($id)

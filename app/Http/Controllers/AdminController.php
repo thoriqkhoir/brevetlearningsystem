@@ -15,6 +15,7 @@ use App\Imports\UserImport;
 use App\Models\Bupot;
 use App\Models\Event;
 use App\Models\Course;
+use App\Models\CourseUser;
 use App\Models\Platform;
 
 class AdminController extends Controller
@@ -149,8 +150,35 @@ class AdminController extends Controller
         $bupots = Bupot::with('object')->where('user_id', $id)->get();
         $spts = Spt::where('user_id', $id)->get();
 
+        $courses = CourseUser::with(['course.user', 'courseResults'])
+            ->where('user_id', $id)
+            ->get()
+            ->map(function ($cu) {
+                $validScores = $cu->courseResults->whereNotNull('score')->pluck('score');
+                $averageScore = $validScores->count() > 0 ? round($validScores->avg(), 2) : null;
+
+                return [
+                    'id' => $cu->course?->id,
+                    'course_user_id' => $cu->id,
+                    'name' => $cu->course?->name,
+                    'code' => $cu->course?->code,
+                    'description' => $cu->course?->description,
+                    'teacher_id' => $cu->course?->teacher_id,
+                    'teacher' => $cu->course?->user ? [
+                        'id' => $cu->course->user->id,
+                        'name' => $cu->course->user->name,
+                        'email' => $cu->course->user->email,
+                    ] : null,
+                    'start_date' => $cu->course?->start_date,
+                    'end_date' => $cu->course?->end_date,
+                    'joined_at' => $cu->created_at,
+                    'average_score' => $averageScore,
+                ];
+            });
+
         return Inertia::render('Admin/DetailPengguna', [
             'user' => $user,
+            'courses' => $courses,
             'fakturKeluaranCount' => $fakturKeluaranCount,
             'fakturMasukanCount' => $fakturMasukanCount,
             'bupotCount' => $bupotCount,

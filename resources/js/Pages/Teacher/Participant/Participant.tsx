@@ -52,10 +52,11 @@ export default function Participant({ participants = [], events = [], platforms 
     const columns = useMemo(
         () =>
             createUserColumns({
-                actionRoute: "teacher.editParticipant",
+                detailRoute: "teacher.showParticipantProfile",
+                editRoute: "teacher.editParticipant",
                 deleteRoute: "teacher.destroyParticipant",
                 entityLabel: "Peserta",
-                actionMode: "edit",
+                actionMode: "both",
             }),
         [],
     );
