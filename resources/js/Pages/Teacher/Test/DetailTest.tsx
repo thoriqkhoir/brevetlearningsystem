@@ -557,18 +557,20 @@ export default function DetailTest({
                                 <Button
                                     variant="outline"
                                     className="text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
-                                    onClick={() =>
-                                        window.open(
-                                            route(
-                                                "teacher.exportTestParticipants",
-                                                test.id,
-                                            ),
-                                            "_blank",
-                                        )
-                                    }
+                                    asChild
                                 >
-                                    <FileUp />
-                                    Export Excel
+                                    <a
+                                        href={route(
+                                            "teacher.exportTestParticipants",
+                                            test.id,
+                                        )}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2"
+                                    >
+                                        <FileUp size={16} />
+                                        Export Excel
+                                    </a>
                                 </Button>
                             </div>
                         </div>
