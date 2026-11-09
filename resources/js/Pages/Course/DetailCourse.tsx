@@ -33,12 +33,15 @@ import DokumenKeluaran from "./CourseResults/DokumenKeluaran";
 import DokumenMasukan from "./CourseResults/DokumenMasukan";
 import ReturDokumenKeluaran from "./CourseResults/ReturDokumenKeluaran";
 import ReturDokumenMasukan from "./CourseResults/ReturDokumenMasukan";
+import StudentCourseSubmissionsSection from "@/Components/layout/Submission/StudentCourseSubmissionsSection";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 function parseLocalDate(value?: string | null) {
     if (!value) return null;
-    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+    const match = String(value).match(
+        /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/,
+    );
     if (!match) return null;
     return new Date(
         Number(match[1]),
@@ -46,24 +49,34 @@ function parseLocalDate(value?: string | null) {
         Number(match[3]),
         Number(match[4]),
         Number(match[5]),
-        Number(match[6] ?? 0)
+        Number(match[6] ?? 0),
     );
 }
 
 function formatLocalDateTime(value?: string | null) {
     const date = parseLocalDate(value);
     if (!date) return value || "-";
-    
+
     const day = date.getDate();
     const months = [
-        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+        "Januari",
+        "Februari",
+        "Maret",
+        "April",
+        "Mei",
+        "Juni",
+        "Juli",
+        "Agustus",
+        "September",
+        "Oktober",
+        "November",
+        "Desember",
     ];
     const month = months[date.getMonth()];
     const year = date.getFullYear();
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
-    
+
     return `${day} ${month} ${year}, ${hours}.${minutes} WIB`;
 }
 
@@ -73,24 +86,15 @@ function getStatus(start: string, end: string) {
     const endDate = parseLocalDate(end) || new Date(0);
 
     if (now < startDate)
-        return {
-            label: "Belum Mulai",
-            color: "border border-amber-200 bg-amber-100 text-amber-800",
-        };
+        return { label: "Belum Mulai", color: "text-gray-500 bg-gray-100" };
     if (now > endDate)
-        return {
-            label: "Selesai",
-            color: "border border-rose-200 bg-rose-100 text-rose-700",
-        };
+        return { label: "Selesai", color: "text-red-700 bg-red-100" };
     if (now >= startDate && now <= endDate)
         return {
             label: "Sedang Berlangsung",
-            color: "border border-emerald-200 bg-emerald-100 text-emerald-700",
+            color: "text-green-700 bg-green-100",
         };
-    return {
-        label: "-",
-        color: "border border-slate-200 bg-slate-100 text-slate-500",
-    };
+    return { label: "-", color: "text-gray-400 bg-gray-50" };
 }
 
 export default function DetailCourse({
@@ -98,6 +102,7 @@ export default function DetailCourse({
     pivot,
     teacher,
     courseSchedules = [],
+    courseSubmissions = [],
     courseTests = [],
     active_course_id,
     fakturs,
@@ -134,297 +139,299 @@ export default function DetailCourse({
     const averageScore = calculateAverageScore();
 
     useEffect(() => {
-        if (flash?.success) toast.success(flash.success);
-        if (flash?.error) toast.error(flash.error);
+        if (flash?.success) {
+            toast.dismiss();
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.dismiss();
+            toast.error(flash.error);
+        }
     }, [flash?.success, flash?.error]);
 
     return (
         <AuthenticatedLayout>
             <Head title={`Detail Kelas - ${course.name}`} />
 
-            <div className="relative min-h-[100svh] overflow-hidden bg-gradient-to-b from-cyan-50/60 via-white to-amber-50/60">
-                <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,_rgba(6,182,212,0.16),_transparent_34%),radial-gradient(circle_at_bottom_left,_rgba(245,158,11,0.15),_transparent_38%)]" />
-                <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
-                    <div className="flex flex-1 flex-col gap-6">
-                        <Breadcrumb>
-                            <BreadcrumbList>
-                                <BreadcrumbItem>
-                                    <Link href={route("courses")}>
-                                        Daftar Kelas
-                                    </Link>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                    <BreadcrumbPage>
-                                        Kelas {course.name}
-                                    </BreadcrumbPage>
-                                </BreadcrumbItem>
-                            </BreadcrumbList>
-                        </Breadcrumb>
+            <div className="py-8 mx-auto lg:px-4">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                    <Breadcrumb>
+                        <BreadcrumbList>
+                            <BreadcrumbItem>
+                                <Link href={route("courses")}>
+                                    Daftar Kelas
+                                </Link>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <BreadcrumbPage>
+                                    Kelas {course.name}
+                                </BreadcrumbPage>
+                            </BreadcrumbItem>
+                        </BreadcrumbList>
+                    </Breadcrumb>
 
-                        {course.has_active_remedial && (
-                            <div className="mt-2 mb-4 rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-sm text-rose-800 flex items-start gap-3 shadow-sm">
-                                <span className="text-xl leading-none">⚠️</span>
-                                <div>
-                                    <h4 className="font-semibold text-rose-900 mb-0.5">Informasi Ujian Remedial</h4>
-                                    <p className="text-xs text-rose-700 leading-relaxed">
-                                        Anda memiliki ujian remedial aktif yang perlu diselesaikan di kelas ini.
-                                        {!isActive ? (
-                                            <> Silakan klik tombol <strong>Mulai Mengerjakan</strong> di bawah untuk membuka akses pengerjaan remedial.</>
-                                        ) : (
-                                            <> Akses kelas aktif. Silakan pilih tab <strong>Ujian Kelas</strong> di bawah untuk mulai mengerjakan ujian remedial.</>
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="grid gap-4 xl:grid-cols-[1fr_auto]">
-                            <div className="rounded-3xl border border-cyan-200/70 bg-white/85 p-6 shadow-sm backdrop-blur-sm">
-                                <div className="flex items-start gap-4">
-                                    <div className="mt-0.5 h-16 w-1 rounded-full bg-gradient-to-b from-cyan-500 to-teal-500" />
-                                    <div>
-                                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                                            Ruang Kelas
-                                        </p>
-                                        <h1 className="mt-2 text-2xl font-semibold text-slate-800 md:text-3xl">
-                                            Kelas {course.name}
-                                        </h1>
-                                        <div className="mt-1 text-sm text-slate-600">
-                                            Pengajar :{" "}
-                                            <span className="font-semibold text-slate-700">
-                                                {teacher?.name || "-"}
-                                            </span>
-                                        </div>
-                                        <div className="text-sm text-slate-600">
-                                            Institusi :{" "}
-                                            <span className="font-semibold text-slate-700">
-                                                {teacher?.institution || "-"}
-                                            </span>
-                                        </div>
-                                        <div
-                                            className={`mt-3 w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${status.color}`}
-                                        >
-                                            Kelas {status.label}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="rounded-2xl border border-amber-200/70 bg-white/85 p-4 shadow-sm backdrop-blur-sm xl:min-w-72">
-                                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
-                                    Aksi Kelas
-                                </p>
-                                {!isActive ? (
-                                    <Button
-                                        className="mt-2 w-full"
-                                        onClick={() =>
-                                            router.post(
-                                                route(
-                                                    "courses.start",
-                                                    course.id,
-                                                ),
-                                            )
-                                        }
-                                        disabled={
-                                            (status.label !== "Sedang Berlangsung" && !course.has_active_remedial) ||
-                                            hasOtherActive
-                                        }
-                                    >
-                                        Mulai Praktik
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="accentOutline"
-                                        className="mt-2 w-full"
-                                        onClick={() =>
-                                            router.post(route("courses.stop"))
-                                        }
-                                    >
-                                        Hentikan Pengerjaan
-                                    </Button>
-                                )}
-
-                                {status.label === "Sedang Berlangsung" && hasOtherActive && (
-                                    <div className="mt-2 rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-xs text-rose-700 leading-relaxed">
-                                        <strong>Kelas Aktif Lain:</strong> Anda memiliki kelas aktif lain. Selesaikan kelas tersebut terlebih dahulu sebelum mengerjakan kelas ini.
-                                    </div>
-                                )}
-
-                                {status.label === "Belum Mulai" && (
-                                    <div className="mt-2 rounded-xl border border-amber-100 bg-amber-50/60 p-3 text-xs text-amber-800 leading-relaxed">
-                                        <strong>Kelas Belum Mulai:</strong> Tunggu waktu mulai kelas untuk dapat mengerjakan.
-                                    </div>
-                                )}
-
-                                {status.label === "Selesai" && (
-                                    course.has_active_remedial ? (
-                                        <div className="mt-2 rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-xs text-rose-800 leading-relaxed">
-                                            <p className="font-semibold text-rose-900 mb-0.5">⚠️ Perlu Remedial</p>
-                                            <p className="text-rose-700">
-                                                Terdapat ujian remedial yang perlu Anda kerjakan pada kelas ini.
-                                                {course.remedial_deadline && (
-                                                    <> Batas akhir pengumpulan: <span className="font-semibold">{formatLocalDateTime(course.remedial_deadline)} WIB</span>.</>
-                                                )}
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs text-slate-500 leading-relaxed">
-                                            Kelas sudah selesai. Anda tidak dapat mengerjakan kelas ini lagi.
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="rounded-2xl border border-teal-100 bg-white/90 p-6 shadow-md backdrop-blur-sm">
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-6">
-                                <div className="col-span-1 md:col-span-2">
-                                    <Button variant="info" asChild>
-                                        <Link
-                                            href={route(
-                                                "course.showModules",
-                                                course.id,
-                                            )}
-                                        >
-                                            <FileText size={16} />
-                                            Lihat Modul (
-                                            {course.modules_count || 0})
-                                        </Link>
-                                    </Button>
-                                </div>
-
-                                <div className="flex-1">
-                                    <div className="text-sm text-slate-500">
-                                        Deskripsi
-                                    </div>
-                                    <div className="mb-2 font-medium text-slate-700">
-                                        {course.description || "-"}
-                                    </div>
-                                    <div>
-                                        <div className="text-sm text-slate-500">
-                                            Durasi Pengerjaan
-                                        </div>
-                                        <div className="font-medium text-slate-700">
-                                            {course.start_date
-                                                ? new Date(
-                                                      course.start_date,
-                                                  ).toLocaleDateString(
-                                                      "id-ID",
-                                                      {
-                                                          day: "numeric",
-                                                          month: "long",
-                                                          year: "numeric",
-                                                      },
-                                                  )
-                                                : "-"}
-                                            {" - "}
-                                            {course.end_date
-                                                ? new Date(
-                                                      course.end_date,
-                                                  ).toLocaleDateString(
-                                                      "id-ID",
-                                                      {
-                                                          day: "numeric",
-                                                          month: "long",
-                                                          year: "numeric",
-                                                      },
-                                                  )
-                                                : "-"}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex-1 flex flex-col gap-2">
-                                    <div>
-                                        <span className="text-sm text-slate-500">
-                                            Nilai Anda
-                                        </span>
-                                        <div className="font-mono text-lg font-bold text-teal-700">
-                                            {averageScore !== null ? (
-                                                averageScore
-                                            ) : (
-                                                <span className="italic text-slate-400">
-                                                    Belum dinilai
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <span className="text-sm text-slate-500">
-                                            Feedback
-                                        </span>
-                                        <div className="text-slate-700">
-                                            {pivot?.feedback ? (
-                                                pivot.feedback
-                                            ) : (
-                                                <span className="italic text-slate-400">
-                                                    Belum ada feedback
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 rounded-2xl border border-amber-100 bg-white/90 p-6 shadow-md backdrop-blur-sm">
-                            <h2 className="text-lg font-semibold text-slate-800">
-                                Jadwal Kelas & Ujian Kelas
-                            </h2>
-
+                    {course.has_active_remedial && (
+                        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-sm text-rose-800 flex items-start gap-3 shadow-sm mt-2">
+                            <span className="text-xl leading-none">⚠️</span>
                             <div>
-                                <h3 className="mb-2 font-semibold text-slate-800">
-                                    Jadwal Kelas ({courseSchedules.length})
-                                </h3>
-                                {courseSchedules.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {courseSchedules.map(
-                                            (schedule: any) => (
-                                                <div
-                                                    key={schedule.id}
-                                                    className="flex flex-col gap-2 rounded-xl border border-teal-100 bg-teal-50/60 p-3 md:flex-row md:items-center md:justify-between"
-                                                >
-                                                    <div>
-                                                        <div className="font-medium text-slate-800">
-                                                            {schedule.title}
-                                                        </div>
-                                                        <div className="text-sm text-slate-500">
-                                                            {formatLocalDateTime(schedule.scheduled_at)}
-                                                        </div>
-                                                    </div>
-                                                    {schedule.zoom_link ? (
-                                                        <a
-                                                            href={
-                                                                schedule.zoom_link
-                                                            }
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="text-sm font-medium text-cyan-700 hover:underline"
-                                                        >
-                                                            Buka Link Meeting
-                                                        </a>
-                                                    ) : (
-                                                        <span className="text-sm italic text-slate-500">
-                                                            Link meeting belum
-                                                            tersedia
-                                                        </span>
+                                <h4 className="font-semibold text-rose-900 mb-1">Informasi Ujian Remedial</h4>
+                                <p>
+                                    Anda memiliki ujian remedial aktif yang perlu diselesaikan di kelas ini.
+                                    {!isActive ? (
+                                        <> Silakan klik tombol <strong>Mulai Mengerjakan</strong> di bawah untuk membuka akses pengerjaan remedial.</>
+                                    ) : (
+                                        <> Akses kelas aktif. Silakan pilih tab <strong>Ujian Kelas</strong> di bawah untuk mulai mengerjakan ujian remedial.</>
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mt-2 gap-4">
+                        <div>
+                            <h1 className="text-2xl font-bold text-primary mb-1">
+                                Kelas {course.name}
+                            </h1>
+                            <div className="text-sm text-gray-500">
+                                Pengajar :{" "}
+                                <span className="font-semibold text-primary">
+                                    {teacher?.name || "-"}
+                                </span>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                                Institusi :{" "}
+                                <span className="font-semibold text-primary">
+                                    {teacher?.institution || "-"}
+                                </span>
+                            </div>
+                            <div
+                                className={`mt-2 w-fit px-2 py-1 rounded text-xs font-semibold ${status.color}`}
+                            >
+                                Kelas {status.label}
+                            </div>
+                        </div>
+                        <div className="flex flex-col md:items-end gap-2">
+                            {!isActive ? (
+                                <Button
+                                    onClick={() =>
+                                        router.post(
+                                            route("courses.start", course.id),
+                                        )
+                                    }
+                                    variant="outline"
+                                    className="text-green-700 bg-green-50 border-green-400 hover:bg-green-100 hover:text-green-700"
+                                    disabled={
+                                        (status.label !== "Sedang Berlangsung" && !course.has_active_remedial) ||
+                                        hasOtherActive
+                                    }
+                                >
+                                    Mulai Mengerjakan
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    className="text-orange-700 bg-orange-50 border-orange-200 hover:bg-orange-100 hover:text-orange-700"
+                                    onClick={() =>
+                                        router.post(route("courses.stop"))
+                                    }
+                                >
+                                    Hentikan Pengerjaan
+                                </Button>
+                            )}
+                            {status.label === "Sedang Berlangsung" ? (
+                                hasOtherActive && (
+                                    <div className="text-sm md:text-right text-red-600 mt-1">
+                                        Anda memiliki kelas aktif lain.
+                                        <br />
+                                        Selesaikan kelas tersebut terlebih
+                                        dahulu sebelum mengerjakan kelas ini.
+                                    </div>
+                                )
+                            ) : (
+                                <div className="text-sm md:text-right mt-1">
+                                    {status.label === "Belum Mulai" && (
+                                        <div className="text-red-600">
+                                            Kelas belum mulai.
+                                            <br />
+                                            Tunggu waktu mulai kelas untuk dapat
+                                            mengerjakan.
+                                        </div>
+                                    )}
+                                    {status.label === "Selesai" && (
+                                        course.has_active_remedial ? (
+                                            <div className="bg-rose-50 border border-rose-200 rounded-lg p-2.5 text-xs text-rose-800 text-left md:text-right max-w-sm">
+                                                <p className="font-semibold mb-0.5">⚠️ Perlu Remedial</p>
+                                                <p>
+                                                    Terdapat ujian remedial yang perlu Anda kerjakan pada kelas ini.
+                                                    {course.remedial_deadline && (
+                                                        <> Batas akhir pengumpulan: <br /><span className="font-semibold">{new Date(course.remedial_deadline).toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} WIB</span>.</>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="text-red-600">
+                                                Kelas sudah selesai.
+                                                <br />
+                                                Anda tidak dapat mengerjakan kelas
+                                                ini lagi.
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl bg-white border shadow p-6 flex flex-col gap-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-6 gap-2">
+                            <div className="col-span-1 md:col-span-2">
+                                <Button
+                                    variant="outline"
+                                    className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
+                                    asChild
+                                >
+                                    <Link
+                                        href={route(
+                                            "course.showModules",
+                                            course.id,
+                                        )}
+                                    >
+                                        <FileText size={16} />
+                                        Lihat Modul ({course.modules_count || 0}
+                                        )
+                                    </Link>
+                                </Button>
+                            </div>
+
+                            <div className="flex-1">
+                                <div className="text-sm text-gray-500">
+                                    Deskripsi
+                                </div>
+                                <div className="font-medium text-gray-700 mb-2">
+                                    {course.description || "-"}
+                                </div>
+                                <div>
+                                    <div className="text-sm text-gray-500">
+                                        Durasi Pengerjaan
+                                    </div>
+                                    <div className="font-medium text-gray-700">
+                                        {course.start_date
+                                            ? new Date(
+                                                  course.start_date,
+                                              ).toLocaleDateString("id-ID", {
+                                                  day: "numeric",
+                                                  month: "long",
+                                                  year: "numeric",
+                                              })
+                                            : "-"}
+                                        {" - "}
+                                        {course.end_date
+                                            ? new Date(
+                                                  course.end_date,
+                                              ).toLocaleDateString("id-ID", {
+                                                  day: "numeric",
+                                                  month: "long",
+                                                  year: "numeric",
+                                              })
+                                            : "-"}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex-1 flex flex-col gap-2">
+                                <div>
+                                    <span className="text-sm text-gray-500">
+                                        Nilai Anda
+                                    </span>
+                                    <div className="font-mono text-lg font-bold text-primary">
+                                        {averageScore !== null ? (
+                                            averageScore
+                                        ) : (
+                                            <span className="italic text-gray-400">
+                                                Belum dinilai
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-500">
+                                        Feedback
+                                    </span>
+                                    <div className="text-gray-700">
+                                        {pivot?.feedback ? (
+                                            pivot.feedback
+                                        ) : (
+                                            <span className="italic text-gray-400">
+                                                Belum ada feedback
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tugas / Submission Kelas Siswa */}
+                    <StudentCourseSubmissionsSection
+                        courseId={course.id}
+                        courseSubmissions={courseSubmissions}
+                    />
+
+                    <div className="rounded-xl bg-white border shadow p-6 space-y-4">
+                        <h2 className="text-lg font-semibold text-primary">
+                            Jadwal Kelas & Ujian Kelas
+                        </h2>
+
+                        <div>
+                            <h3 className="font-semibold text-gray-800 mb-2">
+                                Jadwal Kelas ({courseSchedules.length})
+                            </h3>
+                            {courseSchedules.length > 0 ? (
+                                <div className="space-y-2">
+                                    {courseSchedules.map((schedule: any) => (
+                                        <div
+                                            key={schedule.id}
+                                            className="rounded-lg border p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+                                        >
+                                            <div>
+                                                <div className="font-medium text-gray-800">
+                                                    {schedule.title}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                    {formatLocalDateTime(
+                                                        schedule.scheduled_at,
                                                     )}
                                                 </div>
-                                            ),
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="text-sm italic text-slate-500">
-                                        Belum ada jadwal kelas.
-                                    </p>
-                                )}
-                            </div>
+                                            </div>
+                                            {schedule.zoom_link ? (
+                                                <a
+                                                    href={schedule.zoom_link}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="text-sm font-medium text-blue-700 hover:underline"
+                                                >
+                                                    Buka Link Meeting
+                                                </a>
+                                            ) : (
+                                                <span className="text-sm text-gray-500 italic">
+                                                    Link meeting belum tersedia
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500 italic">
+                                    Belum ada jadwal kelas.
+                                </p>
+                            )}
+                        </div>
 
-                            <div>
-                                <h3 className="mb-2 font-semibold text-slate-800">
-                                    Ujian Kelas ({courseTests.length})
-                                </h3>
-                                {courseTests.length > 0 ? (
+                        <div>
+                            <h3 className="font-semibold text-gray-800 mb-2">
+                                Ujian Kelas ({courseTests.length})
+                            </h3>
+                            {courseTests.length > 0 ? (
                                 <div className="space-y-2">
                                     {courseTests.map((courseTest: any) => {
                                         const isRemedialMode = !!courseTest?.is_remedial_mode;
@@ -503,6 +510,25 @@ export default function DetailCourse({
                                                             {isRemedialMode && (
                                                                 <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold text-rose-700 bg-rose-100 border border-rose-200">
                                                                     Remedial
+                                                                </span>
+                                                            )}
+                                                            {Boolean(courseTest.requires_submission) && (
+                                                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${
+                                                                    courseTest.submission?.status === 'approved'
+                                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                        : courseTest.submission?.status === 'pending_review'
+                                                                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                                                        : courseTest.submission?.status === 'rejected'
+                                                                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                                        : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                                                }`}>
+                                                                    {courseTest.submission?.status === 'approved'
+                                                                        ? '✓ Tugas Disetujui'
+                                                                        : courseTest.submission?.status === 'pending_review'
+                                                                        ? '⏳ Tugas Pending'
+                                                                        : courseTest.submission?.status === 'rejected'
+                                                                        ? '✕ Tugas Ditolak'
+                                                                        : 'Wajib Tugas'}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -649,14 +675,18 @@ export default function DetailCourse({
                                                 <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600">
                                                     <div className="rounded-md border border-dashed bg-white p-2">
                                                         Jadwal Mulai:{" "}
-                                                        {formatLocalDateTime(courseTest.start_date)}
+                                                        {formatLocalDateTime(
+                                                            courseTest.start_date,
+                                                        )}
                                                     </div>
                                                     <div className="rounded-md border border-dashed bg-white p-2">
                                                         Jadwal Selesai:{" "}
-                                                        {formatLocalDateTime(courseTest.end_date)}
+                                                        {formatLocalDateTime(
+                                                            courseTest.end_date,
+                                                        )}
                                                     </div>
                                                     {courseTest.is_remedial_mode && courseTest.remedial_status === 'active' && (
-                                                        <div className="rounded-md border border-rose-100 bg-rose-50/40 p-2 text-rose-700 md:col-span-2 font-semibold">
+                                                        <div className="rounded-md border border-rose-200 bg-rose-50/50 p-2 text-rose-800 md:col-span-2 font-semibold">
                                                             Batas Remedial:{" "}
                                                             {courseTest.remedial_end_date ? (
                                                                 formatLocalDateTime(courseTest.remedial_end_date)
@@ -675,10 +705,10 @@ export default function DetailCourse({
                                     Belum ada ujian kelas.
                                 </p>
                             )}
-                            </div>
                         </div>
+                    </div>
 
-                        {/* <div className="mt-4">
+                    <div className="mt-4">
                         <h2 className="text-lg font-semibold text-primary mb-2">
                             Hasil yang Sudah Dikerjakan
                         </h2>
@@ -720,7 +750,7 @@ export default function DetailCourse({
                                     }
                                     )
                                 </TabsTrigger>
-                                <TabsTrigger value="other-keluaran">
+                                {/* <TabsTrigger value="other-keluaran">
                                     Dokumen Keluaran (
                                     {
                                         others.filter(
@@ -755,7 +785,7 @@ export default function DetailCourse({
                                         ).length
                                     }
                                     )
-                                </TabsTrigger>
+                                </TabsTrigger> */}
                                 <TabsTrigger value="bupot">
                                     Bupot ({bupots.length})
                                 </TabsTrigger>
@@ -787,7 +817,7 @@ export default function DetailCourse({
                                     courseResults={courseResults}
                                 />
                             </TabsContent>
-                            <TabsContent value="other-keluaran">
+                            {/* <TabsContent value="other-keluaran">
                                 <DokumenKeluaran
                                     others={others}
                                     courseResults={courseResults}
@@ -810,7 +840,7 @@ export default function DetailCourse({
                                     returOthers={returOthers}
                                     courseResults={courseResults}
                                 />
-                            </TabsContent>
+                            </TabsContent> */}
                             <TabsContent value="bupot">
                                 <Bupot
                                     bupots={bupots}
@@ -824,46 +854,45 @@ export default function DetailCourse({
                                 />
                             </TabsContent>
                         </Tabs>
-                    </div> */}
-
-                        {/* <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive">
-                                    <DoorOpen /> Keluar Kelas
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                        Apakah Anda yakin ingin keluar dari
-                                        kelas ini?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Tindakan ini tidak dapat dibatalkan.
-                                        Anda harus memasukkan kode kelas lagi
-                                        jika ingin bergabung kembali.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Batal</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        className="bg-rose-600 text-white hover:bg-rose-700"
-                                        onClick={() => {
-                                            router.delete(
-                                                route(
-                                                    "courses.leave",
-                                                    course.id,
-                                                ),
-                                                { preserveScroll: true },
-                                            );
-                                        }}
-                                    >
-                                        Keluar Kelas
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog> */}
                     </div>
+
+                    {/* <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="text-red-700 border-red-200 bg-red-50 hover:bg-red-100"
+                            >
+                                <DoorOpen /> Keluar Kelas
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                    Apakah Anda yakin ingin keluar dari kelas
+                                    ini?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Tindakan ini tidak dapat dibatalkan. Anda
+                                    harus memasukkan kode kelas lagi jika ingin
+                                    bergabung kembali.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                <AlertDialogAction
+                                    className="bg-red-600 text-white hover:bg-red-700"
+                                    onClick={() => {
+                                        router.delete(
+                                            route("courses.leave", course.id),
+                                            { preserveScroll: true },
+                                        );
+                                    }}
+                                >
+                                    Keluar Kelas
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog> */}
                 </div>
             </div>
         </AuthenticatedLayout>

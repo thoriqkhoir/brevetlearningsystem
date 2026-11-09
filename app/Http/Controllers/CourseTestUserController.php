@@ -7,10 +7,12 @@ use App\Models\CourseTest;
 use App\Models\CourseTestAttempt;
 use App\Models\CourseTestAttemptAnswer;
 use App\Models\CourseUser;
+use App\Models\Submission;
 use App\Models\UserCourseTestSequence;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CourseTestUserController extends Controller
@@ -21,6 +23,7 @@ class CourseTestUserController extends Controller
         $user = Auth::user();
 
         $this->ensureParticipant($course, $user->id);
+        $this->ensureSubmissionApproved($courseTest, $user->id);
 
         $tz = 'Asia/Jakarta';
         $now = now($tz);
@@ -67,25 +70,28 @@ class CourseTestUserController extends Controller
             }
         }
 
-        $attempt = CourseTestAttempt::where('user_id', $user->id)
-            ->where('course_test_id', $courseTest->id)
-            ->whereNull('submitted_at')
-            ->first();
+        DB::transaction(function () use ($user, $courseTest, $testType, $tz, $isRemedialActive) {
+            $attempt = CourseTestAttempt::where('user_id', $user->id)
+                ->where('course_test_id', $courseTest->id)
+                ->whereNull('submitted_at')
+                ->lockForUpdate()
+                ->first();
 
-        if (!$attempt && !$this->hasRemainingAttempts($courseTest, $user->id)) {
-            return back()->with('error', $isRemedialActive ? 'Anda sudah lulus ujian remedial ini.' : 'Batas kesempatan ujian sudah habis.');
-        }
+            if (!$attempt && !$this->hasRemainingAttempts($courseTest, $user->id)) {
+                abort(403, $isRemedialActive ? 'Anda sudah lulus ujian remedial ini.' : 'Batas kesempatan ujian sudah habis.');
+            }
 
-        if (!$attempt) {
-            CourseTestAttempt::create([
-                'user_id' => $user->id,
-                'course_test_id' => $courseTest->id,
-                'test_type' => $testType,
-                'score' => 0,
-                'passed' => false,
-                'started_at' => now($tz),
-            ]);
-        }
+            if (!$attempt) {
+                CourseTestAttempt::create([
+                    'user_id' => $user->id,
+                    'course_test_id' => $courseTest->id,
+                    'test_type' => $testType,
+                    'score' => 0,
+                    'passed' => false,
+                    'started_at' => now($tz),
+                ]);
+            }
+        });
 
         session(['active_course_test_id' => $courseTest->id]);
 
@@ -98,6 +104,7 @@ class CourseTestUserController extends Controller
         $user = Auth::user();
 
         $this->ensureParticipant($course, $user->id);
+        $this->ensureSubmissionApproved($courseTest, $user->id);
 
         $course->load('user');
         $courseTest->load([
@@ -326,6 +333,7 @@ class CourseTestUserController extends Controller
         $user = Auth::user();
 
         $this->ensureParticipant($course, $user->id);
+        $this->ensureSubmissionApproved($courseTest, $user->id);
 
         $courseTest->load(['questions.options']);
 
@@ -398,6 +406,7 @@ class CourseTestUserController extends Controller
         $user = Auth::user();
 
         $this->ensureParticipant($course, $user->id);
+        $this->ensureSubmissionApproved($courseTest, $user->id);
 
         $courseTest->load(['questions.options']);
 
@@ -419,6 +428,7 @@ class CourseTestUserController extends Controller
         $user = Auth::user();
 
         $this->ensureParticipant($course, $user->id);
+        $this->ensureSubmissionApproved($courseTest, $user->id);
 
         $attempt = CourseTestAttempt::where('user_id', $user->id)
             ->where('course_test_id', $courseTest->id)
@@ -448,6 +458,7 @@ class CourseTestUserController extends Controller
         $user = Auth::user();
 
         $this->ensureParticipant($course, $user->id);
+        $this->ensureSubmissionApproved($courseTest, $user->id);
 
         $courseTest->load(['questions.options']);
 
@@ -537,6 +548,50 @@ class CourseTestUserController extends Controller
         }
 
         return $participant;
+    }
+
+    private function ensureSubmissionApproved(CourseTest $courseTest, string $userId): void
+    {
+        if (!$courseTest->requires_submission) {
+            return;
+        }
+
+        $isApproved = false;
+
+        if ($courseTest->course_submission_id) {
+            $isApproved = Submission::where('course_submission_id', $courseTest->course_submission_id)
+                ->where('user_id', $userId)
+                ->where('status', 'approved')
+                ->exists();
+        } else {
+            $courseSubmissions = \App\Models\CourseSubmission::where('course_id', $courseTest->course_id)->get();
+            if ($courseSubmissions->isNotEmpty()) {
+                $approvedCount = Submission::where('course_id', $courseTest->course_id)
+                    ->where('user_id', $userId)
+                    ->where('status', 'approved')
+                    ->whereIn('course_submission_id', $courseSubmissions->pluck('id'))
+                    ->count();
+
+                // Harus ACC SEMUA submission di kelas ini
+                $isApproved = $approvedCount >= $courseSubmissions->count();
+            } else {
+                $isApproved = Submission::where('course_test_id', $courseTest->id)
+                    ->where('user_id', $userId)
+                    ->where('status', 'approved')
+                    ->exists();
+
+                if (!$isApproved) {
+                    $isApproved = Submission::where('course_id', $courseTest->course_id)
+                        ->where('user_id', $userId)
+                        ->where('status', 'approved')
+                        ->exists();
+                }
+            }
+        }
+
+        if (!$isApproved) {
+            abort(403, 'Akses ujian ditolak. Anda wajib memiliki submission tugas yang telah disetujui (Approved).');
+        }
     }
 
     private function getOrCreateAttempt(CourseTest $courseTest, string $userId): CourseTestAttempt

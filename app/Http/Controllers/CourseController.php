@@ -16,12 +16,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use ZipArchive;
 
 class CourseController extends Controller
 {
@@ -92,6 +89,8 @@ class CourseController extends Controller
                     'end_date' => $courseTestPayload['end_date'] ?? null,
                     'show_score' => $courseTestPayload['show_score'] ?? true,
                     'show_correct_answers' => $courseTestPayload['show_correct_answers'] ?? true,
+                    'requires_submission' => !empty($courseTestPayload['requires_submission']),
+                    'submission_instructions' => $courseTestPayload['submission_instructions'] ?? null,
                 ]);
             }
         });
@@ -103,8 +102,11 @@ class CourseController extends Controller
     {
         $course = Course::with([
             'courseSchedules',
+            'courseSubmissions' => function ($query) {
+                $query->with(['submissions.user', 'submissions.reviews']);
+            },
             'courseTests' => function ($query) {
-                $query->with(['questionBank']);
+                $query->with(['questionBank', 'courseSubmission']);
             },
         ])->findOrFail($id);
         $participants = $course->participants()
@@ -135,6 +137,7 @@ class CourseController extends Controller
             'course' => $course,
             'participants' => $participants,
             'courseSchedules' => $course->courseSchedules,
+            'courseSubmissions' => $course->courseSubmissions,
             'courseTests' => $course->courseTests,
             'questionBanks' => $questionBanks,
         ]);
@@ -150,93 +153,6 @@ class CourseController extends Controller
         $fileName = 'peserta_kelas_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $course->title ?? 'course') . '.xlsx';
 
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\CourseParticipantsExport($course), $fileName);
-    }
-
-    public function downloadParticipantPhotos($id)
-    {
-        $course = Course::findOrFail($id);
-        if ($course->teacher_id !== Auth::id() && Auth::user()->role !== 'admin') {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $participants = $course->participants()
-            ->with(['user:id,name,profile_url'])
-            ->get();
-
-        $courseName = $course->name ?? 'kelas';
-        $zipFileName = 'foto_peserta_' . Str::slug($courseName, '_') . '.zip';
-        $tempZipPath = tempnam(sys_get_temp_dir(), 'course_photos_');
-
-        $zip = new ZipArchive();
-        if ($zip->open($tempZipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-            return back()->with('error', 'Gagal membuat file arsip foto.');
-        }
-
-        $addedCount = 0;
-        $usedNames = [];
-
-        foreach ($participants as $participant) {
-            $user = $participant->user;
-            if (!$user || empty($user->profile_url)) {
-                continue;
-            }
-
-            $rawUrl = $user->profile_url;
-            $realFilePath = null;
-
-            // 1. Coba melalui disk 'public'
-            $relativePath = ltrim(preg_replace('#^/?storage/#', '', $rawUrl), '/');
-            if (Storage::disk('public')->exists($relativePath)) {
-                $realFilePath = Storage::disk('public')->path($relativePath);
-            } elseif (file_exists(public_path(ltrim($rawUrl, '/')))) {
-                // 2. Coba direct public_path
-                $realFilePath = public_path(ltrim($rawUrl, '/'));
-            } elseif (file_exists(storage_path('app/public/' . $relativePath))) {
-                // 3. Coba direct storage_path
-                $realFilePath = storage_path('app/public/' . $relativePath);
-            }
-
-            if (!$realFilePath || !file_exists($realFilePath) || !is_readable($realFilePath)) {
-                continue;
-            }
-
-            $extension = pathinfo($realFilePath, PATHINFO_EXTENSION) ?: 'jpg';
-
-            $cleanName = Str::slug($user->name, '_');
-            if (empty($cleanName)) {
-                $cleanName = 'peserta_' . $user->id;
-            }
-
-            $entryName = $cleanName . '.' . $extension;
-            if (isset($usedNames[$entryName])) {
-                $usedNames[$entryName]++;
-                $entryName = $cleanName . '_' . $usedNames[$entryName] . '.' . $extension;
-            } else {
-                $usedNames[$entryName] = 1;
-            }
-
-            $zip->addFile($realFilePath, $entryName);
-            $addedCount++;
-        }
-
-        $zip->close();
-
-        if ($addedCount === 0) {
-            if (file_exists($tempZipPath)) {
-                @unlink($tempZipPath);
-            }
-            return back()->with('error', 'Tidak ada foto peserta yang tersedia untuk diunduh.');
-        }
-
-        clearstatcache(true, $tempZipPath);
-
-        return response()->download($tempZipPath, $zipFileName, [
-            'Content-Type' => 'application/zip',
-            'Content-Length' => filesize($tempZipPath),
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ])->deleteFileAfterSend(true);
     }
 
     public function showParticipant($courseId, $participantId)
@@ -560,6 +476,8 @@ class CourseController extends Controller
             'course_tests.*.end_date' => 'nullable|date|after_or_equal:course_tests.*.start_date',
             'course_tests.*.show_score' => 'nullable|boolean',
             'course_tests.*.show_correct_answers' => 'nullable|boolean',
+            'course_tests.*.requires_submission' => 'nullable|boolean',
+            'course_tests.*.submission_instructions' => 'nullable|string',
         ]);
     }
 

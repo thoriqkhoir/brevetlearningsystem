@@ -1339,7 +1339,7 @@ const DetailSPTBadan = ({
     const isL4Enabled =
         form.watch("c_2") === true || form.watch("c_3") === true;
     const isL5Enabled = form.watch("c_1a") === true;
-    const isL6Enabled = form.watch("g_20") === false;
+    const isL6Enabled = form.watch("g_20") === true;
     const isL7Enabled = form.watch("d_8") === true;
     const isL8Enabled = form.watch("d_11") === "3";
 
@@ -1721,13 +1721,20 @@ const DetailSPTBadan = ({
                 ? form.watch("e_13_value") || 0
                 : 0;
             const computed = Math.round((d_12 - e_13_value) / 12);
-            form.setValue("g_20_value", computed > 0 ? computed : 0);
+            const l6Val = Number(l6?.amount_7 ?? 0);
+            const target = l6Val > 0 ? l6Val : (computed > 0 ? computed : 0);
+            if (target > 0) {
+                form.setValue("g_20_value", target);
+            }
+        } else if (form.watch("g_20") === false) {
+            form.setValue("g_20_value", 0);
         }
     }, [
         form.watch("g_20"),
         form.watch("d_12"),
         form.watch("e_13"),
         form.watch("e_13_value"),
+        l6?.amount_7,
     ]);
 
     const handleSaveDraft = async () => {
@@ -1989,16 +1996,32 @@ const DetailSPTBadan = ({
         const g20 = form.watch("g_20");
         const currentG20Value = Number(form.getValues("g_20_value") ?? 0);
 
-        if (g20 === true && currentG20Value !== 0) {
+        if (g20 === false && currentG20Value !== 0) {
             g20ValueCacheRef.current = currentG20Value;
+            form.setValue("g_20_value", 0, {
+                shouldDirty: false,
+                shouldTouch: false,
+                shouldValidate: false,
+            });
         }
 
-        if (g20 === false && currentG20Value === 0) {
+        if (g20 === true && currentG20Value === 0) {
             const backendValue = Number(sptBadan?.g_20_value ?? 0);
+            const l6Val = Number(l6?.amount_7 ?? 0);
+            const d_12 = Number(form.getValues("d_12") ?? 0);
+            const e_13_value = form.getValues("e_13")
+                ? Number(form.getValues("e_13_value") ?? 0)
+                : 0;
+            const computed = Math.round((d_12 - e_13_value) / 12);
+
             const restoredValue =
                 g20ValueCacheRef.current !== 0
                     ? g20ValueCacheRef.current
-                    : backendValue;
+                    : (l6Val !== 0
+                        ? l6Val
+                        : (backendValue !== 0
+                            ? backendValue
+                            : (computed > 0 ? computed : 0)));
 
             if (restoredValue !== 0) {
                 form.setValue("g_20_value", restoredValue, {
@@ -2008,7 +2031,7 @@ const DetailSPTBadan = ({
                 });
             }
         }
-    }, [form, form.watch("g_20"), sptBadan?.g_20_value]);
+    }, [form, form.watch("g_20"), sptBadan?.g_20_value, l6?.amount_7]);
 
     useEffect(() => {
         const conditionalValuePairs: Array<{
@@ -5501,22 +5524,26 @@ const DetailSPTBadan = ({
                                                                     <td className="p-4 align-middle">
                                                                         <NumberField
                                                                             name="g_20_value"
+                                                                            className={cn(
+                                                                                "w-full text-right",
+                                                                                form.watch("g_20") !== true && "hidden",
+                                                                            )}
                                                                             disabled
                                                                         />
                                                                     </td>
                                                                     <td className="p-4 align-middle">
                                                                         {form.watch(
                                                                             "g_20",
-                                                                        ) ===
-                                                                            false && (
+                                                                        ) !==
+                                                                            undefined && (
                                                                             <div className="bg-sky-200/70 text-sky-950 px-3 py-2 rounded text-sm flex items-start gap-2">
                                                                                 <Info className="h-4 w-4 mt-0.5 shrink-0" />
                                                                                 <span>
-                                                                                    Ya,
-                                                                                    silahkan
-                                                                                    mengisi
-                                                                                    Lampiran
-                                                                                    6
+                                                                                    {form.watch(
+                                                                                        "g_20",
+                                                                                    )
+                                                                                        ? "Ya, silahkan mengisi Lampiran 6"
+                                                                                        : "Tidak, silahkan lanjut pertanyaan berikutnya"}
                                                                                 </span>
                                                                             </div>
                                                                         )}

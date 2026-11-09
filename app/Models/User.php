@@ -93,4 +93,14 @@ class User extends Authenticatable
             ->withPivot('id', 'feedback', 'created_at')
             ->withTimestamps();
     }
+
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class, 'user_id');
+    }
+
+    public function submissionReviews()
+    {
+        return $this->hasMany(SubmissionReview::class, 'reviewer_id');
+    }
 }

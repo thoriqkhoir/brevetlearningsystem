@@ -32,6 +32,10 @@ class CourseTestController extends Controller
             $validated['remedial_end_date'] = null;
         }
 
+        $validated['requires_submission'] = $request->boolean('requires_submission');
+        $validated['submission_instructions'] = $validated['requires_submission'] ? $request->input('submission_instructions') : null;
+        $validated['course_submission_id'] = $validated['requires_submission'] ? $request->input('course_submission_id') : null;
+
         $this->validateCourseDateWindow($course, $validated);
 
         $course->courseTests()->create($validated);
@@ -53,6 +57,10 @@ class CourseTestController extends Controller
             $validated['remedial_enabled'] = false;
             $validated['remedial_end_date'] = null;
         }
+
+        $validated['requires_submission'] = $request->boolean('requires_submission');
+        $validated['submission_instructions'] = $validated['requires_submission'] ? $request->input('submission_instructions') : null;
+        $validated['course_submission_id'] = $validated['requires_submission'] ? $request->input('course_submission_id') : null;
 
         $this->validateCourseDateWindow($course, $validated);
 
@@ -107,7 +115,7 @@ class CourseTestController extends Controller
         $courseTest->load('questionBank');
 
         $participants = $course->participants()
-            ->with('user:id,name,email,profile_url')
+            ->with('user:id,name,email')
             ->get(['id', 'course_id', 'user_id']);
 
         $submittedAttempts = CourseTestAttempt::where('course_test_id', $courseTest->id)
@@ -116,7 +124,7 @@ class CourseTestController extends Controller
 
         $attemptHistory = CourseTestAttempt::where('course_test_id', $courseTest->id)
             ->whereNotNull('submitted_at')
-            ->with('user:id,name,email,profile_url')
+            ->with('user:id,name,email')
             ->orderBy('submitted_at', 'desc')
             ->get()
             ->map(function ($attempt) {
@@ -272,6 +280,9 @@ class CourseTestController extends Controller
             'show_correct_answers' => 'nullable|boolean',
             'remedial_enabled' => 'nullable|boolean',
             'remedial_end_date' => 'nullable|date',
+            'requires_submission' => 'nullable|boolean',
+            'submission_instructions' => 'nullable|string',
+            'course_submission_id' => 'nullable|uuid|exists:course_submissions,id',
         ]);
     }
 

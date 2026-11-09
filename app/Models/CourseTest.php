@@ -23,6 +23,7 @@ class CourseTest extends Model
         'end_date' => 'datetime',
         'remedial_enabled' => 'boolean',
         'remedial_end_date' => 'datetime',
+        'requires_submission' => 'boolean',
     ];
 
     protected $appends = ['question_count'];
@@ -47,6 +48,16 @@ class CourseTest extends Model
     public function attempts()
     {
         return $this->hasMany(CourseTestAttempt::class, 'course_test_id');
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class, 'course_test_id');
+    }
+
+    public function courseSubmission()
+    {
+        return $this->belongsTo(CourseSubmission::class, 'course_submission_id');
     }
 
     public function getQuestionCountAttribute()
