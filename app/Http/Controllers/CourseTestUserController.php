@@ -480,49 +480,56 @@ class CourseTestUserController extends Controller
 
         $answers = $attempt->answers()->get()->keyBy('question_id');
         $questions = $this->getDisplayedQuestionsForUser($courseTest, $user->id, $courseTest->questions);
+        $showCorrectAnswers = (bool) ($courseTest->show_correct_answers ?? true);
 
-        $review = $questions->map(function ($question) use ($answers, $sequence) {
-            $options = $question->options;
+        $review = $showCorrectAnswers
+            ? $questions->map(function ($question) use ($answers, $sequence) {
+                $options = $question->options;
 
-            if ($sequence && is_array($sequence->option_sequences) && isset($sequence->option_sequences[$question->id]) && $options) {
-                $seq = $sequence->option_sequences[$question->id];
-                if (is_array($seq) && count($seq) > 1) {
-                    $correct = $options?->firstWhere('is_correct', true);
-                    if ($correct && $seq[0] === $correct->id) {
-                        $swapIndex = count($seq) > 2 ? random_int(1, count($seq) - 1) : 1;
-                        [$seq[0], $seq[$swapIndex]] = [$seq[$swapIndex], $seq[0]];
+                if ($sequence && is_array($sequence->option_sequences) && isset($sequence->option_sequences[$question->id]) && $options) {
+                    $seq = $sequence->option_sequences[$question->id];
+                    if (is_array($seq) && count($seq) > 1) {
+                        $correct = $options?->firstWhere('is_correct', true);
+                        if ($correct && $seq[0] === $correct->id) {
+                            $swapIndex = count($seq) > 2 ? random_int(1, count($seq) - 1) : 1;
+                            [$seq[0], $seq[$swapIndex]] = [$seq[$swapIndex], $seq[0]];
+                        }
                     }
+
+                    $optOrder = array_flip($seq);
+                    $options = $options->sortBy(function ($option) use ($optOrder) {
+                        return $optOrder[$option->id] ?? PHP_INT_MAX;
+                    })->values();
                 }
 
-                $optOrder = array_flip($seq);
-                $options = $options->sortBy(function ($option) use ($optOrder) {
-                    return $optOrder[$option->id] ?? PHP_INT_MAX;
-                })->values();
-            }
+                $answer = $answers->get($question->id);
+                $selectedOptionId = $answer?->answer;
+                $correctOption = $options?->firstWhere('is_correct', true);
 
-            $answer = $answers->get($question->id);
-            $selectedOptionId = $answer?->answer;
-            $correctOption = $options?->firstWhere('is_correct', true);
+                return [
+                    'id' => $question->id,
+                    'order_no' => null,
+                    'question_text' => $question->question_text,
+                    'explanation' => $question->explanation,
+                    'question_type' => $question->question_type,
+                    'selected' => $question->question_type === 'short_answer' ? ($answer?->answer ?? null) : $selectedOptionId,
+                    'is_correct' => $answer?->is_correct ?? null,
+                    'correct_option_id' => $correctOption?->id,
+                    'correct_option_text' => $correctOption?->option_text,
+                    'options' => $options?->map(function ($option) {
+                        return [
+                            'id' => $option->id,
+                            'option_text' => $option->option_text,
+                            'is_correct' => (bool) $option->is_correct,
+                        ];
+                    }),
+                ];
+            })
+            : collect();
 
-            return [
-                'id' => $question->id,
-                'order_no' => null,
-                'question_text' => $question->question_text,
-                'explanation' => $question->explanation,
-                'question_type' => $question->question_type,
-                'selected' => $question->question_type === 'short_answer' ? ($answer?->answer ?? null) : $selectedOptionId,
-                'is_correct' => $answer?->is_correct ?? null,
-                'correct_option_id' => $correctOption?->id,
-                'correct_option_text' => $correctOption?->option_text,
-                'options' => $options?->map(function ($option) {
-                    return [
-                        'id' => $option->id,
-                        'option_text' => $option->option_text,
-                        'is_correct' => (bool) $option->is_correct,
-                    ];
-                }),
-            ];
-        });
+        if (!$showCorrectAnswers) {
+            $courseTest->unsetRelation('questions');
+        }
 
         return Inertia::render('Course/CourseTest/Result', [
             'course' => $course,
