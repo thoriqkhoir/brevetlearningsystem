@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('question_bank_id')->constrained('question_banks')->onDelete('cascade');
             $table->text('question_text');
+            $table->text('explanation')->nullable();
             $table->string('image_url')->nullable();
             $table->enum('question_type', ['multiple_choice', 'true_false', 'short_answer'])->default('multiple_choice');
             $table->integer('order_no')->default(1);

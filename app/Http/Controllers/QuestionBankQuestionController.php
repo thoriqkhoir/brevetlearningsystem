@@ -78,6 +78,7 @@ class QuestionBankQuestionController extends Controller
 
         $validated = $request->validate([
             'question_text' => 'required|string',
+            'explanation' => 'nullable|string',
             'question_type' => 'required|in:multiple_choice,true_false,short_answer',
             'options' => 'required_if:question_type,multiple_choice,true_false|array|min:2',
             'options.*.id' => 'nullable|string',
@@ -95,6 +96,7 @@ class QuestionBankQuestionController extends Controller
         $question = Question::create([
             'question_bank_id' => $questionBank->id,
             'question_text' => $validated['question_text'],
+            'explanation' => $validated['explanation'] ?? null,
             'question_type' => $validated['question_type'],
             'image_url' => $imagePath,
         ]);
@@ -160,6 +162,7 @@ class QuestionBankQuestionController extends Controller
 
         $validated = $request->validate([
             'question_text' => 'required|string',
+            'explanation' => 'nullable|string',
             'question_type' => 'required|in:multiple_choice,true_false,short_answer',
             'options' => 'required_if:question_type,multiple_choice,true_false|array|min:2',
             'options.*.id' => 'nullable|string',
@@ -178,6 +181,7 @@ class QuestionBankQuestionController extends Controller
 
         $question->update([
             'question_text' => $validated['question_text'],
+            'explanation' => $validated['explanation'] ?? null,
             'question_type' => $validated['question_type'],
             'image_url' => $question->image_url,
         ]);

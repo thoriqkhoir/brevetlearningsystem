@@ -35,6 +35,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const formSchema = z.object({
     question_text: z.string().min(1, "Pertanyaan harus diisi"),
+    explanation: z.string().optional(),
     question_type: z.enum(["multiple_choice", "true_false"], {
         required_error: "Pilih jenis soal",
     }),
@@ -64,6 +65,7 @@ export default function CreateQuestion({
         resolver: zodResolver(formSchema),
         defaultValues: {
             question_text: "",
+            explanation: "",
             question_type: "multiple_choice",
         },
     });
@@ -124,6 +126,7 @@ export default function CreateQuestion({
 
         const formData = new FormData();
         formData.append("question_text", values.question_text);
+        formData.append("explanation", values.explanation?.trim() || "");
         formData.append("question_type", values.question_type);
 
         if (values.question_type === "multiple_choice") {
@@ -405,8 +408,11 @@ export default function CreateQuestion({
                                                             key={index}
                                                             className="flex flex-col gap-3 p-3 border rounded-lg"
                                                         >
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="flex items-center space-x-2">
+                                                             <div className="flex items-center gap-3">
+                                                                 <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs font-semibold text-slate-700">
+                                                                     {String.fromCharCode(65 + index)}
+                                                                 </span>
+                                                                 <div className="flex items-center space-x-2">
                                                                     <Checkbox
                                                                         checked={
                                                                             option.is_correct
@@ -606,6 +612,29 @@ export default function CreateQuestion({
                                             </p>
                                         </div>
                                     )} */}
+
+                                    <FormField
+                                        control={form.control}
+                                        name="explanation"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    Pembahasan Soal (opsional)
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Textarea
+                                                        {...field}
+                                                        placeholder="Masukkan pembahasan atau penjelasan jawaban benar..."
+                                                        rows={3}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Ditampilkan pada review jawaban setelah ujian selesai (jika kunci jawaban ditampilkan).
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     <div className="flex gap-2 pt-4">
                                         <Button type="submit">

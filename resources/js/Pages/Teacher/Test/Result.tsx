@@ -102,6 +102,12 @@ export default function TeacherResult({ test, attempt, review, participant }: an
                       })}
                     </div>
                   )}
+                  {r.explanation && (
+                    <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50/70 p-3 text-sm text-blue-950">
+                      <div className="font-semibold text-blue-900 mb-1">Pembahasan</div>
+                      <div className="whitespace-pre-wrap leading-relaxed">{r.explanation}</div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

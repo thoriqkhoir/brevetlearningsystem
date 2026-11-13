@@ -23,27 +23,29 @@ class QuestionImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithVal
 
     public function model(array $row)
     {
+        $explanation = isset($row['explanation']) && trim((string) $row['explanation']) !== ''
+            ? trim((string) $row['explanation'])
+            : null;
+
         // Create the question
         $question = Question::create([
             'question_bank_id' => $this->questionBankId,
             'question_text' => $row['question'],
+            'explanation' => $explanation,
             'question_type' => 'multiple_choice', // Default to multiple choice
         ]);
 
-        // Create options
-        $options = [
-            ['option_text' => $row['option_a'], 'is_correct' => strtoupper($row['correct_option']) === 'A'],
-            ['option_text' => $row['option_b'], 'is_correct' => strtoupper($row['correct_option']) === 'B'],
-        ];
+        $correctOption = strtoupper(trim((string) $row['correct_option']));
+        $options = [];
 
-        // Add option C if exists
-        if (!empty($row['option_c'])) {
-            $options[] = ['option_text' => $row['option_c'], 'is_correct' => strtoupper($row['correct_option']) === 'C'];
-        }
-
-        // Add option D if exists
-        if (!empty($row['option_d'])) {
-            $options[] = ['option_text' => $row['option_d'], 'is_correct' => strtoupper($row['correct_option']) === 'D'];
+        foreach (range('a', 'z') as $letter) {
+            $key = "option_{$letter}";
+            if (array_key_exists($key, $row) && $row[$key] !== null && trim((string) $row[$key]) !== '') {
+                $options[] = [
+                    'option_text' => trim((string) $row[$key]),
+                    'is_correct' => $correctOption === strtoupper($letter),
+                ];
+            }
         }
 
         // Create the options
@@ -60,12 +62,20 @@ class QuestionImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithVal
 
     public function prepareForValidation($data, $index)
     {
-        $fields = ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option'];
-        
+        $fields = ['question', 'correct_option', 'explanation', 'pembahasan'];
+        foreach (range('a', 'z') as $letter) {
+            $fields[] = "option_{$letter}";
+        }
+
         foreach ($fields as $field) {
             if (array_key_exists($field, $data) && $data[$field] !== null) {
                 $data[$field] = trim((string) $data[$field]);
             }
+        }
+
+        // Fallback alias: allow 'pembahasan' column when 'explanation' is not provided
+        if ((!isset($data['explanation']) || $data['explanation'] === '') && isset($data['pembahasan']) && $data['pembahasan'] !== '') {
+            $data['explanation'] = $data['pembahasan'];
         }
 
         return $data;
@@ -73,14 +83,45 @@ class QuestionImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithVal
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'question' => 'required|string',
             'option_a' => 'required|string',
             'option_b' => 'required|string',
-            'option_c' => 'nullable|string',
-            'option_d' => 'nullable|string',
-            'correct_option' => 'required|in:A,B,C,D,a,b,c,d',
+            'correct_option' => ['required', 'string', 'regex:/^[A-Za-z]$/'],
+            'explanation' => 'nullable|string',
         ];
+
+        foreach (range('c', 'z') as $letter) {
+            $rules["option_{$letter}"] = 'nullable|string';
+        }
+
+        return $rules;
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            foreach ($validator->getData() as $rowIndex => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+
+                $correct = strtoupper(trim((string) ($row['correct_option'] ?? '')));
+                if ($correct === '' || !preg_match('/^[A-Z]$/', $correct)) {
+                    continue;
+                }
+
+                $optionKey = 'option_' . strtolower($correct);
+                $optionValue = isset($row[$optionKey]) ? trim((string) $row[$optionKey]) : '';
+
+                if ($optionValue === '') {
+                    $validator->errors()->add(
+                        "{$rowIndex}.correct_option",
+                        "Kolom {$optionKey} harus diisi karena dipilih sebagai correct_option ({$correct})."
+                    );
+                }
+            }
+        });
     }
 
     public function customValidationMessages()
@@ -90,7 +131,7 @@ class QuestionImport implements ToModel, WithHeadingRow, SkipsEmptyRows, WithVal
             'option_a.required' => 'Kolom option_a harus diisi.',
             'option_b.required' => 'Kolom option_b harus diisi.',
             'correct_option.required' => 'Kolom correct_option harus diisi.',
-            'correct_option.in' => 'Kolom correct_option harus berisi A, B, C, atau D.',
+            'correct_option.regex' => 'Kolom correct_option harus berupa huruf opsi yang valid (misal A, B, C, D, E, ...).',
         ];
     }
 }

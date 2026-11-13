@@ -64,6 +64,7 @@ interface QuestionOption {
 interface Question {
     id: string;
     question_text: string;
+    explanation?: string | null;
     question_type: "multiple_choice" | "true_false" | "short_answer";
     correct_answer?: string | boolean;
     options?: QuestionOption[];
@@ -346,7 +347,8 @@ export default function Question({
     const filteredQuestions = normalizedQuery
         ? questions.filter((q) => {
               const qt = (q.question_text || "").toLowerCase();
-              const matchText = qt.includes(normalizedQuery);
+              const exp = (q.explanation || "").toLowerCase();
+              const matchText = qt.includes(normalizedQuery) || exp.includes(normalizedQuery);
               const matchOptions = q.options?.some((o) =>
                   (o.option_text || "").toLowerCase().includes(normalizedQuery),
               );
@@ -618,17 +620,28 @@ export default function Question({
                                                                         option_b,
                                                                         option_c,
                                                                         option_d,
-                                                                        correct_option
+                                                                        option_e
+                                                                        (bisa
+                                                                        ditambah
+                                                                        option_f,
+                                                                        dst.),
+                                                                        correct_option,
+                                                                        explanation
                                                                     </li>
                                                                     <li>
-                                                                        Correct_option:
-                                                                        A, B, C,
-                                                                        atau D
+                                                                        correct_option:
+                                                                        huruf
+                                                                        opsi
+                                                                        benar
+                                                                        (A, B,
+                                                                        C, D, E,
+                                                                        dst.)
                                                                     </li>
                                                                     <li>
-                                                                        Option_c
+                                                                        option_c
+                                                                        ke atas
                                                                         dan
-                                                                        option_d
+                                                                        explanation
                                                                         boleh
                                                                         kosong
                                                                     </li>
@@ -1155,6 +1168,17 @@ export default function Question({
                                                                             </div>
                                                                         ),
                                                                     )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {question.explanation && (
+                                                            <div className="mt-4 rounded-md border border-blue-200 bg-blue-50/70 p-3 text-sm text-blue-950">
+                                                                <div className="font-medium text-blue-900 mb-1">
+                                                                    Pembahasan:
+                                                                </div>
+                                                                <div className="whitespace-pre-wrap leading-relaxed">
+                                                                    {question.explanation}
                                                                 </div>
                                                             </div>
                                                         )}

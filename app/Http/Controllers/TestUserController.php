@@ -370,6 +370,12 @@ class TestUserController extends Controller
             })->values());
         }
 
+        // Prevent leaking question explanation while exam is in progress
+        $test->questions->each->makeHidden(['explanation']);
+        if ($current) {
+            $current->makeHidden(['explanation']);
+        }
+
         return Inertia::render('Test/Exam', [
             'test' => $test,
             'pivot' => $pivot,
@@ -756,6 +762,7 @@ class TestUserController extends Controller
                 'id' => $q->id,
                 'order_no' => null,
                 'question_text' => $q->question_text,
+                'explanation' => $q->explanation,
                 'question_type' => $q->question_type,
                 'selected' => $q->question_type === 'short_answer' ? ($ans?->answer ?? null) : $selectedOptionId,
                 'is_correct' => $ans?->is_correct ?? null,

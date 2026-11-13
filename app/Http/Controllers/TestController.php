@@ -295,6 +295,7 @@ class TestController extends Controller
                 'id' => $q->id,
                 'order_no' => null,
                 'question_text' => $q->question_text,
+                'explanation' => $q->explanation,
                 'question_type' => $q->question_type,
                 'image_url' => $q->image_url ?? null,
                 'selected' => $q->question_type === 'short_answer' ? ($ans?->answer ?? null) : $selectedOptionId,
