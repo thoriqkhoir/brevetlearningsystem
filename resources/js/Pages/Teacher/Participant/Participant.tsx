@@ -234,13 +234,11 @@ export default function Participant({ participants = [], events = [], platforms 
                             className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border-blue-200"
                         >
                             <a
-                                href={route(
-                                    "teacher.downloadParticipantTemplate",
-                                )}
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700"
+                            href="/templates/format_peserta_bls.xlsx"
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700"
                             >
-                                <Download className="h-4 w-4" />
-                                Download Format Import Peserta TLS
+                            <Download className="h-4 w-4" />
+                            Download Format Import Peserta BLS
                             </a>
                         </Button>
                         <DataTableUser

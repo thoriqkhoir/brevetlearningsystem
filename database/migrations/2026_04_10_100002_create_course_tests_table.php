@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('course_id')->constrained('courses')->onUpdate('cascade')->onDelete('cascade');
             $table->foreignUuid('question_bank_id')->constrained('question_banks')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignUuid('course_submission_id')->nullable()->constrained('course_submissions')->onUpdate('cascade')->onDelete('set null');
             $table->string('title');
             $table->text('description')->nullable();
             $table->integer('duration')->default(0);
@@ -27,6 +28,8 @@ return new class extends Migration
             $table->boolean('show_correct_answers')->default(true);
             $table->boolean('remedial_enabled')->default(false);
             $table->timestamp('remedial_end_date')->nullable();
+            $table->boolean('requires_submission')->default(false);
+            $table->text('submission_instructions')->nullable();
             $table->timestamps();
 
             $table->index(['course_id', 'start_date', 'end_date']);

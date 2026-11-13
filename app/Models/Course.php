@@ -45,4 +45,14 @@ class Course extends Model
     {
         return $this->hasMany(CourseTest::class, 'course_id')->orderBy('created_at', 'asc');
     }
+
+    public function courseSubmissions()
+    {
+        return $this->hasMany(CourseSubmission::class, 'course_id')->orderBy('created_at', 'asc');
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class, 'course_id');
+    }
 }

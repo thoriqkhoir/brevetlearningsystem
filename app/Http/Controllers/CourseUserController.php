@@ -14,6 +14,8 @@ use App\Models\Other;
 use App\Models\Retur;
 use App\Models\ReturOther;
 use App\Models\Spt;
+use App\Models\Submission;
+use App\Models\CourseSubmission;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -240,19 +242,19 @@ class CourseUserController extends Controller
             'code' => 'required|string|exists:courses,code',
         ]);
 
-        $user = $request->user();
-
-        $alreadyEnrolled = CourseUser::where('user_id', $user->id)->exists();
-
-        if ($alreadyEnrolled) {
-            return back()->with('error', 'Anda sudah terdaftar di salah satu kelas. Siswa hanya dapat terdaftar di 1 kelas. Silakan minta pengajar atau admin untuk mengeluarkan Anda dari kelas saat ini jika ingin bergabung ke kelas lain.');
-        }
-
         $course = Course::where('code', $request->code)->first();
+
+        $exists = CourseUser::where('course_id', $course->id)
+            ->where('user_id', $request->user()->id)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'Anda sudah bergabung di kelas ini.');
+        }
 
         CourseUser::create([
             'course_id' => $course->id,
-            'user_id' => $user->id,
+            'user_id' => $request->user()->id,
         ]);
 
         return back()->with('success', 'Berhasil bergabung ke kelas!');
@@ -316,6 +318,17 @@ class CourseUserController extends Controller
 
         $active_course_id = session('active_course_id');
 
+        $courseSubmissions = \App\Models\CourseSubmission::where('course_id', $id)
+            ->with(['submissions' => function ($query) use ($user) {
+                $query->where('user_id', $user->id)->with('reviews');
+            }])
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($cs) {
+                $cs->setAttribute('user_submission', $cs->submissions->first());
+                return $cs;
+            });
+
         $courseTests = $course->courseTests;
         if ($courseTests->isNotEmpty()) {
             $attempts = CourseTestAttempt::where('user_id', $user->id)
@@ -325,7 +338,36 @@ class CourseUserController extends Controller
                 ->get()
                 ->groupBy('course_test_id');
 
-            $courseTests = $courseTests->map(function ($courseTest) use ($attempts, $user, $course) {
+            $submissions = Submission::where('user_id', $user->id)
+                ->whereIn('course_test_id', $courseTests->pluck('id'))
+                ->get()
+                ->keyBy('course_test_id');
+
+            $courseTests = $courseTests->map(function ($courseTest) use ($attempts, $user, $course, $submissions, $courseSubmissions) {
+                $sub = $submissions->get($courseTest->id);
+                $isSubmissionApproved = false;
+
+                if ($courseTest->requires_submission) {
+                    if ($courseTest->course_submission_id) {
+                        $targetTask = $courseSubmissions->firstWhere('id', $courseTest->course_submission_id);
+                        $taskSub = $targetTask?->user_submission;
+                        $isSubmissionApproved = $taskSub && $taskSub->status === 'approved';
+                        $courseTest->setAttribute('submission', $taskSub);
+                    } else {
+                        $allApproved = $courseSubmissions->isNotEmpty() && $courseSubmissions->every(fn($cs) => $cs->user_submission && $cs->user_submission->status === 'approved');
+                        $approvedSub = $courseSubmissions->first(fn($cs) => $cs->user_submission && $cs->user_submission->status === 'approved')?->user_submission;
+
+                        $isSubmissionApproved = $allApproved || ($courseSubmissions->isEmpty() && $sub && $sub->status === 'approved');
+                        $displaySub = $allApproved
+                            ? $approvedSub
+                            : ($courseSubmissions->first(fn($cs) => $cs->user_submission)?->user_submission ?? $sub);
+                        $courseTest->setAttribute('submission', $displaySub);
+                    }
+                } else {
+                    $courseTest->setAttribute('submission', $sub);
+                }
+
+                $courseTest->setAttribute('is_submission_approved', $isSubmissionApproved);
                 $attemptItems = $attempts->get($courseTest->id);
                 $attemptCount = $attemptItems ? $attemptItems->count() : 0;
                 
@@ -444,6 +486,7 @@ class CourseUserController extends Controller
             'pivot' => $pivot,
             'teacher' => $course->user,
             'courseSchedules' => $course->courseSchedules,
+            'courseSubmissions' => $courseSubmissions,
             'courseTests' => $courseTests,
             'active_course_id' => $active_course_id,
             'fakturs' => $fakturs,
@@ -503,7 +546,7 @@ class CourseUserController extends Controller
                 ->with('error', 'Anda tidak memiliki akses ke ujian kelas ini.');
         }
 
-        $courseTest = CourseTest::with('questionBank')
+        $courseTest = CourseTest::with(['questionBank', 'courseSubmission'])
             ->where('course_id', $course->id)
             ->findOrFail($courseTestId);
 
@@ -596,9 +639,92 @@ class CourseUserController extends Controller
             }
         }
 
+        $submission = null;
+        $courseSubmissions = CourseSubmission::where('course_id', $course->id)->get();
+        $userSubmissions = Submission::where('course_id', $course->id)
+            ->where('user_id', Auth::id())
+            ->whereIn('course_submission_id', $courseSubmissions->pluck('id'))
+            ->with([
+                'reviewer:id,name',
+                'reviews' => function ($q) {
+                    $q->with('reviewer:id,name')->orderBy('created_at', 'desc');
+                },
+                'courseSubmission:id,title',
+            ])
+            ->get();
+
+        $courseSubmissions = $courseSubmissions->map(function ($cs) use ($userSubmissions) {
+            $userSub = $userSubmissions->firstWhere('course_submission_id', $cs->id);
+            $cs->setAttribute('user_submission', $userSub);
+            return $cs;
+        });
+
+        $isAllSubmissionsRequired = false;
+
+        if ($courseTest->course_submission_id) {
+            $targetTask = $courseSubmissions->firstWhere('id', $courseTest->course_submission_id);
+            $submission = $targetTask?->user_submission ?? Submission::where('course_submission_id', $courseTest->course_submission_id)
+                ->where('user_id', Auth::id())
+                ->with([
+                    'reviewer:id,name',
+                    'reviews' => function ($q) {
+                        $q->with('reviewer:id,name')->orderBy('created_at', 'desc');
+                    },
+                    'courseSubmission:id,title',
+                ])
+                ->first();
+            $isSubmissionApproved = $submission && $submission->status === 'approved';
+        } else {
+            // Wajib ACC semua submission di kelas ini jika ada
+            if ($courseSubmissions->isNotEmpty()) {
+                $isAllSubmissionsRequired = true;
+                $allApproved = $courseSubmissions->every(function ($cs) {
+                    return $cs->user_submission && $cs->user_submission->status === 'approved';
+                });
+                $isSubmissionApproved = $allApproved;
+
+                $submission = $allApproved
+                    ? $userSubmissions->where('status', 'approved')->sortByDesc('updated_at')->first()
+                    : ($userSubmissions->firstWhere('status', 'rejected')
+                        ?? $userSubmissions->firstWhere('status', 'pending_review')
+                        ?? $userSubmissions->first());
+            } else {
+                $submission = Submission::where('course_test_id', $courseTest->id)
+                    ->where('user_id', Auth::id())
+                    ->with([
+                        'reviewer:id,name',
+                        'reviews' => function ($q) {
+                            $q->with('reviewer:id,name')->orderBy('created_at', 'desc');
+                        },
+                        'courseSubmission:id,title',
+                    ])
+                    ->first();
+
+                if (!$submission) {
+                    $submission = Submission::where('course_id', $course->id)
+                        ->where('user_id', Auth::id())
+                        ->with([
+                            'reviewer:id,name',
+                            'reviews' => function ($q) {
+                                $q->with('reviewer:id,name')->orderBy('created_at', 'desc');
+                            },
+                            'courseSubmission:id,title',
+                        ])
+                        ->first();
+                }
+                $isSubmissionApproved = $submission && $submission->status === 'approved';
+            }
+        }
+
+        $courseTest->setAttribute('is_submission_approved', $isSubmissionApproved);
+        $courseTest->setAttribute('is_all_submissions_required', $isAllSubmissionsRequired);
+
         return Inertia::render('Course/CourseTest/Detail', [
             'course' => $course,
             'courseTest' => $courseTest,
+            'submission' => $submission,
+            'courseSubmissions' => $courseSubmissions,
+            'isSubmissionApproved' => $isSubmissionApproved,
             'teacher' => $course->user,
             'attemptHistory' => $attemptHistory,
             'lastAttempt' => $lastAttempt ? [
@@ -697,6 +823,15 @@ class CourseUserController extends Controller
 
     public function destroy($id)
     {
-        return back()->with('error', 'Anda tidak dapat keluar dari kelas sendiri. Silakan minta pengajar atau admin pelatihan untuk mengeluarkan Anda dari kelas.');
+        $user = Auth::user();
+        $pivot = CourseUser::where('course_id', $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($pivot) {
+            $pivot->delete();
+            return redirect()->route('courses')->with('success', 'Berhasil keluar dari kelas.');
+        }
+        return back()->with('error', 'Anda tidak terdaftar di kelas ini.');
     }
 }

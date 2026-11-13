@@ -33,6 +33,7 @@ import {
 } from "@/Components/ui/dialog";
 
 import { Input } from "@/Components/ui/input";
+import { Textarea } from "@/Components/ui/textarea";
 import { Checkbox } from "@/Components/ui/checkbox";
 import {
     Popover,
@@ -57,12 +58,14 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/Components/ui/alert-dialog";
+import TeacherCourseSubmissionsCard from "@/Components/layout/Submission/TeacherCourseSubmissionsCard";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 export default function DetailCourse({
     course,
     participants = [],
     courseSchedules = [],
+    courseSubmissions = [],
     courseTests = [],
     questionBanks = [],
 }: any) {
@@ -114,6 +117,9 @@ export default function DetailCourse({
         remedial_enabled: false,
         remedial_end_date: null as Date | null,
         remedial_end_time: "",
+        requires_submission: false,
+        submission_instructions: "",
+        course_submission_id: "",
     });
     const scheduleImportInputRef = useRef<HTMLInputElement | null>(null);
     const courseTestImportInputRef = useRef<HTMLInputElement | null>(null);
@@ -126,8 +132,14 @@ export default function DetailCourse({
     );
 
     useEffect(() => {
-        if (flash?.success) toast.success(flash.success);
-        if (flash?.error) toast.error(flash.error);
+        if (flash?.success) {
+            toast.dismiss();
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.dismiss();
+            toast.error(flash.error);
+        }
     }, [flash?.success, flash?.error]);
 
     const parseLocalDateTimeParts = (value?: string | null) => {
@@ -386,6 +398,9 @@ export default function DetailCourse({
             remedial_enabled: false,
             remedial_end_date: null,
             remedial_end_time: "",
+            requires_submission: false,
+            submission_instructions: "",
+            course_submission_id: "",
         });
     };
 
@@ -422,6 +437,9 @@ export default function DetailCourse({
             remedial_enabled: !!courseTest.remedial_enabled,
             remedial_end_date: remedialParts.date,
             remedial_end_time: remedialParts.time ?? "",
+            requires_submission: Boolean(courseTest.requires_submission),
+            submission_instructions: courseTest.submission_instructions ?? "",
+            course_submission_id: courseTest.course_submission_id ?? "",
         });
         setTestDialogOpen(true);
     };
@@ -551,6 +569,13 @@ export default function DetailCourse({
             show_correct_answers: courseTestForm.show_correct_answers,
             remedial_enabled: courseTestForm.remedial_enabled,
             remedial_end_date: remedialEndDateText,
+            requires_submission: courseTestForm.requires_submission,
+            submission_instructions: courseTestForm.requires_submission
+                ? courseTestForm.submission_instructions
+                : null,
+            course_submission_id: courseTestForm.requires_submission
+                ? (courseTestForm.course_submission_id || null)
+                : null,
         };
 
         const onSuccess = () => {
@@ -710,11 +735,13 @@ export default function DetailCourse({
         return () => clearTimeout(timeoutId);
     }, [searchQuery]);
 
-    const participantsList = Array.isArray(participants)
+    const safeParticipants = Array.isArray(participants)
         ? participants
-        : (participants?.data ?? []);
+        : Array.isArray(participants?.data)
+        ? participants.data
+        : [];
 
-    const participantsData: ParticipantColumns[] = participantsList.map(
+    const participantsData: ParticipantColumns[] = safeParticipants.map(
         (p: any) => ({
             id: p.id,
             user: p.user,
@@ -1056,6 +1083,12 @@ export default function DetailCourse({
                         )}
                     </div>
 
+                    <TeacherCourseSubmissionsCard
+                        courseId={course.id}
+                        courseSubmissions={courseSubmissions}
+                        participants={participants}
+                    />
+
                     <div className="rounded-xl bg-white border shadow p-6 space-y-3">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <h2 className="text-lg font-bold text-primary">
@@ -1119,8 +1152,13 @@ export default function DetailCourse({
                                     >
                                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                                             <div>
-                                                <div className="font-semibold text-gray-800 text-base">
-                                                    {courseTest.title}
+                                                <div className="font-semibold text-gray-800 text-base flex flex-wrap items-center gap-2">
+                                                    <span>{courseTest.title}</span>
+                                                    {Boolean(courseTest.requires_submission) && (
+                                                        <span className="inline-flex items-center rounded-full bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                                                            Wajib Submission
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1">
                                                     Bank Soal:{" "}
@@ -1413,7 +1451,7 @@ export default function DetailCourse({
                         open={testDialogOpen}
                         onOpenChange={setTestDialogOpen}
                     >
-                        <DialogContent className="max-w-2xl">
+                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
                                 <DialogTitle>
                                     {editingCourseTestId
@@ -1901,6 +1939,84 @@ export default function DetailCourse({
                                         </div>
                                     </div>
                                 )}
+
+                                <div className="md:col-span-2 rounded-lg border p-3.5 space-y-3 bg-slate-50/70">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <label
+                                                className="text-xs md:text-sm font-semibold text-gray-800 flex items-center gap-1.5 cursor-pointer"
+                                                htmlFor="requires_submission_toggle"
+                                            >
+                                                <span>Wajibkan Submission Sebelum Ujian</span>
+                                            </label>
+                                            <p className="text-[11px] md:text-xs text-gray-500">
+                                                Siswa harus mengunggah file tugas dan disetujui pengajar/admin sebelum dapat memulai ujian.
+                                            </p>
+                                        </div>
+                                        <input
+                                            id="requires_submission_toggle"
+                                            type="checkbox"
+                                            checked={courseTestForm.requires_submission}
+                                            onChange={(e) =>
+                                                setCourseTestForm((prev) => ({
+                                                    ...prev,
+                                                    requires_submission: e.target.checked,
+                                                }))
+                                            }
+                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                        />
+                                    </div>
+
+                                    {courseTestForm.requires_submission && (
+                                        <div className="space-y-3 pt-1">
+                                            {courseSubmissions.length > 0 && (
+                                                <div className="space-y-1.5">
+                                                    <label className="text-xs font-medium text-gray-700">
+                                                        Pilih Tugas Submission Persyaratan
+                                                    </label>
+                                                    <select
+                                                        className="w-full text-xs rounded-md border border-input bg-white px-3 py-2 text-gray-800 shadow-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                                                        value={courseTestForm.course_submission_id || ""}
+                                                        onChange={(e) =>
+                                                            setCourseTestForm((prev) => ({
+                                                                ...prev,
+                                                                course_submission_id: e.target.value,
+                                                            }))
+                                                        }
+                                                    >
+                                                        <option value="">Semua Submission di Kelas Ini (Wajib ACC Semua)</option>
+                                                        {courseSubmissions.map((cs: any) => (
+                                                            <option key={cs.id} value={cs.id}>
+                                                                Hanya Tugas: {cs.title}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-medium text-gray-700">
+                                                    Instruksi Tugas untuk Siswa
+                                                </label>
+                                                <Textarea
+                                                    rows={3}
+                                                    placeholder="Contoh: Unggah berkas tugas format PDF atau Excel yang sudah Anda kerjakan..."
+                                                    value={courseTestForm.submission_instructions}
+                                                    onChange={(e) =>
+                                                        setCourseTestForm((prev) => ({
+                                                            ...prev,
+                                                            submission_instructions: e.target.value,
+                                                        }))
+                                                    }
+                                                    className="text-xs bg-white"
+                                                />
+                                                <p className="text-[11px] text-gray-500">
+                                                    Instruksi ini akan ditampilkan kepada siswa di halaman detail ujian sebelum mereka mengunggah tugas.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <Button
                                     className="md:col-span-2"
                                     onClick={submitCourseTest}
@@ -1917,7 +2033,7 @@ export default function DetailCourse({
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
                                 <h2 className="text-lg font-bold text-primary">
-                                    Peserta Terdaftar ({participants.length})
+                                    Peserta Terdaftar ({safeParticipants.length})
                                 </h2>
                                 <p className="text-xs text-muted-foreground mt-0.5">
                                     Untuk melihat detail pengerjaan & nilai peserta, silakan pilih ujian pada daftar ujian di atas.
@@ -1925,21 +2041,6 @@ export default function DetailCourse({
                             </div>
                             
                             <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    className="text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
-                                    asChild
-                                >
-                                    <a
-                                        href={route(
-                                            "teacher.courses.downloadPhotos",
-                                            course.id
-                                        )}
-                                    >
-                                        <Download size={16} />
-                                        Unduh Foto (.zip)
-                                    </a>
-                                </Button>
                                 <Button
                                     variant="outline"
                                     className="text-green-700 bg-green-50 border-green-200 hover:bg-green-100"

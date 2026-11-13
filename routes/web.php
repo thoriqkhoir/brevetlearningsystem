@@ -116,6 +116,9 @@ use App\Http\Controllers\PlatformController;
 use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\QuestionBankQuestionController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\CourseSubmissionController;
+use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\SubmissionReviewController;
 use App\Http\Controllers\TestResultController;
 use App\Http\Middleware\CheckAccessRights;
 use Illuminate\Support\Facades\Route;
@@ -849,6 +852,7 @@ Route::middleware(['auth', EnsureAdmin::class])->group(function () {
 
     Route::get('/admin/courses', [AdminCourseListController::class, 'index'])->name('admin.courses');
     Route::get('/admin/tests', [AdminTestListController::class, 'index'])->name('admin.tests');
+    Route::get('/admin/submissions', [SubmissionReviewController::class, 'indexAdmin'])->name('admin.submissions.index');
 
     Route::get('/admin/platforms', [PlatformController::class, 'index'])->name('admin.platforms');
     Route::post('/admin/platforms', [PlatformController::class, 'store'])->name('admin.platforms.store');
@@ -921,6 +925,10 @@ Route::middleware(['auth', EnsureTeacher::class])->group(function () {
     Route::put('/teacher/courses/{course}/tests/{courseTest}', [CourseTestController::class, 'update'])->name('teacher.courseTests.update');
     Route::delete('/teacher/courses/{course}/tests/{courseTest}', [CourseTestController::class, 'destroy'])->name('teacher.courseTests.destroy');
 
+    Route::post('/teacher/courses/{course}/submissions', [CourseSubmissionController::class, 'store'])->name('teacher.courseSubmissions.store');
+    Route::put('/teacher/courses/{course}/submissions/{courseSubmission}', [CourseSubmissionController::class, 'update'])->name('teacher.courseSubmissions.update');
+    Route::delete('/teacher/courses/{course}/submissions/{courseSubmission}', [CourseSubmissionController::class, 'destroy'])->name('teacher.courseSubmissions.destroy');
+
     Route::get('/teacher/courses/{course}/modules', [CourseModuleController::class, 'index'])->name('course.modules.index');
     Route::get('/teacher/courses/{course}/modules/create', [CourseModuleController::class, 'create'])->name('course.modules.create');
     Route::post('/teacher/courses/{course}/modules', [CourseModuleController::class, 'store'])->name('course.modules.store');
@@ -955,6 +963,7 @@ Route::middleware(['auth', EnsureTeacher::class])->group(function () {
     Route::delete('/teacher/participants/{participant}/average-score', [CourseResultController::class, 'deleteAverageScore'])->name('teacher.deleteAverageScore');
     Route::post('/teacher/participants/{participant}/feedback', [TestResultController::class, 'giveFeedback'])->name('teacher.giveFeedback');
     Route::post('/teacher/participants/{participant}/delete-feedback', [TestResultController::class, 'deleteFeedback'])->name('teacher.deleteFeedback');
+    Route::get('/teacher/submissions', [SubmissionReviewController::class, 'indexTeacher'])->name('teacher.submissions.index');
 });
 
 Route::prefix('api')->group(function () {

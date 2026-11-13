@@ -8,15 +8,25 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/Components/ui/breadcrumb";
-import { CalendarClock, GraduationCap, NotebookPen } from "lucide-react";
-import { useEffect } from "react";
+import {
+    AlertCircle,
+    CalendarClock,
+    CheckCircle2,
+    Clock,
+    Download,
+    FileCheck,
+    FileText,
+    GraduationCap,
+    Lock,
+    NotebookPen,
+    XCircle,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 function parseLocalDate(value?: string | null) {
     if (!value) return null;
-    const match = String(value).match(
-        /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/,
-    );
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
     if (!match) return null;
     return new Date(
         Number(match[1]),
@@ -24,34 +34,24 @@ function parseLocalDate(value?: string | null) {
         Number(match[3]),
         Number(match[4]),
         Number(match[5]),
-        Number(match[6] ?? 0),
+        Number(match[6] ?? 0)
     );
 }
 
 function formatLocalDateTime(value?: string | null) {
     const date = parseLocalDate(value);
     if (!date) return value || "-";
-
+    
     const day = date.getDate();
     const months = [
-        "Januari",
-        "Februari",
-        "Maret",
-        "April",
-        "Mei",
-        "Juni",
-        "Juli",
-        "Agustus",
-        "September",
-        "Oktober",
-        "November",
-        "Desember",
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ];
     const month = months[date.getMonth()];
     const year = date.getFullYear();
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
-
+    
     return `${day} ${month} ${year}, ${hours}.${minutes} WIB`;
 }
 
@@ -92,6 +92,9 @@ export default function CourseTestDetail({
     course,
     courseTest,
     teacher,
+    submission = null,
+    courseSubmissions = [],
+    isSubmissionApproved: initialIsSubmissionApproved = null,
     attemptHistory = [],
     lastAttempt = null,
     activeCourseTestId = null,
@@ -113,6 +116,41 @@ export default function CourseTestDetail({
     const isAttemptLimitReached = !canAttempt;
     const isUnlimitedAttempts = isRemedialMode || Number(maxAttempts ?? 0) <= 0;
     const passingScore = Number(courseTest?.passing_score ?? 70);
+
+    const isSubmissionRequired = Boolean(courseTest?.requires_submission);
+    const isAllSubmissionsRequired = Boolean(
+        courseTest?.is_all_submissions_required ||
+        (!courseTest?.course_submission_id && courseSubmissions.length > 0)
+    );
+
+    const approvedSubmissionsCount = courseSubmissions.filter(
+        (cs: any) => cs.user_submission?.status === 'approved'
+    ).length;
+
+    const allSubmissionsApproved = courseSubmissions.length > 0 &&
+        approvedSubmissionsCount === courseSubmissions.length;
+
+    const isSubmissionApproved = initialIsSubmissionApproved !== null
+        ? Boolean(initialIsSubmissionApproved)
+        : (isAllSubmissionsRequired
+            ? allSubmissionsApproved
+            : Boolean(courseTest?.is_submission_approved || submission?.status === 'approved'));
+
+    const isSubmissionPending = !isSubmissionApproved && (
+        isAllSubmissionsRequired
+            ? courseSubmissions.some((cs: any) => cs.user_submission?.status === 'pending_review')
+            : submission?.status === 'pending_review'
+    );
+    const isSubmissionRejected = !isSubmissionApproved && (
+        isAllSubmissionsRequired
+            ? courseSubmissions.some((cs: any) => cs.user_submission?.status === 'rejected')
+            : submission?.status === 'rejected'
+    );
+    const isExamLockedBySubmission = isSubmissionRequired && !isSubmissionApproved;
+    const requiredTaskTitle = isAllSubmissionsRequired
+        ? `Semua Tugas di Kelas Ini (${courseSubmissions.length} Tugas)`
+        : (courseTest?.course_submission?.title || submission?.course_submission?.title || "Tugas Kelas");
+
     const attemptsText = isRemedialMode
         ? `Tidak terbatas (hingga nilai >= ${passingScore})`
         : (isUnlimitedAttempts
@@ -304,13 +342,226 @@ export default function CourseTestDetail({
                             </div>
                         </div>
 
+                        {isSubmissionRequired && (
+                            <div className="rounded-xl border bg-card p-5 shadow-sm space-y-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <FileCheck className="h-5 w-5 text-indigo-600" />
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 text-sm md:text-base">
+                                                Persyaratan Akses Ujian: Pengiriman Tugas (Submission)
+                                            </h3>
+                                            <p className="text-xs text-gray-500">
+                                                Tugas yang diwajibkan: <strong className="text-primary">{requiredTaskTitle}</strong>
+                                                {isAllSubmissionsRequired && (
+                                                    <span className="ml-1 text-slate-500 font-normal">
+                                                        (Wajib ACC seluruhnya)
+                                                    </span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {isAllSubmissionsRequired ? (
+                                            isSubmissionApproved ? (
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                                                    Semua Tugas Di-ACC ({approvedSubmissionsCount}/{courseSubmissions.length})
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 border border-amber-200">
+                                                    <Clock className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+                                                    Belum Lengkap ({approvedSubmissionsCount}/{courseSubmissions.length} Di-ACC)
+                                                </span>
+                                            )
+                                        ) : (
+                                            <>
+                                                {!submission && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 border border-slate-200">
+                                                        <AlertCircle className="h-3.5 w-3.5 text-slate-500" />
+                                                        Belum Mengumpulkan
+                                                    </span>
+                                                )}
+                                                {isSubmissionPending && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 border border-amber-200">
+                                                        <Clock className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+                                                        Menunggu Review (ACC)
+                                                    </span>
+                                                )}
+                                                {isSubmissionApproved && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 border border-emerald-200">
+                                                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                                                        Disetujui (ACC)
+                                                    </span>
+                                                )}
+                                                {isSubmissionRejected && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700 border border-rose-200">
+                                                        <XCircle className="h-3.5 w-3.5 text-rose-500" />
+                                                        Perlu Perbaikan (Ditolak)
+                                                    </span>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {isAllSubmissionsRequired && courseSubmissions.length > 0 && (
+                                    <div className="rounded-lg border bg-slate-50/60 p-3.5 space-y-2">
+                                        <div className="flex items-center justify-between text-xs text-gray-700 font-semibold border-b pb-2">
+                                            <span>Daftar Tugas yang Wajib Di-ACC ({courseSubmissions.length} Tugas)</span>
+                                            <span className={isSubmissionApproved ? "text-emerald-700 font-medium" : "text-amber-700 font-medium"}>
+                                                {approvedSubmissionsCount} dari {courseSubmissions.length} Tugas Telah Di-ACC
+                                            </span>
+                                        </div>
+                                        <div className="space-y-2 pt-1">
+                                            {courseSubmissions.map((cs: any, idx: number) => {
+                                                const userSub = cs.user_submission;
+                                                const isAcc = userSub?.status === 'approved';
+                                                const isPending = userSub?.status === 'pending_review';
+                                                const isRejected = userSub?.status === 'rejected';
+
+                                                return (
+                                                    <div
+                                                        key={cs.id}
+                                                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg border text-xs ${
+                                                            isAcc
+                                                                ? "bg-emerald-50/40 border-emerald-200"
+                                                                : isPending
+                                                                ? "bg-amber-50/40 border-amber-200"
+                                                                : isRejected
+                                                                ? "bg-rose-50/40 border-rose-200"
+                                                                : "bg-white border-slate-200"
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-start gap-2">
+                                                            <span className="font-semibold text-gray-500">{idx + 1}.</span>
+                                                            <div>
+                                                                <p className="font-semibold text-gray-900">{cs.title}</p>
+                                                                {cs.deadline && (
+                                                                    <p className="text-[11px] text-gray-500">
+                                                                        Batas Waktu: {formatLocalDateTime(cs.deadline)}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                                            {isAcc ? (
+                                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-300">
+                                                                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                                                    Disetujui (ACC)
+                                                                </span>
+                                                            ) : isPending ? (
+                                                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 border border-amber-300">
+                                                                    <Clock className="h-3 w-3 text-amber-600 animate-pulse" />
+                                                                    Menunggu Review (ACC)
+                                                                </span>
+                                                            ) : isRejected ? (
+                                                                <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-800 border border-rose-300">
+                                                                    <XCircle className="h-3 w-3 text-rose-600" />
+                                                                    Ditolak (Perlu Perbaikan)
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 border border-slate-300">
+                                                                    <AlertCircle className="h-3 w-3 text-slate-500" />
+                                                                    Belum Mengumpulkan
+                                                                </span>
+                                                            )}
+                                                            {/* {userSub?.id && (
+                                                                <a
+                                                                    href={route("submissions.download", userSub.id)}
+                                                                    className="inline-flex items-center gap-1 rounded border bg-white px-2 py-0.5 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                                                                >
+                                                                    <Download className="h-3 w-3" />
+                                                                    Berkas
+                                                                </a>
+                                                            )} */}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {courseTest?.submission_instructions && (
+                                    <div className="rounded-lg bg-indigo-50/70 border border-indigo-100 p-3.5 text-sm text-indigo-900">
+                                        <p className="font-semibold text-xs uppercase tracking-wider text-indigo-700 mb-1">
+                                            Instruksi Pengajar:
+                                        </p>
+                                        <div className="whitespace-pre-wrap text-xs md:text-sm text-indigo-800">
+                                            {courseTest.submission_instructions}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* {isSubmissionApproved && (
+                                    <div className="rounded-lg bg-emerald-50/60 border border-emerald-200 p-4 space-y-2">
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <div>
+                                                <p className="text-sm font-semibold text-emerald-900 flex items-center gap-1.5">
+                                                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                                    {isAllSubmissionsRequired
+                                                        ? `Semua Tugas Persyaratan (${courseSubmissions.length} Tugas) Telah Di-ACC!`
+                                                        : `Tugas Persyaratan Telah Di-ACC!`}
+                                                </p>
+                                                <p className="text-xs text-emerald-700 mt-0.5">
+                                                    {isAllSubmissionsRequired
+                                                        ? `Seluruh tugas submission di kelas ini telah disetujui (ACC) oleh pengajar. Akses pengerjaan ujian telah terbuka.`
+                                                        : `Tugas ${requiredTaskTitle} telah disetujui. Akses pengerjaan ujian telah terbuka.`}
+                                                </p>
+                                            </div>
+                                            {!isAllSubmissionsRequired && submission?.id && (
+                                                <a
+                                                    href={route("submissions.download", submission.id)}
+                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-50 shadow-xs transition"
+                                                >
+                                                    <Download className="h-3.5 w-3.5" />
+                                                    Berkas Saya ({submission.original_filename})
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                )} */}
+
+                                {!isSubmissionApproved && (
+                                    <div className="rounded-lg bg-amber-50/60 border border-amber-200 p-4 space-y-3">
+                                        <div>
+                                            <p className="text-sm font-semibold text-amber-900 flex items-center gap-1.5">
+                                                <Clock className="h-4 w-4 text-amber-600" />
+                                                {isAllSubmissionsRequired
+                                                    ? `Sebagian / Seluruh Tugas Belum Di-ACC Pengajar`
+                                                    : isSubmissionPending
+                                                    ? `Tugas Masih Menunggu Review (ACC) Pengajar`
+                                                    : isSubmissionRejected
+                                                    ? `Tugas Perlu Perbaikan (Ditolak)`
+                                                    : `Tugas Belum Dikirimkan`}
+                                            </p>
+                                            <p className="text-xs text-amber-700 mt-0.5">
+                                                {isAllSubmissionsRequired
+                                                    ? `Ujian ini mewajibkan seluruh tugas (${courseSubmissions.length} tugas) disetujui (ACC) oleh pengajar. Saat ini baru ${approvedSubmissionsCount} dari ${courseSubmissions.length} tugas yang telah disetujui.`
+                                                    : `Tugas ${requiredTaskTitle} belum disetujui (ACC). Ujian akan dapat dimulai setelah tugas disetujui.`}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <Button size="sm" variant="outline" asChild className="text-xs text-amber-800 border-amber-300 bg-white hover:bg-amber-50">
+                                                <Link href={route("courses.detail", course.id)}>
+                                                    Lihat & Kerjakan Tugas di Halaman Kelas
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="pt-1">
-                            <Button
+                             <Button
                                 disabled={
                                     (courseTestStatus !== 'ongoing' && courseTestStatus !== 'remedial_active') ||
                                     Boolean(hasOtherActive) ||
                                     isAttemptLimitReached ||
-                                    isNotEligible
+                                    isNotEligible ||
+                                    isExamLockedBySubmission
                                 }
                                 onClick={() => {
                                     router.post(
@@ -328,6 +579,18 @@ export default function CourseTestDetail({
                                       ? (isRemedialMode ? "Kerjakan Remedial" : "Ulangi Mengerjakan")
                                       : "Mulai Ujian"}
                             </Button>
+                            {isExamLockedBySubmission && (
+                                <p className="mt-2 text-xs font-medium text-amber-700 flex items-center gap-1.5">
+                                    <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                                    {isAllSubmissionsRequired
+                                        ? `Ujian ini memerlukan persetujuan (ACC) seluruh tugas di kelas ini (${approvedSubmissionsCount}/${courseSubmissions.length} disetujui). Silakan lengkapi di halaman kelas.`
+                                        : !submission
+                                        ? `Ujian ini memerlukan persetujuan (ACC) tugas "${requiredTaskTitle}". Silakan kumpulkan tugas pada halaman kelas terlebih dahulu.`
+                                        : isSubmissionPending
+                                        ? `Tugas "${requiredTaskTitle}" sedang menunggu review (ACC) pengajar. Ujian akan terbuka setelah disetujui.`
+                                        : `Tugas "${requiredTaskTitle}" belum disetujui (Ditolak). Silakan perbaiki dan kirimkan revisi pada halaman kelas.`}
+                                </p>
+                            )}
                             {hasOtherActive && (
                                 <p className="mt-2 text-xs text-red-600">
                                     Anda memiliki ujian kelas aktif lain.
@@ -412,9 +675,7 @@ export default function CourseTestDetail({
                                                             <span className="mx-2 text-slate-400">
                                                                 •
                                                             </span>
-                                                            {formatLocalDateTime(
-                                                                attempt.submitted_at,
-                                                            )}
+                                                            {formatLocalDateTime(attempt.submitted_at)}
                                                         </>
                                                     )}
                                                 </div>
