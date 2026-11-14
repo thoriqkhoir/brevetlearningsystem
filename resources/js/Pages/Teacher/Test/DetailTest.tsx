@@ -55,6 +55,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/Components/ui/alert-dialog";
+import { ReferenceLinksDisplay } from "@/Components/exam/ReferenceLinksInput";
 
 export default function DetailTest({
     course,
@@ -455,6 +456,9 @@ export default function DetailTest({
                                         </span>
                                     </div>
                                 </div>
+                            </div>
+                            <div className="lg:col-span-2">
+                                <ReferenceLinksDisplay links={test.reference_link} />
                             </div>
                         </div>
                     </div>

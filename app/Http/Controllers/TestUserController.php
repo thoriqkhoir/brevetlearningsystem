@@ -380,6 +380,8 @@ class TestUserController extends Controller
             'test' => $test,
             'pivot' => $pivot,
             'teacher' => $test->user,
+            'attemptId' => $attempt?->id,
+            'attemptSignature' => $attempt ? ($attempt->id . '_' . (optional($attempt->started_at)->timestamp ?? 0)) : null,
             'currentQuestion' => $current,
             'nextQuestionId' => $nextId,
             'prevQuestionId' => $prevId,
@@ -606,7 +608,7 @@ class TestUserController extends Controller
 
         session()->forget('active_test_id');
 
-        return redirect()->route('tests.detail', $test->id);
+        return redirect()->route('tests.result', [$test->id, $attempt->id]);
     }
 
     public function startWorking($id)
@@ -734,10 +736,12 @@ class TestUserController extends Controller
             ->first();
         $answers = $attempt->answers()->get()->keyBy('question_id');
         $questions = $this->getDisplayedQuestionsForUser($test, $user->id, $test->questions);
+        $showScore = (bool) ($test->show_score ?? true);
         $showCorrectAnswers = (bool) ($test->show_correct_answers ?? true);
+        $showExplanation = $showScore && $showCorrectAnswers;
 
         $review = $showCorrectAnswers
-            ? $questions->map(function ($q) use ($answers, $sequence) {
+            ? $questions->map(function ($q) use ($answers, $sequence, $showExplanation) {
                 // reorder options for this question according to saved sequence
                 $options = $q->options;
                 if ($sequence && is_array($sequence->option_sequences) && isset($sequence->option_sequences[$q->id]) && $options) {
@@ -765,7 +769,7 @@ class TestUserController extends Controller
                     'id' => $q->id,
                     'order_no' => null,
                     'question_text' => $q->question_text,
-                    'explanation' => $q->explanation,
+                    'explanation' => $showExplanation ? $q->explanation : null,
                     'question_type' => $q->question_type,
                     'selected' => $q->question_type === 'short_answer' ? ($ans?->answer ?? null) : $selectedOptionId,
                     'is_correct' => $ans?->is_correct ?? null,
@@ -778,6 +782,9 @@ class TestUserController extends Controller
             })
             : collect();
 
+        if (!$showExplanation && $test->relationLoaded('questions')) {
+            $test->questions->each->makeHidden('explanation');
+        }
         if (!$showCorrectAnswers) {
             $test->unsetRelation('questions');
         }

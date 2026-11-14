@@ -49,6 +49,10 @@ import {
     CommandItem,
     CommandList,
 } from "@/Components/ui/command";
+import {
+    ReferenceLinksInput,
+    validateAndPrepareReferenceLinks,
+} from "@/Components/exam/ReferenceLinksInput";
 
 const formSchema = z
     .object({
@@ -56,6 +60,15 @@ const formSchema = z
         title: z.string().min(1, "title Ujian harus diisi"),
         code: z.string().min(1, "Kode Ujian harus diisi"),
         description: z.string().nullable(),
+        reference_link: z
+            .array(
+                z.object({
+                    title: z.string().optional().default(""),
+                    url: z.string().optional().default(""),
+                }),
+            )
+            .optional()
+            .default([]),
         question_bank_id: z.string().uuid("Bank soal harus dipilih"),
         questions_to_show: z.number().int().min(1).nullable().optional(),
         duration: z.number().min(0),
@@ -137,6 +150,7 @@ export default function FormCreateTest({
             title: "",
             code: generateClassCode(8),
             description: "",
+            reference_link: [],
             question_bank_id: "",
             questions_to_show: null,
             duration: 0,
@@ -181,6 +195,15 @@ export default function FormCreateTest({
     }, [watchedQuestionBankId, maxQuestionsFromBank]);
 
     function onSubmit(values: z.infer<typeof formSchema>) {
+        const refValidation = validateAndPrepareReferenceLinks(values.reference_link);
+        if (!refValidation.valid) {
+            form.setError("reference_link", {
+                type: "manual",
+                message: refValidation.error,
+            });
+            return;
+        }
+
         // Gabungkan tanggal (start_date) dan jam (start_time) menjadi satu timestamp
         const dateStr = format(values.start_date, "yyyy-MM-dd");
         const [hours, minutes] = (values.start_time || "00:00")
@@ -194,6 +217,7 @@ export default function FormCreateTest({
             title: values.title,
             code: values.code,
             description: values.description || "",
+            reference_link: refValidation.data,
             question_bank_id: values.question_bank_id,
             questions_to_show: values.questions_to_show ?? null,
             duration: values.duration || 0,
@@ -874,6 +898,24 @@ export default function FormCreateTest({
                                                 </FormItem>
                                             )}
                                         />
+                                        <div className="md:col-span-2">
+                                            <FormField
+                                                control={form.control}
+                                                name="reference_link"
+                                                render={({ field, fieldState }) => (
+                                                    <FormItem>
+                                                        <ReferenceLinksInput
+                                                            value={field.value || []}
+                                                            onChange={(next) => {
+                                                                form.clearErrors("reference_link");
+                                                                field.onChange(next);
+                                                            }}
+                                                            error={fieldState.error?.message}
+                                                        />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
                                     </div>
                                     <Button
                                         type="submit"

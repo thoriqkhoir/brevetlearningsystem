@@ -9,6 +9,8 @@ type HeaderOnlyLayoutProps = PropsWithChildren<{
     backHref?: string;
     onBack?: () => void;
     right?: React.ReactNode;
+    centerTitle?: boolean;
+    wide?: boolean;
 }>;
 
 export default function HeaderOnlyLayout({
@@ -16,6 +18,8 @@ export default function HeaderOnlyLayout({
     backHref,
     onBack,
     right,
+    centerTitle = false,
+    wide = false,
     children,
 }: HeaderOnlyLayoutProps) {
     const handleBack = () => {
@@ -27,18 +31,44 @@ export default function HeaderOnlyLayout({
         <div className="relative flex min-h-screen flex-col overflow-hidden bg-slate-50/70">
             <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(13,148,136,0.12),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.14),_transparent_35%)]" />
             <header className="sticky top-0 z-40 w-full border-b border-teal-100 bg-gradient-to-r from-teal-50 via-white to-amber-50/90 backdrop-blur-sm">
-                <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                        {/* <Button variant="outline" onClick={handleBack}>
-                            <ArrowLeft size={16} className="mr-1" /> Kembali
-                        </Button> */}
-                        {title && (
-                            <h1 className="truncate text-sm font-medium text-slate-700 sm:text-base md:text-lg">
-                                {title}
-                            </h1>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2">{right}</div>
+                <div
+                    className={`mx-auto ${
+                        wide ? "max-w-[1600px]" : "max-w-7xl"
+                    } px-4 h-16 ${
+                        centerTitle
+                            ? "flex items-center justify-between gap-2 md:grid md:grid-cols-[1fr_auto_1fr]"
+                            : "flex items-center justify-between gap-2"
+                    }`}
+                >
+                    {centerTitle ? (
+                        <>
+                            <div className="hidden md:flex items-center gap-3 min-w-0" />
+                            <div className="min-w-0 md:text-center">
+                                {title && (
+                                    <h1 className="truncate text-sm font-medium text-slate-700 sm:text-base md:text-lg">
+                                        {title}
+                                    </h1>
+                                )}
+                            </div>
+                            <div className="flex items-center justify-end gap-2 shrink-0">
+                                {right}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-3">
+                                {/* <Button variant="outline" onClick={handleBack}>
+                                    <ArrowLeft size={16} className="mr-1" /> Kembali
+                                </Button> */}
+                                {title && (
+                                    <h1 className="truncate text-sm font-medium text-slate-700 sm:text-base md:text-lg">
+                                        {title}
+                                    </h1>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">{right}</div>
+                        </>
+                    )}
                 </div>
             </header>
 

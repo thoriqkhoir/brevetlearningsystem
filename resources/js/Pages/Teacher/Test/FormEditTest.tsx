@@ -56,6 +56,11 @@ import {
     CommandItem,
     CommandList,
 } from "@/Components/ui/command";
+import {
+    normalizeReferenceLinksForForm,
+    ReferenceLinksInput,
+    validateAndPrepareReferenceLinks,
+} from "@/Components/exam/ReferenceLinksInput";
 
 const formSchema = z
     .object({
@@ -63,6 +68,15 @@ const formSchema = z
         title: z.string().min(1, "Judul Ujian harus diisi"),
         code: z.string().min(1, "Kode Ujian harus diisi"),
         description: z.string().nullable(),
+        reference_link: z
+            .array(
+                z.object({
+                    title: z.string().optional().default(""),
+                    url: z.string().optional().default(""),
+                }),
+            )
+            .optional()
+            .default([]),
         question_bank_id: z.string().uuid("Bank soal harus dipilih"),
         questions_to_show: z.number().int().min(1).nullable().optional(),
         duration: z.number().min(1, "Durasi harus diisi"),
@@ -128,6 +142,7 @@ export default function FormEditTest({ test, questionBanks = [] }: any) {
             title: test.title,
             code: test.code,
             description: test.description,
+            reference_link: normalizeReferenceLinksForForm(test.reference_link),
             question_bank_id: test.question_bank_id ?? "",
             questions_to_show: test.questions_to_show ?? null,
             duration: test.duration,
@@ -187,6 +202,15 @@ export default function FormEditTest({ test, questionBanks = [] }: any) {
     }, [watchedQuestionBankId, maxQuestionsFromBank]);
 
     function onSubmit(values: z.infer<typeof formSchema>) {
+        const refValidation = validateAndPrepareReferenceLinks(values.reference_link);
+        if (!refValidation.valid) {
+            form.setError("reference_link", {
+                type: "manual",
+                message: refValidation.error,
+            });
+            return;
+        }
+
         // Gabungkan tanggal dan jam ke start_date timestamp
         const combined = new Date(values.start_date);
         const [hours, minutes] = (values.start_time || "00:00")
@@ -199,6 +223,7 @@ export default function FormEditTest({ test, questionBanks = [] }: any) {
         formData.append("title", values.title);
         formData.append("code", values.code);
         formData.append("description", values.description || "");
+        formData.append("reference_link", JSON.stringify(refValidation.data));
         formData.append("question_bank_id", values.question_bank_id);
         formData.append(
             "questions_to_show",
@@ -806,6 +831,24 @@ export default function FormEditTest({ test, questionBanks = [] }: any) {
                                             </FormItem>
                                         )}
                                     />
+                                    <div className="md:col-span-2">
+                                        <FormField
+                                            control={form.control}
+                                            name="reference_link"
+                                            render={({ field, fieldState }) => (
+                                                <FormItem>
+                                                    <ReferenceLinksInput
+                                                        value={field.value || []}
+                                                        onChange={(next) => {
+                                                            form.clearErrors("reference_link");
+                                                            field.onChange(next);
+                                                        }}
+                                                        error={fieldState.error?.message}
+                                                    />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
                                 <Button
                                     type="submit"

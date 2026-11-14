@@ -60,6 +60,12 @@ import {
 } from "@/Components/ui/alert-dialog";
 import TeacherCourseSubmissionsCard from "@/Components/layout/Submission/TeacherCourseSubmissionsCard";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
+import {
+    normalizeReferenceLinksForForm,
+    ReferenceLinkFormItem,
+    ReferenceLinksInput,
+    validateAndPrepareReferenceLinks,
+} from "@/Components/exam/ReferenceLinksInput";
 
 export default function DetailCourse({
     course,
@@ -103,6 +109,7 @@ export default function DetailCourse({
     const [courseTestForm, setCourseTestForm] = useState({
         title: "",
         description: "",
+        reference_link: [] as ReferenceLinkFormItem[],
         question_bank_id: "",
         duration: "",
         passing_score: "",
@@ -384,6 +391,7 @@ export default function DetailCourse({
         setCourseTestForm({
             title: "",
             description: "",
+            reference_link: [],
             question_bank_id: "",
             duration: "",
             passing_score: "",
@@ -419,6 +427,7 @@ export default function DetailCourse({
         setCourseTestForm({
             title: courseTest.title ?? "",
             description: courseTest.description ?? "",
+            reference_link: normalizeReferenceLinksForForm(courseTest.reference_link),
             question_bank_id: courseTest.question_bank_id ?? "",
             duration: String(courseTest.duration ?? 0),
             passing_score: String(courseTest.passing_score ?? 0),
@@ -553,9 +562,18 @@ export default function DetailCourse({
             return;
         }
 
+        const refValidation = validateAndPrepareReferenceLinks(
+            courseTestForm.reference_link,
+        );
+        if (!refValidation.valid) {
+            toast.error(refValidation.error);
+            return;
+        }
+
         const payload: any = {
             title: courseTestForm.title,
             description: courseTestForm.description || null,
+            reference_link: refValidation.data,
             question_bank_id: courseTestForm.question_bank_id,
             duration: Number(courseTestForm.duration || 0),
             passing_score: Number(courseTestForm.passing_score || 0),
@@ -2031,6 +2049,19 @@ export default function DetailCourse({
                                             </div>
                                         </div>
                                     )}
+                                </div>
+
+                                <div className="md:col-span-2">
+                                    <ReferenceLinksInput
+                                        compact
+                                        value={courseTestForm.reference_link}
+                                        onChange={(next) =>
+                                            setCourseTestForm((prev) => ({
+                                                ...prev,
+                                                reference_link: next,
+                                            }))
+                                        }
+                                    />
                                 </div>
 
                                 <Button

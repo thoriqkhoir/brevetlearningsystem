@@ -10,6 +10,7 @@ import {
 } from "@/Components/ui/breadcrumb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Upload } from "lucide-react";
+import { ReferenceLinksDisplay } from "@/Components/exam/ReferenceLinksInput";
 
 function parseLocalDate(value?: string | null) {
     if (!value) return null;
@@ -236,6 +237,7 @@ export default function DetailCourseTest({
                                 )}
                             </div>
                         )}
+                        <ReferenceLinksDisplay links={courseTest?.reference_link} />
                     </div>
 
                     <div className="rounded-xl border bg-white p-6 shadow">

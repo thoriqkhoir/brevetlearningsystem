@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\CourseTest;
 use App\Models\CourseTestAttempt;
 use App\Models\QuestionBank;
+use App\Support\ReferenceLinkNormalizer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -234,7 +235,7 @@ class CourseTestController extends Controller
 
     private function validateCourseTestPayload(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'duration' => 'nullable|integer|min:0',
@@ -284,6 +285,10 @@ class CourseTestController extends Controller
             'submission_instructions' => 'nullable|string',
             'course_submission_id' => 'nullable|uuid|exists:course_submissions,id',
         ]);
+
+        $validated['reference_link'] = ReferenceLinkNormalizer::normalize($request->input('reference_link'));
+
+        return $validated;
     }
 
     private function validateCourseDateWindow(Course $course, array $payload): void

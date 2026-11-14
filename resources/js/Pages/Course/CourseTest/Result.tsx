@@ -2,8 +2,8 @@ import { Head, Link } from "@inertiajs/react";
 import HeaderOnlyLayout from "@/Layouts/HeaderOnlyLayout";
 
 export default function Result({ course, test, attempt, review }: any) {
-    const showScore = test?.show_score ?? true;
-    const showCorrectAnswers = test?.show_correct_answers ?? true;
+    const showScore = Boolean(test?.show_score ?? true);
+    const showCorrectAnswers = Boolean(test?.show_correct_answers ?? true);
 
     return (
         <HeaderOnlyLayout
@@ -148,7 +148,7 @@ export default function Result({ course, test, attempt, review }: any) {
                                                         )}
                                                     </div>
                                                 )}
-                                                {showCorrectAnswers && r.explanation && (
+                                                {showScore && showCorrectAnswers && r.explanation && (
                                                     <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50/70 p-3 text-sm text-blue-950">
                                                         <div className="font-semibold text-blue-900 mb-1">
                                                             Pembahasan

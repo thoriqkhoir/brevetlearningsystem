@@ -19,6 +19,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TestParticipantsExport;
+use App\Support\ReferenceLinkNormalizer;
 
 class TestController extends Controller
 {
@@ -104,6 +105,7 @@ class TestController extends Controller
             'title' => $validated['title'],
             'code' => $validated['code'],
             'description' => $validated['description'],
+            'reference_link' => ReferenceLinkNormalizer::normalize($request->input('reference_link')),
             'duration' => $validated['duration'] ?? 0,
             'passing_score' => $validated['passing_score'] ?? 0,
             'question_bank_id' => $validated['question_bank_id'] ?? null,
@@ -389,6 +391,7 @@ class TestController extends Controller
         ]);
 
         $test = Test::findOrFail($id);
+        $validated['reference_link'] = ReferenceLinkNormalizer::normalize($request->input('reference_link'));
 
         $test->update($validated);
 
@@ -560,6 +563,7 @@ class TestController extends Controller
             'title'         => $original->title . ' (Salinan)',
             'code'          => $newCode,
             'description'   => $original->description,
+            'reference_link' => $original->reference_link,
             'duration'      => $original->duration,
             'passing_score' => $original->passing_score,
             'questions_to_show' => $original->questions_to_show,

@@ -319,6 +319,8 @@ class CourseTestUserController extends Controller
             'course' => $course,
             'test' => $courseTest,
             'teacher' => $course->user,
+            'attemptId' => $attempt?->id,
+            'attemptSignature' => $attempt ? ($attempt->id . '_' . (optional($attempt->started_at)->timestamp ?? 0)) : null,
             'currentQuestion' => $current,
             'nextQuestionId' => $nextId,
             'prevQuestionId' => $prevId,
@@ -480,10 +482,12 @@ class CourseTestUserController extends Controller
 
         $answers = $attempt->answers()->get()->keyBy('question_id');
         $questions = $this->getDisplayedQuestionsForUser($courseTest, $user->id, $courseTest->questions);
+        $showScore = (bool) ($courseTest->show_score ?? true);
         $showCorrectAnswers = (bool) ($courseTest->show_correct_answers ?? true);
+        $showExplanation = $showScore && $showCorrectAnswers;
 
         $review = $showCorrectAnswers
-            ? $questions->map(function ($question) use ($answers, $sequence) {
+            ? $questions->map(function ($question) use ($answers, $sequence, $showExplanation) {
                 $options = $question->options;
 
                 if ($sequence && is_array($sequence->option_sequences) && isset($sequence->option_sequences[$question->id]) && $options) {
@@ -510,7 +514,7 @@ class CourseTestUserController extends Controller
                     'id' => $question->id,
                     'order_no' => null,
                     'question_text' => $question->question_text,
-                    'explanation' => $question->explanation,
+                    'explanation' => $showExplanation ? $question->explanation : null,
                     'question_type' => $question->question_type,
                     'selected' => $question->question_type === 'short_answer' ? ($answer?->answer ?? null) : $selectedOptionId,
                     'is_correct' => $answer?->is_correct ?? null,
@@ -527,6 +531,9 @@ class CourseTestUserController extends Controller
             })
             : collect();
 
+        if (!$showExplanation && $courseTest->relationLoaded('questions')) {
+            $courseTest->questions->each->makeHidden('explanation');
+        }
         if (!$showCorrectAnswers) {
             $courseTest->unsetRelation('questions');
         }

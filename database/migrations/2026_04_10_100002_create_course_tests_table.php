@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignUuid('course_submission_id')->nullable()->constrained('course_submissions')->onUpdate('cascade')->onDelete('set null');
             $table->string('title');
             $table->text('description')->nullable();
+            $table->json('reference_link')->nullable();
             $table->integer('duration')->default(0);
             $table->integer('passing_score')->default(0);
             $table->integer('questions_to_show')->nullable();

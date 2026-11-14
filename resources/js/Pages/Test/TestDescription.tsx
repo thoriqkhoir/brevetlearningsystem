@@ -1,4 +1,4 @@
-import { Head, usePage, router } from "@inertiajs/react";
+import { Head, Link, usePage, router } from "@inertiajs/react";
 import HeaderOnlyLayout from "@/Layouts/HeaderOnlyLayout";
 import { Button } from "@/Components/ui/button";
 import { FileText, User as UserIcon, AlertTriangle } from "lucide-react";
@@ -307,7 +307,8 @@ export default function TestDescription({
                                                         <th className="py-2 pr-4">#</th>
                                                         <th className="py-2 pr-4">Tanggal</th>
                                                         <th className="py-2 pr-4 text-center">Nilai</th>
-                                                        <th className="py-2 pr-0 text-center">Status</th>
+                                                        <th className="py-2 pr-4 text-center">Status</th>
+                                                        <th className="py-2 pr-0 text-right">Aksi</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -324,10 +325,20 @@ export default function TestDescription({
                                                                 <td className="py-2 pr-4 font-semibold text-center">
                                                                     {typeof a.score === 'number' ? a.score : '-'}
                                                                 </td>
-                                                                <td className="py-2 pr-0 text-center">
+                                                                <td className="py-2 pr-4 text-center">
                                                                     <span className={`inline-flex text-xs px-2 py-0.5 rounded-full ${a.passed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                                                                         {a.passed ? 'Lulus' : 'Tidak Lulus'}
                                                                     </span>
+                                                                </td>
+                                                                <td className="py-2 pr-0 text-right">
+                                                                    <Button size="sm" variant="outline" asChild>
+                                                                        <Link href={route("tests.result", [test.id, a.id])}>
+                                                                            {Boolean(test?.show_score ?? true) &&
+                                                                                Boolean(test?.show_correct_answers ?? true)
+                                                                                ? "Lihat Hasil & Pembahasan"
+                                                                                : "Lihat Hasil"}
+                                                                        </Link>
+                                                                    </Button>
                                                                 </td>
                                                             </tr>
                                                         );

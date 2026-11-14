@@ -24,6 +24,7 @@ class CourseTest extends Model
         'remedial_enabled' => 'boolean',
         'remedial_end_date' => 'datetime',
         'requires_submission' => 'boolean',
+        'reference_link' => 'array',
     ];
 
     protected $appends = ['question_count'];

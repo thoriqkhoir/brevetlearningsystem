@@ -13,6 +13,7 @@ class Test extends Model
 
     protected $casts = [
         'questions_to_show' => 'integer',
+        'reference_link' => 'array',
     ];
 
     /**

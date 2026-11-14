@@ -9,6 +9,7 @@ import {
 } from "@/Components/ui/breadcrumb";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { ReferenceLinksDisplay } from "@/Components/exam/ReferenceLinksInput";
 
 export default function AdminDetailTest({ teacher, test = {}, participants = [] }: any) {
   const getInitials = (name: string) => {
@@ -115,6 +116,9 @@ export default function AdminDetailTest({ teacher, test = {}, participants = [] 
                 </tr>
               </tbody>
             </table>
+            <div className="mt-4">
+              <ReferenceLinksDisplay links={(test as any)?.reference_link} />
+            </div>
           </div>
 
           <div className="rounded-xl bg-white border shadow p-6">

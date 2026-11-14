@@ -19,6 +19,7 @@ import {
 } from "@/Components/ui/select";
 import { ArrowLeft, CheckCircle2, Clock, Download, FileText, Search, UserCheck, Users, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
+import { ReferenceLinksDisplay } from "@/Components/exam/ReferenceLinksInput";
 
 function parseLocalDate(value?: string | null) {
     if (!value) return null;
@@ -257,6 +258,7 @@ export default function CourseTestTeacherDetail({
                                 </p>
                             </div>
                         </div>
+                        <ReferenceLinksDisplay links={courseTest?.reference_link} />
                     </div>
 
                     {/* Participants & Scores Section */}
