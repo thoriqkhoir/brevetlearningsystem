@@ -7348,6 +7348,10 @@ const DetailSPTOP = ({
                                                 >
                                                     <Calendar
                                                         mode="single"
+                                                        toYear={
+                                                            new Date().getFullYear() +
+                                                            5
+                                                        }
                                                         selected={
                                                             bankFilters.start_date
                                                                 ? new Date(
@@ -7415,6 +7419,10 @@ const DetailSPTOP = ({
                                                 >
                                                     <Calendar
                                                         mode="single"
+                                                        toYear={
+                                                            new Date().getFullYear() +
+                                                            5
+                                                        }
                                                         selected={
                                                             bankFilters.end_date
                                                                 ? new Date(

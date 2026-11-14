@@ -321,6 +321,10 @@ export default function DaftarUjian({ tests, teachers, filters = {} }: any) {
                                             >
                                                 <Calendar
                                                     mode="single"
+                                                    toYear={
+                                                        new Date().getFullYear() +
+                                                        5
+                                                    }
                                                     selected={parseYmd(
                                                         filterState.start_date_from,
                                                     )}
@@ -362,6 +366,10 @@ export default function DaftarUjian({ tests, teachers, filters = {} }: any) {
                                             >
                                                 <Calendar
                                                     mode="single"
+                                                    toYear={
+                                                        new Date().getFullYear() +
+                                                        5
+                                                    }
                                                     selected={parseYmd(
                                                         filterState.start_date_to,
                                                     )}
@@ -410,6 +418,10 @@ export default function DaftarUjian({ tests, teachers, filters = {} }: any) {
                                             >
                                                 <Calendar
                                                     mode="single"
+                                                    toYear={
+                                                        new Date().getFullYear() +
+                                                        5
+                                                    }
                                                     selected={parseYmd(
                                                         filterState.end_date_from,
                                                     )}
@@ -451,6 +463,10 @@ export default function DaftarUjian({ tests, teachers, filters = {} }: any) {
                                             >
                                                 <Calendar
                                                     mode="single"
+                                                    toYear={
+                                                        new Date().getFullYear() +
+                                                        5
+                                                    }
                                                     selected={parseYmd(
                                                         filterState.end_date_to,
                                                     )}

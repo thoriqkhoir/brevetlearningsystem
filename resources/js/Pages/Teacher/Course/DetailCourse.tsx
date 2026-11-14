@@ -1386,6 +1386,10 @@ export default function DetailCourse({
                                             >
                                                 <Calendar
                                                     mode="single"
+                                                    toYear={
+                                                        new Date().getFullYear() +
+                                                        5
+                                                    }
                                                     selected={
                                                         scheduleForm.scheduled_date ||
                                                         undefined
@@ -1721,6 +1725,10 @@ export default function DetailCourse({
                                                 >
                                                     <Calendar
                                                         mode="single"
+                                                        toYear={
+                                                            new Date().getFullYear() +
+                                                            5
+                                                        }
                                                         selected={
                                                             courseTestForm.start_date ||
                                                             undefined
@@ -1802,6 +1810,10 @@ export default function DetailCourse({
                                                 >
                                                     <Calendar
                                                         mode="single"
+                                                        toYear={
+                                                            new Date().getFullYear() +
+                                                            5
+                                                        }
                                                         selected={
                                                             courseTestForm.end_date ||
                                                             undefined
@@ -1911,6 +1923,10 @@ export default function DetailCourse({
                                                     <PopoverContent className="w-auto p-0" align="start">
                                                         <Calendar
                                                             mode="single"
+                                                            toYear={
+                                                                new Date().getFullYear() +
+                                                                5
+                                                            }
                                                             selected={courseTestForm.remedial_end_date || undefined}
                                                             onSelect={(date) => {
                                                                 setCourseTestForm((prev) => ({

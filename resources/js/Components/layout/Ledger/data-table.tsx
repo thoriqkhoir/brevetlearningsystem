@@ -182,6 +182,7 @@ export function DataTableLedger<TData, TValue>({
                     <PopoverContent className="w-auto p-0">
                         <Calendar
                             mode="single"
+                            toYear={new Date().getFullYear() + 5}
                             selected={selectedDate}
                             onSelect={(date) => {
                                 setSelectedDate(date);

@@ -185,6 +185,7 @@ export default function CourseSubmissionFormModal({
                                 <PopoverContent className="w-auto p-0" align="start">
                                     <Calendar
                                         mode="single"
+                                        toYear={new Date().getFullYear() + 5}
                                         selected={deadlineDate || undefined}
                                         onSelect={(d) => {
                                             setDeadlineDate(d || null);

@@ -128,7 +128,7 @@ export default function FormCreateTest({
     const minSelectableDate = new Date();
     minSelectableDate.setHours(0, 0, 0, 0);
     const maxSelectableDate = new Date(minSelectableDate);
-    maxSelectableDate.setFullYear(maxSelectableDate.getFullYear() + 1);
+    maxSelectableDate.setFullYear(maxSelectableDate.getFullYear() + 5);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),

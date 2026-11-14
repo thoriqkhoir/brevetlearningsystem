@@ -234,6 +234,10 @@ export default function FormEditCourse({ course }: any) {
                                                     >
                                                         <Calendar
                                                             mode="single"
+                                                            toYear={
+                                                                new Date().getFullYear() +
+                                                                5
+                                                            }
                                                             selected={
                                                                 field.value
                                                             }
@@ -318,6 +322,10 @@ export default function FormEditCourse({ course }: any) {
                                                     >
                                                         <Calendar
                                                             mode="single"
+                                                            toYear={
+                                                                new Date().getFullYear() +
+                                                                5
+                                                            }
                                                             selected={
                                                                 field.value
                                                             }

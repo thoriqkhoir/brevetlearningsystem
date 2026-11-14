@@ -458,6 +458,7 @@ export function FormL11CDialog({
                             >
                                 <Calendar
                                     mode="single"
+                                    toYear={new Date().getFullYear() + 5}
                                     selected={
                                         endLoanTerm
                                             ? new Date(endLoanTerm)
